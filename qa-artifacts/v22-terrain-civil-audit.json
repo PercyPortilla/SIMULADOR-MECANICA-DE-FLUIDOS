@@ -1,0 +1,78 @@
+﻿{
+  "revision": "V22",
+  "checks": 14,
+  "passed": 14,
+  "failed": [],
+  "details": [
+    {
+      "id": "microrelief-bounded",
+      "ok": true,
+      "details": "max |microrelief|=0.1197 m"
+    },
+    {
+      "id": "reception-datum-preserved",
+      "ok": true,
+      "details": "terrain=8.439 m"
+    },
+    {
+      "id": "crushing-datum-preserved",
+      "ok": true,
+      "details": "terrain=6.000 m"
+    },
+    {
+      "id": "crushing-cut-no-hump",
+      "ok": true,
+      "details": "profile=6.000,6.454,6.700,6.620,6.510 m"
+    },
+    {
+      "id": "crushing-cut-continuous",
+      "ok": true,
+      "details": "max sampled step=0.454 m"
+    },
+    {
+      "id": "rom-tie-in-flare",
+      "ok": true,
+      "details": "5.20→9.20 m"
+    },
+    {
+      "id": "rom-tie-in-berm-taper",
+      "ok": true,
+      "details": "1.20→0.00 m"
+    },
+    {
+      "id": "rom-road-terrain-continuity",
+      "ok": true,
+      "details": "max error=0.000152 m"
+    },
+    {
+      "id": "primary-haul-grade-preserved",
+      "ok": true,
+      "details": "max grade=8.30% <= 10.00%"
+    },
+    {
+      "id": "no-duplicate-reception-fill",
+      "ok": true,
+      "details": "source=terrainHeight"
+    },
+    {
+      "id": "functional-rom-apron-retained",
+      "ok": true,
+      "details": "turning apron present"
+    },
+    {
+      "id": "surface-profile:terrain",
+      "ok": true,
+      "details": "albedo=7x5 rough=5x4 bump=9x6 scale=0.078"
+    },
+    {
+      "id": "surface-profile:road",
+      "ok": true,
+      "details": "albedo=9x4 rough=7x3 bump=12x4 scale=0.05"
+    },
+    {
+      "id": "surface-profile:concrete",
+      "ok": true,
+      "details": "albedo=4x3 rough=3x3 bump=5x4 scale=0.04"
+    }
+  ]
+}

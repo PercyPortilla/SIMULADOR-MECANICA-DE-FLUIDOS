@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { getReceptionEarthworkBand, getTerrainHeight, PIT_DESIGN, TERRAIN_EXTENT } from './terrainHeight.js';
+import { getCrushingEarthworkBand, getReceptionEarthworkBand, getTerrainHeight, PIT_DESIGN, TERRAIN_EXTENT } from './terrainHeight.js';
 import { MINE_AUXILIARY_AREAS } from '../config/siteDesign.js';
 
 
@@ -27,7 +27,11 @@ function terrainToneVariation(x, z) {
   const broad = Math.sin(x * 0.041 + z * 0.027) * 0.45;
   const medium = Math.sin(x * 0.113 - z * 0.071 + 1.7) * 0.32;
   const fine = Math.cos((x + z) * 0.233 - 0.8) * 0.23;
-  return 0.985 + (broad + medium + fine) * 0.025;
+  const patchX = Math.floor((x + 430) / 23);
+  const patchZ = Math.floor((z + 280) / 19);
+  const patchSeed = Math.sin(patchX * 12.9898 + patchZ * 78.233) * 43758.5453;
+  const patch = (patchSeed - Math.floor(patchSeed)) - 0.5;
+  return 0.985 + (broad + medium + fine) * 0.025 + patch * 0.018;
 }
 
 export function createMineTerrain(material) {
@@ -55,6 +59,8 @@ export function createMineTerrain(material) {
   const compactedFillColor = new THREE.Color(0xb99a73);
   const earthworkFaceColor = new THREE.Color(0x967454);
   const catchBermColor = new THREE.Color(0xaa8861);
+  const cutFaceColor = new THREE.Color(0x8f765d);
+  const secondaryBermColor = new THREE.Color(0xb09a78);
   for (let index = 0; index < positions.count; index += 1) {
     const x = positions.getX(index);
     const z = positions.getZ(index);
@@ -93,6 +99,10 @@ export function createMineTerrain(material) {
     if (receptionBand === 'crest') color.lerp(compactedFillColor, 0.38);
     if (receptionBand === 'upper-slope' || receptionBand === 'toe-slope') color.lerp(earthworkFaceColor, 0.48);
     if (receptionBand === 'berm') color.lerp(catchBermColor, 0.55);
+    const crushingBand = getCrushingEarthworkBand(x, z);
+    if (crushingBand === 'cut-face') color.lerp(cutFaceColor, 0.46);
+    if (crushingBand === 'catch-berm') color.lerp(secondaryBermColor, 0.52);
+    if (crushingBand === 'toe-transition') color.lerp(cutFaceColor, 0.24);
     color.multiplyScalar(terrainToneVariation(x, z));
     colors.push(color.r, color.g, color.b);
   }

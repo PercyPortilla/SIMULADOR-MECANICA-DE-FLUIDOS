@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { createIndustrialMaterial, createPipeMaterial } from '../../src/scene/materials/industrialMaterials.js';
+import {
+  createIndustrialMaterial,
+  createPipeMaterial,
+  SURFACE_MATERIAL_PROFILES,
+} from '../../src/scene/materials/industrialMaterials.js';
 
 describe('industrial materials', () => {
   it('differentiates concrete and structural steel physically', () => {
@@ -26,6 +30,24 @@ describe('industrial materials', () => {
     expect(terrain.metalness).toBe(0);
     expect(road.metalness).toBe(0);
     expect(terrain.bumpScale).toBeLessThan(0.11);
+  });
+
+  it('uses distinct multi-scale surface profiles so soil, road and concrete do not tile in lockstep', () => {
+    const terrain = createIndustrialMaterial('terrain');
+    const road = createIndustrialMaterial('road');
+    const concrete = createIndustrialMaterial('concrete');
+    for (const [role, material] of [['terrain', terrain], ['road', road], ['concrete', concrete]]) {
+      const profile = SURFACE_MATERIAL_PROFILES[role];
+      expect(material.userData.surfaceProfile).toEqual(profile);
+      expect(new Set([
+        profile.albedoRepeat.join('x'),
+        profile.roughnessRepeat.join('x'),
+        profile.bumpRepeat.join('x'),
+      ]).size).toBe(3);
+      expect(material.bumpScale).toBeCloseTo(profile.bumpScale, 8);
+    }
+    expect(SURFACE_MATERIAL_PROFILES.terrain.albedoRepeat).not.toEqual(SURFACE_MATERIAL_PROFILES.road.albedoRepeat);
+    expect(SURFACE_MATERIAL_PROFILES.road.albedoRepeat).not.toEqual(SURFACE_MATERIAL_PROFILES.concrete.albedoRepeat);
   });
 
   it('keeps dark steel readable while preserving contrast with process steel and belts', () => {

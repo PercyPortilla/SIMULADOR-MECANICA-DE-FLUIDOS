@@ -81,7 +81,24 @@ function isInspectable(object) {
     || (object?.userData?.mobileEquipment === true && Boolean(object.name));
 }
 
+export function inferImportedInspectionRole(object) {
+  if (object?.userData?.blenderImported !== true) return null;
+  const name = String(object?.name || '').toUpperCase();
+  // Blender equipment IDs are part of every mesh name. Match component tokens
+  // after an underscore so SLURRY-PUMP-01 does not make the whole pump interior
+  // and DISCHARGE is never mistaken for CHARGE.
+  if (/_(?:SLURRY|FLUID|CHARGE|ORE|LINER|IMPELLER|SHAFT|VORTEX|BAFFLE|BLADE|SCREEN|ELECTROLYTE|CATHODE|MELT|REFRACTORY|JAW)(?:_|$)/.test(name)) {
+    return 'interior';
+  }
+  if (/_(?:SHELL|WALL|CASING|BARREL|CONE|HOPPER|TANK|COVER|VOLUTE|FLOOR|CELL|CRUCIBLE)(?:_|$)/.test(name)) {
+    return 'shell';
+  }
+  return 'structure';
+}
+
 function isInterior(object) {
+  const importedRole = inferImportedInspectionRole(object);
+  if (importedRole) return importedRole === 'interior';
   return object?.userData?.inspectionInterior === true || object?.userData?.inspectionRole === 'interior';
 }
 
@@ -96,6 +113,8 @@ function isInteriorWithin(object, target) {
 }
 
 function isExplicitShell(object) {
+  const importedRole = inferImportedInspectionRole(object);
+  if (importedRole) return importedRole === 'shell';
   return object?.userData?.inspectionShell === true || object?.userData?.inspectionRole === 'shell';
 }
 

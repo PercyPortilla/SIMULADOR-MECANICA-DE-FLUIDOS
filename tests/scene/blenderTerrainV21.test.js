@@ -36,6 +36,7 @@ describe('V21 Blender reception earthwork', () => {
   it('stores a deterministic height contract sampled from the authoritative runtime terrain', () => {
     const contract = JSON.parse(fs.readFileSync(contractPath, 'utf8'));
     expect(contract.assetId).toBe('RECEPTION-EARTHWORK-V21');
+    expect(contract.compatibleTerrainRevision).toBe('V22');
     expect(contract.authoritative).toBe(false);
     expect(contract.visualOnly).toBe(true);
     expect(contract.worldUnitsPerMeter).toBe(1);
@@ -101,6 +102,7 @@ describe('V21 Blender reception earthwork', () => {
     expect(handle.root.parent).toBe(parent);
     expect(handle.root.userData.visualOnly).toBe(true);
     expect(handle.root.userData.authoritativeTerrain).toBe(false);
+    expect(handle.root.userData.terrainRealismRevision).toBe('V22');
     expect(handle.root.userData.blenderVisualStatus).toBe('ssr-procedural-fallback');
     handle.dispose();
     expect(handle.root.parent).toBeNull();

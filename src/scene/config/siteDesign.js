@@ -73,9 +73,9 @@ export const TOPOGRAPHIC_ZONES = Object.freeze({
 
 // Reception is intentionally an engineered earthwork rather than a broad
 // procedural plateau. The crest keeps the authoritative ROM coordinates and
-// elevation, while the north/south/west edges step through a visible face,
-// catch berm and toe slope. The east side stays open for the existing
-// reception-to-crushing grade transition.
+// elevation; its south side exposes a visible face, catch berm and toe slope.
+// The east shoulder fades before primary crushing so both terraces read as one
+// continuous civil layout instead of two intersecting earthworks.
 export const RECEPTION_EARTHWORK = Object.freeze({
   center: Object.freeze([...TOPOGRAPHIC_ZONES.reception.center]),
   crestSizeM: Object.freeze([...TOPOGRAPHIC_ZONES.reception.size]),
@@ -84,8 +84,29 @@ export const RECEPTION_EARTHWORK = Object.freeze({
   bermWidthM: 5.0,
   bermDropM: 1.0,
   toeSlopeRunM: 10.0,
+  eastBlendWidthM: 16.0,
   embankmentSide: 'south',
   openEast: true,
+});
+
+export const CRUSHING_CUT = Object.freeze({
+  center: Object.freeze([...TOPOGRAPHIC_ZONES.crushing.center]),
+  terraceSizeM: Object.freeze([...TOPOGRAPHIC_ZONES.crushing.size]),
+  terraceElevationM: TOPOGRAPHIC_ZONES.crushing.elevation,
+  activeXRangeM: Object.freeze([-97, -61]),
+  faceRunM: 5.0,
+  bermWidthM: 3.0,
+  bermRiseM: 0.70,
+  toeRunM: 7.0,
+});
+
+export const ROAD_CIVIL_DETAIL = Object.freeze({
+  primaryTransitionWidthM: 5.2,
+  primaryTieInFlareM: 4.0,
+  primaryTieInStart: 0.86,
+  primaryBermHeightM: 1.20,
+  primaryBermTaperStart: 0.88,
+  primaryBermTaperEnd: 0.985,
 });
 
 export const PLANT_ZONE_DEFINITIONS = Object.freeze({

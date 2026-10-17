@@ -4,6 +4,7 @@ import { createBaseScene } from '../../src/scene/baseEnvironment.js';
 import { getRoadDesignMetrics, getRoadNetworkJunctions, getRoadPath } from '../../src/scene/environment/haulRoads.js';
 import { getTerrainHeight } from '../../src/scene/environment/terrainHeight.js';
 import { ROAD_DEFINITIONS } from '../../src/scene/config/siteDesign.js';
+import { RECOVERY_ROAD_SPAN_WIDTH_M } from '../../src/scene/infrastructure/pipeRacks.js';
 
 describe('infraestructura de conexión', () => {
   it('mantiene cuatro caminos y ROAD-04 sigue la topografía', () => {
@@ -102,6 +103,25 @@ describe('infraestructura de conexión', () => {
       }
     });
     expect(segmentIndexes.size).toBeGreaterThanOrEqual(3);
+  });
+
+  it('usa pórticos anchos en el tramo PUMP-01 → CIP que comparte corredor aéreo con ROAD-02', () => {
+    const base = createBaseScene();
+    const portals = [];
+    base.processPipeRacks.traverse((object) => {
+      if (object.userData?.connectionId === 'P-PUMP-01-TO-CIP'
+        && object.userData?.pipeRackFrame
+        && object.userData?.roadSpanPortal) portals.push(object);
+    });
+    expect(portals.length).toBeGreaterThanOrEqual(4);
+    portals.forEach((portal) => {
+      expect(portal.userData.clearRoadId).toBe('ROAD-02');
+      expect(portal.userData.segmentIndex).toBe(2);
+      expect(portal.userData.frameWidthM).toBe(RECOVERY_ROAD_SPAN_WIDTH_M);
+      const footings = portal.children.filter((child) => child.name.includes('-footing-'));
+      expect(footings).toHaveLength(2);
+      expect(Math.abs(footings[0].position.z - footings[1].position.z)).toBeGreaterThanOrEqual(RECOVERY_ROAD_SPAN_WIDTH_M - 1e-9);
+    });
   });
 
   it('no genera ground racks para las conexiones interstage entre reactores', () => {

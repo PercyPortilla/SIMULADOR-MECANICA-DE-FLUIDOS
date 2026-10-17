@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { getTerrainHeight } from './terrainHeight.js';
-import { ROAD_DEFINITIONS } from '../config/siteDesign.js';
+import { ROAD_CIVIL_DETAIL, ROAD_DEFINITIONS } from '../config/siteDesign.js';
 import { createIndustrialMaterial } from '../materials/industrialMaterials.js';
 import { createPrimaryRoadAlignment } from './roadEngineering.js';
 
@@ -9,6 +9,31 @@ export const HAUL_ROAD_WIDTH = ROAD_DEFINITIONS['ROAD-01'].widthM;
 export const ROAD_SURFACE_OFFSET_M = 0.10;
 const PRIMARY_CROSSFALL = 0.022;
 const SERVICE_CROSSFALL = 0.018;
+const ROAD_ID_BY_DEFINITION = new Map(Object.entries(ROAD_DEFINITIONS).map(([roadId, definition]) => [definition, roadId]));
+
+export function getRoadCutFillTransitionWidth(roadId, progress = 0) {
+  const definition = ROAD_DEFINITIONS[roadId];
+  if (!definition) throw new RangeError(`Camino desconocido: ${roadId}.`);
+  if (definition.role !== 'primary-haul-road') return 3.2;
+  const tieIn = THREE.MathUtils.smoothstep(
+    THREE.MathUtils.clamp(progress, 0, 1),
+    ROAD_CIVIL_DETAIL.primaryTieInStart,
+    1,
+  );
+  return ROAD_CIVIL_DETAIL.primaryTransitionWidthM + ROAD_CIVIL_DETAIL.primaryTieInFlareM * tieIn;
+}
+
+export function getRoadSafetyBermHeight(roadId, progress = 0) {
+  const definition = ROAD_DEFINITIONS[roadId];
+  if (!definition) throw new RangeError(`Camino desconocido: ${roadId}.`);
+  if (definition.role !== 'primary-haul-road') return 0.48;
+  const taper = THREE.MathUtils.smoothstep(
+    THREE.MathUtils.clamp(progress, 0, 1),
+    ROAD_CIVIL_DETAIL.primaryBermTaperStart,
+    ROAD_CIVIL_DETAIL.primaryBermTaperEnd,
+  );
+  return ROAD_CIVIL_DETAIL.primaryBermHeightM * (1 - taper);
+}
 
 export function getRoadWidth(roadId) {
   const definition = ROAD_DEFINITIONS[roadId];
@@ -160,7 +185,8 @@ function sampleCrossSection(curve, t, definition) {
   const widening = curveWidening(curve, t, definition);
   const halfRoad = definition.widthM / 2 + widening;
   const shoulder = definition.shoulderM + (definition.role === 'primary-haul-road' ? widening * 0.35 : 0);
-  const transitionWidth = definition.role === 'primary-haul-road' ? 5.2 : 3.2;
+  const roadId = ROAD_ID_BY_DEFINITION.get(definition);
+  const transitionWidth = roadId ? getRoadCutFillTransitionWidth(roadId, t) : 3.2;
   const crossfall = definition.role === 'primary-haul-road' ? PRIMARY_CROSSFALL : SERVICE_CROSSFALL;
   const crownRise = Math.min(0.22, halfRoad * crossfall);
   const shoulderDrop = Math.min(0.18, shoulder * 0.035);
@@ -249,12 +275,14 @@ function buildBermGeometry(curve, definition, samples, sign) {
   const vertices = [];
   const indices = [];
   const isPrimary = definition.role === 'primary-haul-road';
-  const bermHeight = isPrimary ? 1.20 : 0.48;
   const innerInset = isPrimary ? 0.30 : 0.20;
   const bermWidth = isPrimary ? 1.75 : 0.90;
 
   for (let index = 0; index <= samples; index += 1) {
-    const section = sampleCrossSection(curve, index / samples, definition);
+    const progress = index / samples;
+    const section = sampleCrossSection(curve, progress, definition);
+    const roadId = ROAD_ID_BY_DEFINITION.get(definition);
+    const bermHeight = roadId ? getRoadSafetyBermHeight(roadId, progress) : (isPrimary ? 1.20 : 0.48);
     const shoulderOuter = sign > 0 ? section.leftShoulder : section.rightShoulder;
     const outward = section.side.clone().multiplyScalar(sign);
     const innerToe = shoulderOuter.clone().addScaledVector(outward, innerInset);

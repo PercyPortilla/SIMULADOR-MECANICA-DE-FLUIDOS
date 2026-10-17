@@ -47,6 +47,7 @@ import {
   getAcademicExperiment,
 } from './ui/academicLab.js';
 import { buildAcademicLabReportHtml } from './ui/academicLabReport.js';
+import { RELEASE_INFO } from './releaseInfo.js';
 
 const app = document.querySelector('#app');
 let activeTheme = applyTheme(loadTheme());
@@ -679,7 +680,7 @@ function installAcademicLabPanel() {
   const panel = document.querySelector('.academic-case-panel');
   if (!panel || document.querySelector('#academic-lab')) return;
   const badge = panel.querySelector('.academic-case-heading small');
-  if (badge) badge.textContent = 'V20';
+  if (badge) badge.textContent = RELEASE_INFO.version;
   const details = document.createElement('details');
   details.id = 'academic-lab';
   details.className = 'academic-lab';
@@ -969,7 +970,7 @@ function render() {
   shell.innerHTML = `
     <header class="topbar">
       <img class="brand-logo" src="/upn-logo.svg" alt="UPN · Universidad Privada del Norte">
-      <div><p class="eyebrow">UPN · SIMULADOR ACADÉMICO</p><h1>PULPA LAB <span>V2</span></h1></div>
+      <div><p class="eyebrow">UPN · SIMULADOR ACADÉMICO</p><h1>PULPA LAB <span>V2</span></h1><small class="release-tag">${RELEASE_INFO.version} · ${RELEASE_INFO.name}</small></div>
       <div class="topbar-meta">MOTOR DE PARÁMETROS · SI</div><button id="theme-toggle" class="theme-toggle" type="button">PALETA</button>
     </header>
     <main class="workspace">

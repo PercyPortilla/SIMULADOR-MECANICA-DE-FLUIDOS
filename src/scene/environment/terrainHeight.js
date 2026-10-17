@@ -1,4 +1,5 @@
 import {
+  CRUSHING_CUT,
   MINE_AUXILIARY_AREAS,
   MINE_DRAINAGE_PATHS,
   PIT_DESIGN,
@@ -17,6 +18,17 @@ function smoothstep(edge0, edge1, value) {
   return t * t * (3 - 2 * t);
 }
 function lerp(a, b, t) { return a + (b - a) * t; }
+
+export function getTerrainMicrorelief(x, z) {
+  // Low-amplitude, multi-scale relief prevents large natural surfaces from
+  // reading as mathematically smooth without turning engineered pads or roads
+  // into corrugated geometry. Engineered features are applied later and remain
+  // authoritative over this natural base.
+  const broad = Math.sin(x * 0.071 + z * 0.049 + 0.4) * 0.055;
+  const cross = Math.cos(x * 0.119 - z * 0.083 - 0.9) * 0.040;
+  const fine = Math.sin((x + z) * 0.173 + Math.cos(z * 0.031)) * 0.025;
+  return broad + cross + fine;
+}
 
 function roundedRectInfluence(x, z, zone, feather = 10) {
   const [cx, cz] = zone.center;
@@ -90,9 +102,55 @@ function applyReceptionEarthwork(x, z, baseHeight) {
   } else {
     target = lerp(bermElevation, baseHeight, smoothstep(bermEnd, toeEnd, distance));
   }
+  // Fade the south earthwork before it reaches the primary-crushing terrace.
+  // This removes the V21 east-side shoulder hump while retaining the full ROM
+  // platform and the existing authoritative reception/crushing elevations.
+  const eastEdge = definition.center[0] + definition.crestSizeM[0] / 2;
+  const eastBlendStart = eastEdge - definition.eastBlendWidthM;
+  const eastWeight = 1 - smoothstep(eastBlendStart, eastEdge, x);
+  if (distance > 1e-9) target = lerp(baseHeight, target, eastWeight);
   // This is an embankment/cut platform contract, not a second terrain source.
   // Outside the crest we never cut below the pre-earthwork terrain surface.
   return distance <= 1e-9 ? target : Math.max(baseHeight, target);
+}
+
+export function getCrushingEarthworkBand(x, z) {
+  const cut = CRUSHING_CUT;
+  if (x < cut.activeXRangeM[0] || x > cut.activeXRangeM[1]) return null;
+  const southEdge = cut.center[1] - cut.terraceSizeM[1] / 2;
+  const northEdge = cut.center[1] + cut.terraceSizeM[1] / 2;
+  if (z > northEdge) return null;
+  if (z >= southEdge) return 'terrace';
+  const distance = southEdge - z;
+  if (distance <= cut.faceRunM) return 'cut-face';
+  if (distance <= cut.faceRunM + cut.bermWidthM) return 'catch-berm';
+  if (distance <= cut.faceRunM + cut.bermWidthM + cut.toeRunM) return 'toe-transition';
+  return null;
+}
+
+function applyCrushingSouthCut(x, z, baseHeight) {
+  const band = getCrushingEarthworkBand(x, z);
+  if (!band || band === 'terrace') return baseHeight;
+  const cut = CRUSHING_CUT;
+  const southEdge = cut.center[1] - cut.terraceSizeM[1] / 2;
+  const distance = southEdge - z;
+  const faceEnd = cut.faceRunM;
+  const bermEnd = faceEnd + cut.bermWidthM;
+  const toeEnd = bermEnd + cut.toeRunM;
+  const bermElevation = cut.terraceElevationM + cut.bermRiseM;
+  let target;
+  if (distance <= faceEnd) {
+    target = lerp(cut.terraceElevationM, bermElevation, smoothstep(0, faceEnd, distance));
+  } else if (distance <= bermEnd) {
+    target = bermElevation;
+  } else {
+    target = lerp(bermElevation, baseHeight, smoothstep(bermEnd, toeEnd, distance));
+  }
+  const edgeFade = Math.min(
+    smoothstep(cut.activeXRangeM[0], cut.activeXRangeM[0] + 4, x),
+    1 - smoothstep(cut.activeXRangeM[1] - 4, cut.activeXRangeM[1], x),
+  );
+  return lerp(baseHeight, Math.min(baseHeight, target), edgeFade);
 }
 
 function distanceToSegment(x, z, ax, az, bx, bz) {
@@ -137,7 +195,8 @@ function naturalTerrainHeight(x, z) {
   const westMassif = 8.6 * (1 - smoothstep(145, 410, Math.hypot(x - PIT_DESIGN.center.x, z - PIT_DESIGN.center.z)));
   const eastRise = 2.4 * smoothstep(175, 350, x);
   const ridge = 1.4 * (1 - smoothstep(0, 85, Math.abs(z - (0.17 * x + 52))));
-  return regionalUndulation + structuralGrain + northRise + southShoulder + westMassif + eastRise + ridge;
+  return regionalUndulation + structuralGrain + northRise + southShoulder + westMassif + eastRise + ridge
+    + getTerrainMicrorelief(x, z);
 }
 
 function pitContourOffset(azimuth, radius) {
@@ -302,6 +361,11 @@ export function getTerrainHeight(x, z) {
     const influence = roundedRectInfluence(x, z, zone, feather);
     height = lerp(height, zone.elevation, influence);
   });
+
+  // A shallow cut bench south of primary crushing removes the visual hump that
+  // previously separated the 6 m crusher terrace from the service-road ground.
+  // It is terrain shaping only: equipment, road X/Z and process coordinates stay fixed.
+  height = applyCrushingSouthCut(x, z, height);
 
   // Controlled transition between elevated ROM and primary crushing terrace.
   const reception = ZONES.reception;

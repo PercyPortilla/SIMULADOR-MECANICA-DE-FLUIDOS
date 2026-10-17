@@ -1,0 +1,17 @@
+﻿[
+    {
+        "url":  "http://127.0.0.1:4174/",
+        "status":  200,
+        "bytes":  498
+    },
+    {
+        "url":  "http://127.0.0.1:4174/models/pulpa-blender/RECEPTION-EARTHWORK-V21.glb",
+        "status":  200,
+        "bytes":  463792
+    },
+    {
+        "url":  "http://127.0.0.1:4174/models/pulpa-blender/MILL-01.glb",
+        "status":  200,
+        "bytes":  793344
+    }
+]

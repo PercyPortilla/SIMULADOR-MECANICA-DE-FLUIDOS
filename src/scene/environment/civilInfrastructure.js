@@ -75,20 +75,10 @@ export function createCivilInfrastructure() {
   const reception = getTerrainZone('reception');
   const receptionElevation = getZoneElevation('reception');
 
-  // Compact ROM earthwork: enough for the truck dump approach without turning
-  // the complete reception zone into one oversized geometric platform.
-  const fillHeight = 4.2;
-  const fillCenterX = reception.center[0] - 8;
-  const fillWidth = 34;
-  const fillDepth = 28;
-  const fill = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.28, fillHeight, 8, 1, false), earth);
-  fill.name = 'reception-engineered-embankment';
-  fill.rotation.y = Math.PI / 8;
-  fill.scale.set(fillWidth / 2, 1, fillDepth / 2);
-  fill.position.set(fillCenterX, receptionElevation - fillHeight / 2 + 0.05, reception.center[1]);
-  fill.castShadow = true;
-  fill.receiveShadow = true;
-  root.add(fill);
+  // V22: the authoritative terrain already contains the ROM embankment, face,
+  // catch berm and toe. Do not stack a second decorative fill solid on top of
+  // it; that V21-era cylinder produced visible intersections at the road tie-in.
+  root.userData.receptionEarthworkSource = 'terrainHeight';
 
   root.add(box(
     'reception-turning-apron',

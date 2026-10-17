@@ -1,0 +1,33 @@
+{
+  "baseline": "V21",
+  "modified": [
+    "blender/generated/v21-reception-earthwork-contract.json",
+    "public/models/pulpa-blender/RECEPTION-EARTHWORK-V21.glb",
+    "src/main.js",
+    "src/scene/baseEnvironment.js",
+    "src/scene/config/siteDesign.js",
+    "src/scene/environment/civilInfrastructure.js",
+    "src/scene/environment/haulRoads.js",
+    "src/scene/environment/terrain.js",
+    "src/scene/environment/terrainHeight.js",
+    "src/scene/infrastructure/pipeRacks.js",
+    "src/scene/inspection/equipmentInspection.js",
+    "src/scene/integration/blenderTerrainOverlay.js",
+    "src/scene/materials/industrialMaterials.js",
+    "src/styles.css",
+    "tests/scene/baseEnvironment.test.js",
+    "tests/scene/blenderTerrainV21.test.js",
+    "tests/scene/industrialMaterials.test.js",
+    "tests/scene/infrastructure.test.js",
+    "tests/scene/inspectionModes.test.js",
+    "tools/exportV21TerrainContract.mjs",
+    "tools/integrationClearanceAudit.mjs"
+  ],
+  "added": [
+    "src/releaseInfo.js",
+    "tests/scene/terrainCivilV22.test.js",
+    "tests/ui/releaseInfo.test.js",
+    "tools/v22TerrainCivilAudit.mjs"
+  ],
+  "missing": []
+}

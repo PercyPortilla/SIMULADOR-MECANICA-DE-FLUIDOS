@@ -43,6 +43,7 @@ const cellBands = zValues.slice(0, -1).map((z0, zi) => xValues.slice(0, -1).map(
 
 const payload = {
   version: 'V21',
+  compatibleTerrainRevision: 'V22',
   assetId: 'RECEPTION-EARTHWORK-V21',
   source: 'src/scene/environment/terrainHeight.js#getTerrainHeight',
   authoritative: false,

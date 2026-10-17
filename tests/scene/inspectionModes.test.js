@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import { computeInspectionCameraDistance, createBaseScene } from '../../src/scene/baseEnvironment.js';
 import {
+  createEquipmentInspectionSystem,
   getInspectionCircuitContext,
+  inferImportedInspectionRole,
   INSPECTION_CIRCUIT_ORDER,
 } from '../../src/scene/inspection/equipmentInspection.js';
 
@@ -53,6 +55,56 @@ describe('equipment internal inspection modes', () => {
     expect(context.previousId).toBe('CV-03-STOCKPILE-TO-GRINDING');
     expect(context.nextId).toBe('P-MILL-TO-SUMP');
     expect(context.index).toBeGreaterThan(0);
+  });
+
+  it('classifies imported close-view parts by component token without equipment-name collisions', () => {
+    const roleFor = (name) => inferImportedInspectionRole({ name, userData: { blenderImported: true } });
+
+    expect(roleFor('SLURRY-PUMP-01_BASEPLATE')).toBe('structure');
+    expect(roleFor('SLURRY-PUMP-01_MOTOR')).toBe('structure');
+    expect(roleFor('SLURRY-PUMP-01_DETAIL_CASING_CORE')).toBe('shell');
+    expect(roleFor('SLURRY-PUMP-01_SHAFT')).toBe('interior');
+    expect(roleFor('PRIMARY-CRUSHER_DISCHARGE_CHUTE')).toBe('structure');
+    expect(roleFor('PRIMARY-CRUSHER_MOVING_JAW_PLATE')).toBe('interior');
+    expect(roleFor('ROM-HOPPER_DISCHARGE_THROAT')).toBe('structure');
+    expect(roleFor('ROM-HOPPER_ORE')).toBe('interior');
+    expect(roleFor('CLASS-01_CYCLONE_01_BARREL')).toBe('shell');
+    expect(roleFor('LEACH-REACTOR_BAFFLE_01')).toBe('interior');
+    expect(roleFor('CIP-ADSORPTION_BLADE_+167_0')).toBe('interior');
+    expect(roleFor('EW-CELLS_CELL_1')).toBe('shell');
+    expect(roleFor('EW-CELLS_ELECTROLYTE_1')).toBe('interior');
+    expect(roleFor('SMELTING-FURNACE_MELT')).toBe('interior');
+  });
+
+  it('overrides broad GLB role metadata when inspecting pump shell, structure and internals', () => {
+    const environmentRoot = new THREE.Group();
+    const target = new THREE.Group();
+    target.name = 'SLURRY-PUMP-01';
+    target.userData.inspectableEquipment = true;
+    const makePart = (name) => {
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial());
+      mesh.name = name;
+      mesh.userData.blenderImported = true;
+      // Reproduces metadata produced by the broad legacy loader heuristic.
+      mesh.userData.inspectionRole = 'interior';
+      target.add(mesh);
+      return mesh;
+    };
+    const baseplate = makePart('SLURRY-PUMP-01_BASEPLATE');
+    const casing = makePart('SLURRY-PUMP-01_DETAIL_CASING_CORE');
+    const shaft = makePart('SLURRY-PUMP-01_SHAFT');
+    environmentRoot.add(target);
+
+    const inspection = createEquipmentInspectionSystem({ environmentRoot });
+    inspection.setTarget('SLURRY-PUMP-01');
+    inspection.setMode('interior');
+
+    expect(casing.visible).toBe(false);
+    expect(shaft.visible).toBe(true);
+    expect(shaft.material.opacity).toBeGreaterThanOrEqual(0.76);
+    expect(baseplate.visible).toBe(true);
+    expect(baseplate.material.opacity).toBeCloseTo(0.10, 3);
+    inspection.dispose();
   });
 
   it('renders inspection context boxes for selected, upstream and downstream targets', () => {

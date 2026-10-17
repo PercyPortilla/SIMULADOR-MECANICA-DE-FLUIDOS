@@ -10,6 +10,12 @@ const POLICY_PRESETS = Object.freeze({
   none: Object.freeze({ maxSpanM: Infinity, widthM: 0, minRunM: Infinity }),
 });
 
+// PUMP-01 -> CIP runs parallel to ROAD-02 for one elevated segment. The pipe
+// centerline is intentionally preserved, but a normal 3.8 m rack would put its
+// columns inside the service road. A portal span keeps both columns beyond the
+// road + shoulders while the pipe crosses the clear airspace above it.
+export const RECOVERY_ROAD_SPAN_WIDTH_M = 18.0;
+
 function asVector3(value) {
   if (value instanceof THREE.Vector3) return value.clone();
   if (Array.isArray(value) && value.length >= 3 && value.slice(0, 3).every(Number.isFinite)) {
@@ -51,6 +57,8 @@ function createRackFrame({
   stationM,
   policy,
 }) {
+  const spansRecoveryServiceRoad = connectionId === 'P-PUMP-01-TO-CIP' && segmentIndex === 2;
+  const effectiveWidthM = spansRecoveryServiceRoad ? Math.max(widthM, RECOVERY_ROAD_SPAN_WIDTH_M) : widthM;
   const terrainY = getTerrainHeight(point.x, point.z);
   const pipeRadius = Math.max(0.05, renderedDiameterM / 2);
   const beamThickness = policy === 'rack' ? 0.20 : 0.16;
@@ -70,9 +78,12 @@ function createRackFrame({
     terrainY,
     supportedPipeY: pipeY,
     renderedDiameterM,
+    roadSpanPortal: spansRecoveryServiceRoad,
+    clearRoadId: spansRecoveryServiceRoad ? 'ROAD-02' : null,
+    frameWidthM: effectiveWidthM,
   };
 
-  const halfWidth = widthM / 2;
+  const halfWidth = effectiveWidthM / 2;
   const leftBase = point.clone().addScaledVector(side, -halfWidth);
   const rightBase = point.clone().addScaledVector(side, halfWidth);
   const leftTerrainY = getTerrainHeight(leftBase.x, leftBase.z);

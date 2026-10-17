@@ -10,7 +10,9 @@ describe('base 3D environment', () => {
     expect(environment.scene.getObjectByName('environment-root')).toBeTruthy();
     expect(environment.environmentRoot.parent).toBe(environment.scene);
     expect(environment.skyDome.material.side).toBe(THREE.BackSide);
+    expect(environment.skyDome.userData.atmosphereProfile).toBe('clear-highland-blue');
     expect(environment.ground.name).toBe('base-ground');
+    expect(environment.ground.userData.surfaceProfile).toBe('compacted-weathered-rock');
     expect(environment.blenderTerrainOverlay.root.name).toBe('reception-earthwork-v21-overlay');
     expect(environment.blenderTerrainOverlay.root.userData.visualOnly).toBe(true);
     expect(environment.blenderTerrainOverlay.root.userData.authoritativeTerrain).toBe(false);

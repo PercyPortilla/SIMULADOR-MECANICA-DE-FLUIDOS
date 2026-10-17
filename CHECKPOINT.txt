@@ -1,22 +1,25 @@
-PULPA-LAB-V2-V21-TERRAIN-ANIMATION-HARDENING-CHECKPOINT
+PULPA-LAB-V2-V22-INDUSTRIAL-REALISM-CHECKPOINT
 Project: PULPA LAB V2
 Date: 2026-10-17
-Status: V21 CLOSED — TERRAIN + ANIMATION + SCALE + CI HARDENING VERIFIED
-Architecture: Three.js authoritative runtime + Blender industrial asset pipeline. No Babylon.js migration in V21.
-Baseline: V20 interactive academic lab + V19 comparator + V18 cases + V17 presentation/master Blender.
-Animation grounding: MILL-01 and both slurry-pump uses repair the imported rotating pivot at runtime while preserving the animation track/rest pose; sampled MILL rotating bounds remain >= 0.510 m and pump rotating bounds >= 0.940 m above the local datum through the cycle.
-Additional motion: ROM grizzly, stockpile reclaim feeder/grizzly/mineral and SUMP liquid/suspended solids animate visibly and obey the global Animaciones ON/OFF contract; APRON-FEEDER and PRIMARY-CRUSHER late-cycle continuity is regression-tested.
-Terrain: reception remains Three.js-height-authoritative at 8.5 m crest elevation with engineered upper slope, catch berm and toe transition; optional RECEPTION-EARTHWORK-V21.glb is visual-only and generated from the same sampled height contract in Blender 5.2.2.
-Scale: one world unit = one metre; 16/16 audited Blender equipment envelopes are within the industrial reference envelope. No blanket rescale was applied because the measured fleet/process scale is coherent.
-Browser QA: production build HTTP 200; 0 runtime errors; 0 network failures; visible motion detected on ROM, stockpile reclaim, MILL, SLURRY-PUMP-01, PUMP-01 and SUMP-01; PUMP-01 has 0 changed pixels with Animaciones OFF; no horizontal overflow at 1440 px.
-Tests: 66/66 test files PASS; 340/340 tests PASS; exit code 0; duration 223.30 s.
-Build: npm run build PASS; Vite 105 modules transformed. Three.js >500 kB chunk warning remains informational.
-Calculation guard vs V20: 0 changes in src/controller, src/core, src/state, src/process and src/reporting.
-Asset guard: public and dist each contain 24 GLB / 5,704,036 bytes; 0 hash mismatches.
-Blender terrain asset: public/models/pulpa-blender/RECEPTION-EARTHWORK-V21.glb — 463,796 bytes — SHA-256 FADC04494AFDD938CBFD74319C8D5A1950FD481732C6DA51E446842417DC6115.
+Status: V22 CLOSED — INDUSTRIAL REALISM + CIVIL TERRAIN + INSPECTION HARDENING VERIFIED
+Architecture: Three.js authoritative runtime + Blender industrial asset pipeline. No Babylon.js migration in V22.
+Baseline: V21 terrain/animation hardening + V20 interactive academic lab + V19 comparator + V18 cases + V17 presentation/master Blender.
+Terrain realism: deterministic natural microrelief remains bounded below 0.13 m; reception east shoulder blends before crushing; primary-crushing south side now exposes a controlled cut face, catch berm and toe transition without moving equipment coordinates.
+Road/civil realism: ROAD-01 cut/fill transition flares 5.2→9.2 m into the ROM tie-in and its safety berm tapers 1.2→0 m; max primary-haul grade remains 8.30% <= 10% design. The duplicate decorative reception fill solid was removed while the functional apron, retaining wall and safety berms remain.
+Materials/atmosphere: terrain reads as compacted weathered rock rather than pale sand; terrain, road and concrete use distinct multi-scale albedo/roughness/bump profiles; sky uses a clear highland-blue profile. No physical process property is derived from these materials.
+Recovery access: P-PUMP-01-TO-CIP keeps its authoritative centerline and endpoints; the elevated segment over/along ROAD-02 now uses 18 m portal frames so the service road and shoulders remain clear. Integration clearance audit: 156/156 PASS.
+Inspection: imported GLB parts are classified by component token as structure/shell/interior only for Inspection, preventing equipment-ID collisions and making pump, crusher, cyclone, leach, CIP, EW and smelting close views semantically correct.
+Scale: one world unit = one metre; 16/16 audited Blender equipment envelopes PASS. No blanket rescale was applied.
+Browser QA: release tag V22 visible; 24 GLB resources; production build preview HTTP 200; 0 runtime errors; 0 network failures; reception/crushing/grinding/recovery and MILL/PUMP/CLASS inspection views captured; 390 px mobile has documentWidth=viewportWidth=390 and no horizontal overflow.
+Tests: 68/68 test files PASS; 351/351 tests PASS; exit code 0; duration 207.45 s.
+Build: npm run build PASS; Vite 106 modules transformed. Three.js >500 kB chunk warning remains informational.
+Calculation guard vs V21: 0 changes in src/controller, src/core, src/state, src/process and src/reporting.
+Terrain/civil audit: 14/14 PASS. Scale audit: 16/16 PASS. Clearance audit: 156/156 PASS.
+Asset guard: public and dist each contain 24 GLB / 5,704,032 bytes; 0 hash mismatches.
+Blender terrain overlay: RECEPTION-EARTHWORK-V21.glb regenerated from the V22 authoritative sampled terrain contract — 463,792 bytes — SHA-256 59CB2AE7471EE5DE85A7E1186243C5C4D0D68E826897C4A8DF4DC6BE928FBA6A.
+Terrain contract SHA-256: C56C9436A41433129DAD8046885109887018CB2672DB8930784AA2C54B0A55FC.
 Blender master unchanged: blender/PULPA_LAB_BLENDER_MASTER_V17.blend — 688,141 bytes — SHA-256 E78577DAE8E533429B84FC13FC054036684F6D36AB5F1A3D76AB4CCA787CACA6.
-CI: .github/workflows/ci.yml runs npm ci, npm test and npm run build for main pushes and pull requests.
 GitHub release target: PercyPortilla/SIMULADOR-MECANICA-DE-FLUIDOS.
 Vercel production target: https://simulador-mecanica-de-fluidos.vercel.app
-Report: V21_TERRAIN_ANIMATION_HARDENING_CHECKPOINT.md
-Rule: preserve equations, process route, physical pipe diameters/endpoints, parametric conveyors, cameras, V17 presentation, V18 cases, V19 comparator, V20 academic lab, Blender master and fallback behavior.
+Report: V22_INDUSTRIAL_REALISM_CHECKPOINT.md
+Rule: preserve equations, process route, physical pipe diameters/endpoints, parametric conveyors, cameras, V17 presentation, V18 cases, V19 comparator, V20 academic lab, V21 animation grounding, Blender master and all fallback behavior.

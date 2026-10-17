@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 export const RECEPTION_EARTHWORK_BLENDER_URL = 'models/pulpa-blender/RECEPTION-EARTHWORK-V21.glb';
+export const RECEPTION_EARTHWORK_TERRAIN_REVISION = 'V22';
 
 const loader = new GLTFLoader();
 
@@ -32,6 +33,7 @@ export function attachReceptionEarthworkBlenderOverlay({ parent } = {}) {
   root.userData.visualOnly = true;
   root.userData.authoritativeTerrain = false;
   root.userData.blenderVisualUrl = RECEPTION_EARTHWORK_BLENDER_URL;
+  root.userData.terrainRealismRevision = RECEPTION_EARTHWORK_TERRAIN_REVISION;
   root.userData.blenderVisualStatus = 'procedural-fallback';
   parent.add(root);
 

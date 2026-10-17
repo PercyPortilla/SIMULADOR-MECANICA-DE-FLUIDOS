@@ -4,7 +4,7 @@ Simulador académico de transporte, bombeo, reología y recuperación de pulpas 
 
 ## Estado actual
 
-**V21 · Terreno, animaciones y hardening de release**
+**V22 · Realismo industrial y topografía**
 
 La versión actual integra:
 
@@ -24,6 +24,13 @@ La versión actual integra:
 - overlay Blender visual del terraplén generado desde la misma topografía autoritativa de Three.js;
 - contrato métrico 1 unidad = 1 m y auditoría de escala industrial sobre los GLB principales;
 - CI en GitHub para ejecutar pruebas y build antes de aceptar regresiones.
+- microrelieve natural acotado y lectura diferenciada de bancos, cortes, rellenos y bermas;
+- transición ROM → chancado sin el antiguo hombro/hump visual en el borde este del terraplén;
+- talud de corte, berma de captura y pie al sur de chancado primario;
+- transición vial ROAD-01 ensanchada en el tie-in de recepción y berma de seguridad que se desvanece antes del apron;
+- materiales multiescala independientes para terreno, camino y concreto, con cielo altoandino más limpio;
+- pórticos de 18 m en el tramo elevado PUMP-01 → CIP que comparte corredor aéreo con ROAD-02, sin mover la tubería;
+- clasificación shell/interior/structure más precisa para activos Blender durante Inspección.
 
 ## Arquitectura
 
@@ -34,7 +41,7 @@ La versión actual integra:
 
 Three.js continúa siendo el runtime autoritativo. Las geometrías paramétricas de conveyors, piping, endpoints, diámetros y topografía no se sustituyen por modelos rígidos cuando dependen del estado del simulador.
 
-El terreno Blender de V21 es una capa visual opcional. La elevación que gobierna equipos, caminos y cimentaciones sigue proviniendo de `getTerrainHeight()`; si el GLB no carga, el terreno procedural conserva toda la geometría funcional.
+El terreno Blender es una capa visual opcional. En V22 se regeneró el overlay de recepción desde el contrato muestreado de la topografía vigente. La elevación que gobierna equipos, caminos y cimentaciones sigue proviniendo de `getTerrainHeight()`; si el GLB no carga, el terreno procedural conserva toda la geometría funcional.
 
 ## Circuito principal
 

@@ -49,17 +49,20 @@ function makeGroundTexture() {
       const fragment = hash01(x * 3 + 5, y * 5 + 11) > 0.985 ? -0.20 : 0;
       const tone = broad * 0.52 + medium * 0.31 + grain + fragment;
 
-      data[index] = Math.max(0, Math.min(255, 235 + tone * 18));
-      data[index + 1] = Math.max(0, Math.min(255, 229 + tone * 17));
-      data[index + 2] = Math.max(0, Math.min(255, 217 + tone * 16));
+      // Mine-scale earth should read as compacted soil / weathered rock rather
+      // than pale sand. Keep the texture neutral enough for terrain vertex
+      // colours to distinguish pit benches, fill, berms and damp zones.
+      data[index] = Math.max(0, Math.min(255, 194 + tone * 22));
+      data[index + 1] = Math.max(0, Math.min(255, 174 + tone * 20));
+      data[index + 2] = Math.max(0, Math.min(255, 142 + tone * 18));
       data[index + 3] = 255;
     }
   }
   context.putImageData(image, 0, 0);
 
   // Soft geological streaks break the tile without creating the old dotted-grid look.
-  context.globalAlpha = 0.11;
-  context.strokeStyle = '#8a7b69';
+  context.globalAlpha = 0.10;
+  context.strokeStyle = '#6f5c49';
   context.lineWidth = 1.1;
   for (let band = 0; band < 11; band += 1) {
     context.beginPath();
@@ -156,11 +159,11 @@ function createSkyDome() {
       varying vec3 worldPosition;
       void main() {
         float elevation = clamp(normalize(worldPosition).y, 0.0, 1.0);
-        vec3 horizon = vec3(0.72, 0.70, 0.64);
-        vec3 upperHaze = vec3(0.50, 0.61, 0.66);
-        vec3 zenith = vec3(0.26, 0.39, 0.52);
-        vec3 color = mix(horizon, upperHaze, smoothstep(0.0, 0.34, elevation));
-        color = mix(color, zenith, smoothstep(0.32, 1.0, elevation));
+        vec3 horizon = vec3(0.74, 0.79, 0.80);
+        vec3 lowerSky = vec3(0.46, 0.64, 0.76);
+        vec3 zenith = vec3(0.17, 0.36, 0.58);
+        vec3 color = mix(horizon, lowerSky, smoothstep(0.0, 0.24, elevation));
+        color = mix(color, zenith, smoothstep(0.22, 1.0, elevation));
         gl_FragColor = vec4(color, 1.0);
       }
     `,
@@ -168,6 +171,7 @@ function createSkyDome() {
   const dome = new THREE.Mesh(new THREE.SphereGeometry(760, 48, 24), material);
   dome.name = 'blue-gray-sky-dome';
   dome.renderOrder = -10;
+  dome.userData.atmosphereProfile = 'clear-highland-blue';
   return dome;
 }
 
@@ -226,6 +230,7 @@ export function createBaseScene() {
   const groundTexture = makeGroundTexture();
   const groundMaterial = createIndustrialMaterial('terrain', { color: 0xffffff, map: groundTexture });
   const ground = createMineTerrain(groundMaterial);
+  ground.userData.surfaceProfile = 'compacted-weathered-rock';
   environmentRoot.add(ground);
   const blenderTerrainOverlay = attachReceptionEarthworkBlenderOverlay({ parent: environmentRoot });
 

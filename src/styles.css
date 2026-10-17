@@ -28,6 +28,7 @@ button, input, select { font: inherit; }
 h1, h2, h3, p { margin-top: 0; }
 h1 { margin-bottom: 0; font-size: 19px; letter-spacing: .1em; font-weight: 700; }
 h1 span { color: var(--ui-accent); font-weight: 500; }
+.release-tag { display: block; margin-top: 2px; color: #70848f; font-size: 8px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; }
 .topbar-meta { margin-left: auto; color: #7e929e; font-size: 10px; letter-spacing: .13em; }
 .theme-toggle { height: 32px; padding: 0 12px; border: 1px solid var(--ui-border); border-radius: 5px; background: var(--ui-panel); color: var(--ui-muted); cursor: pointer; font-size: 10px; letter-spacing: .11em; }
 .theme-toggle:hover { border-color: var(--ui-accent); color: var(--ui-accent-strong); }

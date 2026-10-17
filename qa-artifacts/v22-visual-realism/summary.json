@@ -1,0 +1,30 @@
+{
+  "boot": {
+    "title": "PULPA LAB V2",
+    "releaseTag": "V22 · Realismo industrial y topografía",
+    "academicBadge": "V22",
+    "sceneError": "",
+    "earthworkRequested": true,
+    "earthworkBytes": 300,
+    "targets": 38
+  },
+  "desktop": {
+    "documentWidth": 1425,
+    "viewportWidth": 1440,
+    "activeCamera": "inspection",
+    "activeTarget": "CLASS-01",
+    "activeMode": "interior",
+    "guide": "GUÍA DE PROCESO\nCiclones · CLASS-01\n\nQué hace: Representa la clasificación en ciclones y la separación entre overflow y underflow.\n\nETAPA\nMolienda · bombeo · clasificación\nRESULTADO RELACIONADO\nClasificación conceptual · sin KPI independiente calculado\nENTRADA\nPulpa desde la bomba.\nSALIDA\nOverflow hacia lixiviación y underflow de retorno.\nVARIABLE CLAVE\nPartición/recirculación conceptual\nQUÉ CAMBIA EN EL CÁLCULO\nLa recirculación se muestra en 3D; el modelo actual no resuelve curva de partición, d50 ni eficiencia de clasificación.\nAnterior\nSeleccionado\nSiguiente\nAnterior: Línea · P-PUMP-TO-CYCLONES\nSiguiente: Línea · P-CYCLONE-UNDERFLOW-RETURN",
+    "sceneError": "",
+    "glbResources": 24
+  },
+  "mobile": {
+    "documentWidth": 390,
+    "viewportWidth": 390,
+    "bodyWidth": 390,
+    "releaseTag": "V22 · Realismo industrial y topografía",
+    "sceneCardWidth": 354
+  },
+  "runtimeErrors": [],
+  "networkFailures": []
+}

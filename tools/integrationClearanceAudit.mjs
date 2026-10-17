@@ -1,9 +1,10 @@
 import { FINAL_EQUIPMENT_LAYOUT, MOBILE_ROUTE_LAYOUT, PIPE_CORRIDORS, SUPPORT_LAYOUT } from '../src/scene/integration/finalLayout.js';
 import { ROAD_DEFINITIONS } from '../src/scene/config/siteDesign.js';
+import { RECOVERY_ROAD_SPAN_WIDTH_M } from '../src/scene/infrastructure/pipeRacks.js';
 
 const dimensions = Object.freeze({
   'ROM-HOPPER': [11.5, 9.2], 'APRON-FEEDER': [8.4, 2.8], 'PRIMARY-CRUSHER': [5.4, 4.2],
-  'MILL-01': [10.6, 6.1], 'SLURRY-PUMP-01': [4.8, 2.65], 'CLASS-01': [5.4, 5.4],
+  'MILL-01': [10.6, 6.1], 'SLURRY-PUMP-01': [4.8, 2.65], 'CLASS-01': [5.4, 5.4], 'PUMP-01': [4.8, 2.65],
   'R-01': [7.6, 7.6], 'R-02': [7.6, 7.6], 'R-03': [7.6, 7.6], 'R-04': [7.6, 7.6],
   'CIP-ADSORPTION': [13.8, 7.4], 'ELUTION-SKID': [9.4, 5.6], 'EW-CELLS': [10.8, 5.8], 'SMELTING-FURNACE': [7.4, 5.8],
 });
@@ -38,7 +39,12 @@ for (const [roadId, road] of Object.entries(ROAD_DEFINITIONS)) {
 
 const service = ROAD_DEFINITIONS['ROAD-02'];
 const rackDistance = lineDistance(196, PIPE_CORRIDORS.recoveryRackZ, service.points);
-checks.push({ id: 'recovery-rack-vs-service-road', ok: rackDistance > service.widthM / 2 + service.shoulderM + 4, details: `rack corridor distance=${rackDistance.toFixed(2)} m` });
+const requiredPortalWidth = service.widthM + service.shoulderM * 2 + 2.0;
+checks.push({
+  id: 'recovery-rack-vs-service-road',
+  ok: rackDistance <= service.widthM / 2 + service.shoulderM + 4 && RECOVERY_ROAD_SPAN_WIDTH_M >= requiredPortalWidth,
+  details: `elevated corridor distance=${rackDistance.toFixed(2)} m; portal=${RECOVERY_ROAD_SPAN_WIDTH_M.toFixed(2)} m; required=${requiredPortalWidth.toFixed(2)} m`,
+});
 
 const loaderLeg = Math.hypot(SUPPORT_LAYOUT.loaderDump.x - SUPPORT_LAYOUT.loaderPickup.x, SUPPORT_LAYOUT.loaderDump.z - SUPPORT_LAYOUT.loaderPickup.z);
 checks.push({ id: 'loader-operating-cycle-length', ok: loaderLeg >= 12 && loaderLeg <= 30, details: `${loaderLeg.toFixed(2)} m` });
