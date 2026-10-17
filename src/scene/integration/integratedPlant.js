@@ -410,7 +410,11 @@ export function createIntegratedPlant() {
     getPortWorldDirection: (equipmentId, portId) => registry.getPortWorldDirection(equipmentId, portId),
     updateAssets: (dt) => {
       registry.updateAssets(dt);
-      if (animationsEnabled) romFeederTransfer.update(dt);
+      if (animationsEnabled) {
+        romFeederTransfer.update(dt);
+        stockpile.update?.(dt);
+        sump.update?.(dt);
+      }
     },
     updateLOD: (camera) => registry.updateLOD(camera),
     setAnimationsEnabled: (enabled) => {

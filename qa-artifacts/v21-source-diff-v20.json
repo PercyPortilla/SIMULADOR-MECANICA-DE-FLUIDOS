@@ -1,0 +1,31 @@
+{
+  "baseline": "V20",
+  "modified": [
+    "src/equipment/crushing/romHopper.js",
+    "src/scene/baseEnvironment.js",
+    "src/scene/config/siteDesign.js",
+    "src/scene/environment/terrain.js",
+    "src/scene/environment/terrainHeight.js",
+    "src/scene/integration/blenderVisualReplacement.js",
+    "src/scene/integration/integratedPlant.js",
+    "src/scene/integration/supportEquipment.js",
+    "tests/equipment/materialTransport.test.js",
+    "tests/scene/baseEnvironment.test.js",
+    "tests/scene/blenderAnimationPlayback.test.js",
+    "tests/scene/blenderVisualReplacement.test.js",
+    "tests/scene/industrialAnimations.test.js",
+    "tests/scene/siteScale.test.js",
+    "tests/scene/terrain.test.js"
+  ],
+  "added": [
+    ".github/workflows/ci.yml",
+    "blender/generated/v21-reception-earthwork-contract.json",
+    "blender/scripts/blender_v21_reception_earthwork.py",
+    "public/models/pulpa-blender/RECEPTION-EARTHWORK-V21.glb",
+    "src/scene/integration/blenderTerrainOverlay.js",
+    "tests/scene/blenderTerrainV21.test.js",
+    "tools/exportV21TerrainContract.mjs",
+    "tools/v21VisualScaleAudit.mjs"
+  ],
+  "missing": []
+}

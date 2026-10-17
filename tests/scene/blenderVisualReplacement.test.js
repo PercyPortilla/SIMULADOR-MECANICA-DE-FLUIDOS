@@ -4,6 +4,7 @@ import {
   BLENDER_REPLACEMENT_SPECS,
   cloneBlenderReplacementSource,
   shouldCastImportedShadow,
+  stabilizeImportedRotationPivot,
 } from '../../src/scene/integration/blenderVisualReplacement.js';
 import { createIntegratedPlant } from '../../src/scene/integration/integratedPlant.js';
 
@@ -69,11 +70,59 @@ describe('Blender visual replacements', () => {
     expect(BLENDER_REPLACEMENT_SPECS['LOADER-01'].playAllAnimations).toBe(true);
   });
 
+  it('repairs the imported X-axis pivots for the mill and both slurry-pump instances', () => {
+    expect(BLENDER_REPLACEMENT_SPECS['MILL-01'].rotationPivotRepair)
+      .toEqual({ nodeName: 'MILL-01_ROTATING_GROUP', axis: 'x' });
+    expect(BLENDER_REPLACEMENT_SPECS['SLURRY-PUMP-01'].rotationPivotRepair)
+      .toEqual({ nodeName: 'SLURRY-PUMP-01_ROTATING_GROUP', axis: 'x' });
+    expect(BLENDER_REPLACEMENT_SPECS['PUMP-01'].rotationPivotRepair)
+      .toEqual({ nodeName: 'SLURRY-PUMP-01_ROTATING_GROUP', axis: 'x' });
+  });
+
   it('preserves the cyclone process-flow overlay when the static Blender shell loads', () => {
     const spec = BLENDER_REPLACEMENT_SPECS['CLASS-01'];
     expect(spec.keepProceduralUpdate).toBe(true);
     expect(spec.preserveProceduralOverlays).toContain('cyclone-1-swirl');
     expect(spec.preserveProceduralOverlays).toContain('cyclone-manifold-suspended-solids');
+  });
+
+  it('keeps the ROM grizzly procedural overlay active over the Blender shell', () => {
+    const spec = BLENDER_REPLACEMENT_SPECS['ROM-HOPPER'];
+    expect(spec.keepProceduralUpdate).toBe(true);
+    expect(spec.preserveProceduralOverlays).toContain('rom-grizzly');
+  });
+
+  it('keeps the sump liquid as the only animated process overlay over its static Blender shell', () => {
+    const spec = BLENDER_REPLACEMENT_SPECS['SUMP-01'];
+    expect(spec.preserveProceduralOverlays).toEqual(['SUMP-01-slurry', 'SUMP-01-suspended-solids']);
+  });
+
+  it('preserves only the stockpile reclaim motion overlay over its static GLB shell', () => {
+    const spec = BLENDER_REPLACEMENT_SPECS['STOCKPILE-RECLAIM'];
+    expect(spec.preserveProceduralOverlays).toEqual(['STOCKPILE-RECLAIM-motion']);
+  });
+
+  it('recenters only the transverse coordinates of a bad rotating GLB pivot', () => {
+    const scene = new THREE.Group();
+    const pivot = new THREE.Group();
+    pivot.name = 'bad-pivot';
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(4, 2, 2), new THREE.MeshBasicMaterial());
+    mesh.position.set(0, 3, 0);
+    pivot.add(mesh);
+    scene.add(pivot);
+    scene.updateMatrixWorld(true);
+    const before = new THREE.Box3().setFromObject(mesh).clone();
+
+    stabilizeImportedRotationPivot(scene, { nodeName: 'bad-pivot', axis: 'x' });
+    scene.updateMatrixWorld(true);
+    const after = new THREE.Box3().setFromObject(mesh);
+
+    expect(pivot.position.x).toBeCloseTo(0, 12);
+    expect(pivot.position.y).toBeCloseTo(3, 12);
+    expect(pivot.position.z).toBeCloseTo(0, 12);
+    expect(after.min.distanceTo(before.min)).toBeLessThan(1e-9);
+    expect(after.max.distanceTo(before.max)).toBeLessThan(1e-9);
+    expect(pivot.userData.rotationPivotStabilized).toBe(true);
   });
 
   it('maps shovel and loader ore loads onto their Blender nodes', () => {

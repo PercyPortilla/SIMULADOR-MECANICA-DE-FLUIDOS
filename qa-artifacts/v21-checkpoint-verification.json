@@ -1,0 +1,15 @@
+{
+  "zip_test": true,
+  "entry_count": 557,
+  "forbidden_count": 0,
+  "required_missing": [],
+  "checkpoint_is_v21": true,
+  "public_glb_count": 24,
+  "dist_glb_count": 24,
+  "glb_mismatches": [],
+  "calculation_guard_pass": true,
+  "master_bytes": 688141,
+  "master_sha256": "E78577DAE8E533429B84FC13FC054036684F6D36AB5F1A3D76AB4CCA787CACA6",
+  "zip_sha256": "DA313AA531FCD3D901B933990CE2A1CF35008201D5E52D460884BD116226AEFF",
+  "manifest_sha256": "86514F806D0C6EEC0E2A1C356112B5D4E20C3245087CFC97311D07A4E712CE10"
+}

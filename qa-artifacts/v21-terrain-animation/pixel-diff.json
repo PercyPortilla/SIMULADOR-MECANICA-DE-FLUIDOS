@@ -1,0 +1,60 @@
+{
+  "ROM-HOPPER": {
+    "changedPixels": 21110,
+    "bbox": [
+      614,
+      607,
+      1130,
+      992
+    ]
+  },
+  "STOCKPILE-RECLAIM": {
+    "changedPixels": 5343,
+    "bbox": [
+      419,
+      628,
+      1086,
+      1000
+    ]
+  },
+  "MILL-01": {
+    "changedPixels": 45470,
+    "bbox": [
+      395,
+      524,
+      1167,
+      960
+    ]
+  },
+  "SLURRY-PUMP-01": {
+    "changedPixels": 407,
+    "bbox": [
+      387,
+      525,
+      561,
+      568
+    ]
+  },
+  "PUMP-01": {
+    "changedPixels": 100,
+    "bbox": [
+      886,
+      555,
+      1004,
+      854
+    ]
+  },
+  "SUMP-01": {
+    "changedPixels": 12554,
+    "bbox": [
+      375,
+      524,
+      1181,
+      1000
+    ]
+  },
+  "PUMP-01-OFF": {
+    "changedPixels": 0,
+    "bbox": null
+  }
+}

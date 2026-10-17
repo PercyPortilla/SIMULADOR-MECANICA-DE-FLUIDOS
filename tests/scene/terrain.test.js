@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { getTerrainHeight, getZoneElevation } from '../../src/scene/environment/terrainHeight.js';
+import { getReceptionEarthworkBand, getTerrainHeight, getZoneElevation } from '../../src/scene/environment/terrainHeight.js';
 import { createRoadAlignment, getRoadPath, getRoadSurfaceOffset, getRoadWidth, HAUL_ROAD_WIDTH } from '../../src/scene/environment/haulRoads.js';
 import { nearestOnPrimaryRoad } from '../../src/scene/environment/roadEngineering.js';
 import { getIndustrialPad } from '../../src/scene/environment/industrialPads.js';
-import { MINE_AUXILIARY_AREAS, PIT_DESIGN, ROAD_DEFINITIONS, SITE_EXTENT } from '../../src/scene/config/siteDesign.js';
+import { MINE_AUXILIARY_AREAS, PIT_DESIGN, RECEPTION_EARTHWORK, ROAD_DEFINITIONS, SITE_EXTENT } from '../../src/scene/config/siteDesign.js';
 import { createMineProps } from '../../src/scene/environment/mineProps.js';
 import { createBaseScene } from '../../src/scene/baseEnvironment.js';
 import { getPitVisualSector } from '../../src/scene/environment/terrain.js';
@@ -122,6 +122,33 @@ describe('mine terrain', () => {
     expect(pad.depth).toBeGreaterThan(10);
     expect(pad.width).toBeLessThan(14);
     expect(pad.depth).toBeLessThan(16);
+  });
+
+  it('shapes reception as an elevated terraplén with a face, catch berm and toe slope', () => {
+    const [cx, cz] = RECEPTION_EARTHWORK.center;
+    const halfDepth = RECEPTION_EARTHWORK.crestSizeM[1] / 2;
+    const crest = getTerrainHeight(cx, cz);
+    const southEdge = cz - halfDepth;
+    const face = getTerrainHeight(cx, southEdge - RECEPTION_EARTHWORK.upperSlopeRunM * 0.5);
+    const bermA = getTerrainHeight(cx, southEdge - RECEPTION_EARTHWORK.upperSlopeRunM - 1.0);
+    const bermB = getTerrainHeight(cx, southEdge - RECEPTION_EARTHWORK.upperSlopeRunM - RECEPTION_EARTHWORK.bermWidthM + 1.0);
+    const toe = getTerrainHeight(cx, southEdge - RECEPTION_EARTHWORK.upperSlopeRunM - RECEPTION_EARTHWORK.bermWidthM - RECEPTION_EARTHWORK.toeSlopeRunM * 0.65);
+
+    expect(crest).toBeCloseTo(getZoneElevation('reception'), 0);
+    expect(face).toBeLessThan(crest - 0.25);
+    expect(Math.abs(bermB - bermA)).toBeLessThan(0.45);
+    expect(toe).toBeLessThan(bermA - 0.1);
+    expect(getReceptionEarthworkBand(cx, cz)).toBe('crest');
+    expect(getReceptionEarthworkBand(cx, southEdge - 2)).toBe('upper-slope');
+    expect(getReceptionEarthworkBand(cx, southEdge - RECEPTION_EARTHWORK.upperSlopeRunM - 2)).toBe('berm');
+    expect(getReceptionEarthworkBand(cx, cz + halfDepth + 2)).toBeNull();
+  });
+
+  it('keeps the reception east side open for the existing crushing transition', () => {
+    const [cx, cz] = RECEPTION_EARTHWORK.center;
+    const eastEdge = cx + RECEPTION_EARTHWORK.crestSizeM[0] / 2;
+    expect(getReceptionEarthworkBand(eastEdge + 2, cz)).toBeNull();
+    expect(getTerrainHeight(-88, -30)).toBeCloseTo(getZoneElevation('crushing'), 0);
   });
 
   it('keeps decorative pit rocks inside the rendered terrain extent', () => {

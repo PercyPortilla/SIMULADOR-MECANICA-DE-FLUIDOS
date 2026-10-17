@@ -3,6 +3,8 @@ dist/
 .vite/
 coverage/
 .vercel/
+.env.local
+.env.*.local
 __pycache__/
 *.pyc
 *.log

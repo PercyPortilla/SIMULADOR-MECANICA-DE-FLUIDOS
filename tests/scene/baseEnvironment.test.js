@@ -11,6 +11,11 @@ describe('base 3D environment', () => {
     expect(environment.environmentRoot.parent).toBe(environment.scene);
     expect(environment.skyDome.material.side).toBe(THREE.BackSide);
     expect(environment.ground.name).toBe('base-ground');
+    expect(environment.blenderTerrainOverlay.root.name).toBe('reception-earthwork-v21-overlay');
+    expect(environment.blenderTerrainOverlay.root.userData.visualOnly).toBe(true);
+    expect(environment.blenderTerrainOverlay.root.userData.authoritativeTerrain).toBe(false);
+    expect(environment.blenderTerrainOverlay.root.userData.blenderVisualStatus).toBe('ssr-procedural-fallback');
+    expect(environment.scene.getObjectByName('reception-earthwork-v21-overlay')).toBeTruthy();
     expect(environment.platform.name).toBe('central-concrete-platform');
     expect(environment.grid.name).toBe('platform-technical-grid');
     expect(environment.scene.getObjectByName('base-ground')).toBeTruthy();

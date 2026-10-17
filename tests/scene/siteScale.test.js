@@ -5,9 +5,11 @@ import {
   REFERENCE_EQUIPMENT_DIMENSIONS,
   PIT_DESIGN,
   PLANT_CLEARANCES,
+  RECEPTION_EARTHWORK,
   ROAD_DEFINITIONS,
 } from '../../src/scene/config/siteDesign.js';
 import { PLANT_ZONE_ORDER, getPlantZone } from '../../src/scene/layout/plantLayout.js';
+import { createCatalogAsset } from '../../src/equipment/catalog/equipmentCatalog.js';
 
 function rectangleGap(a, b) {
   const dx = Math.max(0,
@@ -37,11 +39,43 @@ describe('site metric master contract', () => {
     expect(shovel.heightM).toBeGreaterThan(8);
   });
 
+  it('keeps procedural mobile-equipment dimensions at the one-metre world scale', () => {
+    const checks = [
+      ['haulTruck', REFERENCE_EQUIPMENT_DIMENSIONS.haulTruck, ['lengthM', 'widthM', 'heightM']],
+      ['wheelLoader', REFERENCE_EQUIPMENT_DIMENSIONS.wheelLoader, ['lengthM', 'widthM', 'heightM']],
+      ['miningShovel', REFERENCE_EQUIPMENT_DIMENSIONS.miningShovel, ['bodyLengthM', 'widthM', 'heightM']],
+    ];
+    checks.forEach(([assetKey, reference, keys]) => {
+      const asset = createCatalogAsset(assetKey);
+      const dimensions = asset.getDimensions();
+      const source = {
+        lengthM: dimensions.length,
+        bodyLengthM: dimensions.length,
+        widthM: dimensions.width,
+        heightM: dimensions.height,
+      };
+      keys.forEach((key) => expect(source[key] / reference[key]).toBeGreaterThanOrEqual(0.98));
+      keys.forEach((key) => expect(source[key] / reference[key]).toBeLessThanOrEqual(1.02));
+      expect(asset.root.scale.toArray()).toEqual([1, 1, 1]);
+      asset.dispose?.();
+    });
+  });
+
   it('defines a real pit footprint with ten-metre benches and a working floor', () => {
     expect(PIT_DESIGN.radiusX * 2).toBeGreaterThanOrEqual(250);
     expect(PIT_DESIGN.radiusZ * 2).toBeGreaterThanOrEqual(180);
     expect(PIT_DESIGN.benchHeightM).toBe(10);
     expect(PIT_DESIGN.floorElevation).toBeLessThan(-20);
+  });
+
+  it('uses mine-scale reception earthwork geometry without moving its authoritative crest', () => {
+    expect(RECEPTION_EARTHWORK.center).toEqual([-110, -30]);
+    expect(RECEPTION_EARTHWORK.crestSizeM).toEqual([58, 48]);
+    expect(RECEPTION_EARTHWORK.crestElevationM).toBe(8.5);
+    expect(RECEPTION_EARTHWORK.upperSlopeRunM).toBeGreaterThanOrEqual(5);
+    expect(RECEPTION_EARTHWORK.bermWidthM).toBeGreaterThanOrEqual(4);
+    expect(RECEPTION_EARTHWORK.toeSlopeRunM).toBeGreaterThanOrEqual(10);
+    expect(RECEPTION_EARTHWORK.bermDropM / RECEPTION_EARTHWORK.upperSlopeRunM).toBeLessThanOrEqual(0.5);
   });
 
   it('uses a truck-controlled primary haul road, not the previous 9 m service width', () => {

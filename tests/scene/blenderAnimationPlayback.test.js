@@ -3,7 +3,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  attachBlenderVisualReplacement,
+  resetBlenderReplacementCacheForTests,
+  stabilizeImportedRotationPivot,
+} from '../../src/scene/integration/blenderVisualReplacement.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const assetRoot = path.resolve(here, '../../public/models/pulpa-blender');
@@ -30,6 +35,32 @@ async function sampleRotation(filename, nodeName, timeSelector = (clip) => clip.
   mixer.stopAllAction();
   return initial.angleTo(sampled);
 }
+
+async function sampleLateMotion(filename, nodeName, property, startFraction = 0.84, endFraction = 0.92) {
+  const gltf = await loadGlb(filename);
+  expect(gltf.animations).toHaveLength(1);
+  const clip = gltf.animations[0];
+  const track = clip.tracks.find((candidate) => candidate.name === `${nodeName}.${property}`);
+  expect(track, `${filename}: missing ${nodeName}.${property}`).toBeTruthy();
+  expect(track.times.at(-1)).toBeCloseTo(clip.duration, 5);
+
+  const target = gltf.scene.getObjectByName(nodeName);
+  expect(target, `${filename}: missing ${nodeName}`).toBeTruthy();
+  const mixer = new THREE.AnimationMixer(gltf.scene);
+  mixer.clipAction(clip).play();
+  mixer.setTime(clip.duration * startFraction);
+  const before = property === 'position' ? target.position.clone() : target.quaternion.clone();
+  mixer.setTime(clip.duration * endFraction);
+  const after = property === 'position' ? target.position.clone() : target.quaternion.clone();
+  mixer.stopAllAction();
+  return property === 'position' ? before.distanceTo(after) : before.angleTo(after);
+}
+
+afterEach(() => {
+  resetBlenderReplacementCacheForTests();
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 
 describe('Blender animation playback through Three.js', () => {
   const oneRevolutionTargets = [
@@ -63,4 +94,74 @@ describe('Blender animation playback through Three.js', () => {
     );
     expect(angularDelta).toBeGreaterThan(0.35);
   });
+
+  it('keeps APRON-FEEDER pans and rotors moving through the late half of the clip', async () => {
+    const panDelta = await sampleLateMotion('APRON-FEEDER.glb', 'APRON-FEEDER_PANS_GROUP', 'position');
+    const rotorDelta = await sampleLateMotion('APRON-FEEDER.glb', 'APRON-FEEDER_ROTOR_01', 'quaternion');
+    expect(panDelta).toBeGreaterThan(0.005);
+    expect(rotorDelta).toBeGreaterThan(0.1);
+  });
+
+  it('keeps PRIMARY-CRUSHER jaw and drive moving through the late half of the clip', async () => {
+    const jawDelta = await sampleLateMotion('PRIMARY-CRUSHER.glb', 'PRIMARY-CRUSHER_MOVING_JAW', 'quaternion');
+    const driveDelta = await sampleLateMotion('PRIMARY-CRUSHER.glb', 'PRIMARY-CRUSHER_FLYWHEEL_01', 'quaternion');
+    expect(jawDelta).toBeGreaterThan(0.005);
+    expect(driveDelta).toBeGreaterThan(0.1);
+  });
+
+  for (const [instanceId, filename, nodeName] of [
+    ['APRON-FEEDER', 'APRON-FEEDER.glb', 'APRON-FEEDER_ROTOR_01'],
+    ['PRIMARY-CRUSHER', 'PRIMARY-CRUSHER.glb', 'PRIMARY-CRUSHER_FLYWHEEL_01'],
+  ]) {
+    it(`${instanceId} freezes and resumes its Blender mixer with Animaciones ON/OFF`, async () => {
+      const sourceGltf = await loadGlb(filename);
+      vi.stubGlobal('window', {});
+      vi.spyOn(GLTFLoader.prototype, 'load').mockImplementation(function mockLoad(_url, onLoad) {
+        onLoad(sourceGltf);
+        return this;
+      });
+      resetBlenderReplacementCacheForTests();
+
+      const hostRoot = new THREE.Group();
+      const controller = attachBlenderVisualReplacement({ hostRoot, instanceId });
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(controller.loaded).toBe(true);
+
+      const target = controller.scene.getObjectByName(nodeName);
+      expect(target).toBeTruthy();
+      controller.setAnimationTime(sourceGltf.animations[0].duration * 0.62);
+      const beforeFreeze = target.quaternion.clone();
+      controller.setAnimationEnabled(false);
+      controller.update(0.1);
+      expect(beforeFreeze.angleTo(target.quaternion)).toBeLessThan(1e-6);
+
+      controller.setAnimationEnabled(true);
+      controller.update(0.1);
+      expect(beforeFreeze.angleTo(target.quaternion)).toBeGreaterThan(0.05);
+      controller.dispose();
+    });
+  }
+
+  for (const [filename, nodeName] of [
+    ['MILL-01.glb', 'MILL-01_ROTATING_GROUP'],
+    ['SLURRY-PUMP-01.glb', 'SLURRY-PUMP-01_ROTATING_GROUP'],
+  ]) {
+    it(`${filename} keeps ${nodeName} above its rest bottom after Three.js pivot repair`, async () => {
+      const gltf = await loadGlb(filename);
+      const target = gltf.scene.getObjectByName(nodeName);
+      stabilizeImportedRotationPivot(gltf.scene, { nodeName, axis: 'x' });
+      gltf.scene.updateMatrixWorld(true);
+      const restBottom = new THREE.Box3().setFromObject(target, true).min.y;
+      const mixer = new THREE.AnimationMixer(gltf.scene);
+      mixer.clipAction(gltf.animations[0]).play();
+      for (const fraction of [0.125, 0.25, 0.5, 0.75]) {
+        mixer.setTime(gltf.animations[0].duration * fraction);
+        gltf.scene.updateMatrixWorld(true);
+        const bottom = new THREE.Box3().setFromObject(target, true).min.y;
+        expect(bottom).toBeGreaterThan(restBottom - 0.2);
+      }
+      mixer.stopAllAction();
+    });
+  }
 });

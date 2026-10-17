@@ -19,6 +19,7 @@ import { applyIndustrialPaletteToScene, createIndustrialMaterial } from './mater
 import { createIntegratedAnimations } from './integration/integratedAnimations.js';
 import { createEquipmentInspectionSystem } from './inspection/equipmentInspection.js';
 import { createGeotechnicalSystem } from './geotech/geotechnicalSystem.js';
+import { attachReceptionEarthworkBlenderOverlay } from './integration/blenderTerrainOverlay.js';
 
 export const INSPECTION_CONTROL_LIMITS = Object.freeze({ minDistance: 0.8, maxDistance: 1200 });
 
@@ -226,6 +227,7 @@ export function createBaseScene() {
   const groundMaterial = createIndustrialMaterial('terrain', { color: 0xffffff, map: groundTexture });
   const ground = createMineTerrain(groundMaterial);
   environmentRoot.add(ground);
+  const blenderTerrainOverlay = attachReceptionEarthworkBlenderOverlay({ parent: environmentRoot });
 
   const concreteTexture = makeConcreteTexture();
   const platform = new THREE.Group();
@@ -390,6 +392,7 @@ export function createBaseScene() {
     environmentRoot,
     skyDome,
     ground,
+    blenderTerrainOverlay,
     platform,
     grid,
     haulRoads,
@@ -628,6 +631,7 @@ export function createBaseEnvironment({ canvas }) {
       base.industrialAnimations.dispose();
       base.equipmentInspection.dispose();
       base.geotechnicalSystem.dispose();
+      base.blenderTerrainOverlay.dispose();
       base.pipe1System.dispose();
       base.integratedPiping.dispose();
       inspectionControls.dispose();

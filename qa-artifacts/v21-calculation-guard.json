@@ -1,0 +1,15 @@
+{
+  "baseline": "V20",
+  "prefixes": [
+    "src/controller/",
+    "src/core/",
+    "src/state/",
+    "src/process/",
+    "src/reporting/"
+  ],
+  "changed": [],
+  "missing": [],
+  "added": [],
+  "changed_count": 0,
+  "pass": true
+}

@@ -37,10 +37,15 @@ export function createRomHopperAsset() {
     hopper.add(liner);
   });
 
+  const grizzly = new THREE.Group();
+  grizzly.name = 'rom-grizzly';
+  grizzly.userData.rotationAxis = 'none';
+  grizzly.userData.vibratingGrizzly = true;
+  root.add(grizzly);
   for (let i = -5; i <= 5; i += 1) {
     const z = i * 0.72;
     const bar = tubeBetween(`rom-grizzly-${i}`, [-4.5, 7.15, z], [4.5, 7.15, z], 0.085, frameMat.clone(), 12, { role: 'structure', lodTier: 1 });
-    root.add(bar);
+    grizzly.add(bar);
   }
 
   const ore = new THREE.Mesh(new THREE.ConeGeometry(3.5, 4.2, 36, 1, true), createEquipmentMaterial('ore'));
@@ -78,9 +83,12 @@ export function createRomHopperAsset() {
       { id: 'feedIn', type: 'materialIn', position: [0, 7.3, 0], direction: [0, -1, 0] },
       { id: 'dischargeOut', type: 'materialOut', position: [0, 1.95, 0], direction: [0, -1, 0] },
     ],
-    capabilities: { materialFlow: true, inspection: true, cutaway: true, lod: false },
-    update: () => {
+    capabilities: { materialFlow: true, grizzlyVibration: true, inspection: true, cutaway: true, lod: false },
+    update: (dt, elapsed) => {
       ore.position.y = 4.82;
+      const phase = elapsed * 19;
+      grizzly.position.y = Math.sin(phase) * 0.035;
+      grizzly.position.z = Math.cos(phase * 0.92) * 0.018;
     },
   });
 }

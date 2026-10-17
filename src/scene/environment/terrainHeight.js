@@ -1,4 +1,11 @@
-import { MINE_AUXILIARY_AREAS, MINE_DRAINAGE_PATHS, PIT_DESIGN, SITE_EXTENT, TOPOGRAPHIC_ZONES } from '../config/siteDesign.js';
+import {
+  MINE_AUXILIARY_AREAS,
+  MINE_DRAINAGE_PATHS,
+  PIT_DESIGN,
+  RECEPTION_EARTHWORK,
+  SITE_EXTENT,
+  TOPOGRAPHIC_ZONES,
+} from '../config/siteDesign.js';
 import { nearestOnPrimaryRoad } from './roadEngineering.js';
 
 const ZONES = TOPOGRAPHIC_ZONES;
@@ -29,6 +36,63 @@ function rotatedRectInfluence(x, z, area, feather = 2.5) {
   const outsideX = Math.max(Math.abs(localX) - area.widthM / 2, 0);
   const outsideZ = Math.max(Math.abs(localZ) - area.depthM / 2, 0);
   return 1 - smoothstep(0, feather, Math.hypot(outsideX, outsideZ));
+}
+
+function rectangleOutsideDistance(x, z, center, size) {
+  const dx = Math.max(Math.abs(x - center[0]) - size[0] / 2, 0);
+  const dz = Math.max(Math.abs(z - center[1]) - size[1] / 2, 0);
+  return Math.hypot(dx, dz);
+}
+
+function receptionEarthworkDistance(x, z) {
+  const definition = RECEPTION_EARTHWORK;
+  const westEdge = definition.center[0] - definition.crestSizeM[0] / 2;
+  const eastEdge = definition.center[0] + definition.crestSizeM[0] / 2;
+  const southEdge = definition.center[1] - definition.crestSizeM[1] / 2;
+  const northEdge = definition.center[1] + definition.crestSizeM[1] / 2;
+  const insideCrest = x >= westEdge && x <= eastEdge && z >= southEdge && z <= northEdge;
+  if (insideCrest) return 0;
+  if (definition.openEast && x > eastEdge) return Infinity;
+  if (definition.embankmentSide === 'south' && z >= southEdge) return Infinity;
+  return rectangleOutsideDistance(x, z, definition.center, definition.crestSizeM);
+}
+
+export function getReceptionEarthworkBand(x, z) {
+  const definition = RECEPTION_EARTHWORK;
+  const distance = receptionEarthworkDistance(x, z);
+  if (!Number.isFinite(distance)) return null;
+  if (distance <= 1e-9) return 'crest';
+  if (distance <= definition.upperSlopeRunM) return 'upper-slope';
+  if (distance <= definition.upperSlopeRunM + definition.bermWidthM) return 'berm';
+  if (distance <= definition.upperSlopeRunM + definition.bermWidthM + definition.toeSlopeRunM) return 'toe-slope';
+  return null;
+}
+
+function applyReceptionEarthwork(x, z, baseHeight) {
+  const definition = RECEPTION_EARTHWORK;
+  const distance = receptionEarthworkDistance(x, z);
+  if (!Number.isFinite(distance)) return baseHeight;
+
+  const upperEnd = definition.upperSlopeRunM;
+  const bermEnd = upperEnd + definition.bermWidthM;
+  const toeEnd = bermEnd + definition.toeSlopeRunM;
+  if (distance > toeEnd) return baseHeight;
+
+  const crest = definition.crestElevationM;
+  const bermElevation = crest - definition.bermDropM;
+  let target;
+  if (distance <= 1e-9) {
+    target = crest;
+  } else if (distance <= upperEnd) {
+    target = lerp(crest, bermElevation, smoothstep(0, upperEnd, distance));
+  } else if (distance <= bermEnd) {
+    target = bermElevation;
+  } else {
+    target = lerp(bermElevation, baseHeight, smoothstep(bermEnd, toeEnd, distance));
+  }
+  // This is an embankment/cut platform contract, not a second terrain source.
+  // Outside the crest we never cut below the pre-earthwork terrain surface.
+  return distance <= 1e-9 ? target : Math.max(baseHeight, target);
 }
 
 function distanceToSegment(x, z, ax, az, bx, bz) {
@@ -226,8 +290,15 @@ export function getTerrainHeight(x, z) {
   height = applyPitSumpDepression(x, z, height);
   height = applyDrainageChannels(x, z, height);
 
+  // Keep the ROM coordinates/elevation authoritative but make its civil setting
+  // legible as a real terraplén with face + catch berm + toe instead of the old
+  // 16 m feathered plateau. Crushing is applied afterwards so the east-side
+  // process transition remains unchanged.
+  height = applyReceptionEarthwork(x, z, height);
+
   Object.entries(ZONES).forEach(([zoneId, zone]) => {
-    const feather = zoneId === 'reception' ? 16 : zoneId === 'process' ? 12 : 10;
+    if (zoneId === 'reception') return;
+    const feather = zoneId === 'process' ? 12 : 10;
     const influence = roundedRectInfluence(x, z, zone, feather);
     height = lerp(height, zone.elevation, influence);
   });

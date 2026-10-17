@@ -72,6 +72,22 @@ it('scales visual pipe flow from derived process flow without changing calculati
   expect(base.equipmentSystem.getEquipment('PUMP-01').group3D.userData.operationalState).toBe('operating');
 });
 
+it('animates only the sump liquid surface, never the whole sump equipment root', () => {
+  const base = createBaseScene();
+  const sump = base.equipmentSystem.getEquipment('SUMP-01').group3D;
+  const liquid = sump.getObjectByName('SUMP-01-slurry');
+  expect(liquid?.userData.slurrySurface).toBe(true);
+  const rootPosition = sump.position.clone();
+  const rootRotation = sump.rotation.clone();
+  const liquidPosition = liquid.position.clone();
+
+  base.industrialAnimations.update(0.1);
+
+  expect(sump.position.distanceTo(rootPosition)).toBeLessThan(1e-12);
+  expect(Math.abs(sump.rotation.y - rootRotation.y)).toBeLessThan(1e-12);
+  expect(liquid.position.distanceTo(liquidPosition)).toBeGreaterThan(0);
+});
+
 it('throttles LOD updates instead of traversing equipment every frame', () => {
   let lodCalls = 0;
   const equipmentSystem = {

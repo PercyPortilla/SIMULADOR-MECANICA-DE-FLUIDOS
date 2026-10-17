@@ -5,6 +5,8 @@ import { clone as cloneSkeletonAware } from 'three/addons/utils/SkeletonUtils.js
 export const BLENDER_REPLACEMENT_SPECS = Object.freeze({
   'ROM-HOPPER': Object.freeze({
     url: 'models/pulpa-blender/ROM-HOPPER.glb',
+    keepProceduralUpdate: true,
+    preserveProceduralOverlays: Object.freeze(['rom-grizzly']),
   }),
   'APRON-FEEDER': Object.freeze({
     url: 'models/pulpa-blender/APRON-FEEDER.glb',
@@ -16,6 +18,7 @@ export const BLENDER_REPLACEMENT_SPECS = Object.freeze({
   }),
   'STOCKPILE-RECLAIM': Object.freeze({
     url: 'models/pulpa-blender/STOCKPILE-RECLAIM.glb',
+    preserveProceduralOverlays: Object.freeze(['STOCKPILE-RECLAIM-motion']),
   }),
   'EXCAVATOR-01': Object.freeze({
     url: 'models/pulpa-blender/MINING-SHOVEL.glb',
@@ -34,13 +37,16 @@ export const BLENDER_REPLACEMENT_SPECS = Object.freeze({
   'MILL-01': Object.freeze({
     url: 'models/pulpa-blender/MILL-01.glb',
     expectedAnimation: 'MILL-01_Rotation',
+    rotationPivotRepair: Object.freeze({ nodeName: 'MILL-01_ROTATING_GROUP', axis: 'x' }),
   }),
   'SUMP-01': Object.freeze({
     url: 'models/pulpa-blender/SUMP-01.glb',
+    preserveProceduralOverlays: Object.freeze(['SUMP-01-slurry', 'SUMP-01-suspended-solids']),
   }),
   'SLURRY-PUMP-01': Object.freeze({
     url: 'models/pulpa-blender/SLURRY-PUMP-01.glb',
     expectedAnimation: 'SLURRY-PUMP-01_ShaftRotation',
+    rotationPivotRepair: Object.freeze({ nodeName: 'SLURRY-PUMP-01_ROTATING_GROUP', axis: 'x' }),
   }),
   'CLASS-01': Object.freeze({
     url: 'models/pulpa-blender/CLASS-01.glb',
@@ -74,6 +80,7 @@ export const BLENDER_REPLACEMENT_SPECS = Object.freeze({
   'PUMP-01': Object.freeze({
     url: 'models/pulpa-blender/SLURRY-PUMP-01.glb',
     expectedAnimation: 'SLURRY-PUMP-01_ShaftRotation',
+    rotationPivotRepair: Object.freeze({ nodeName: 'SLURRY-PUMP-01_ROTATING_GROUP', axis: 'x' }),
   }),
   'CIP-ADSORPTION': Object.freeze({
     url: 'models/pulpa-blender/CIP-ADSORPTION.glb',
@@ -145,6 +152,38 @@ function getImportedNode(controller, name) {
 
 function restRotation(node, axisIndex) {
   return Number(node?.userData?.blenderRestRotation?.[axisIndex] ?? 0);
+}
+
+export function stabilizeImportedRotationPivot(scene, { nodeName, axis = 'x' } = {}) {
+  const node = scene?.getObjectByName?.(nodeName);
+  if (!node?.parent || !['x', 'y', 'z'].includes(axis)) return null;
+  scene.updateMatrixWorld(true);
+  const bounds = new THREE.Box3().setFromObject(node, true);
+  if (bounds.isEmpty()) return null;
+  const centerWorld = bounds.getCenter(new THREE.Vector3());
+  const parent = node.parent;
+  const centerParent = parent.worldToLocal(centerWorld.clone());
+  const desired = node.position.clone();
+  if (axis !== 'x') desired.x = centerParent.x;
+  if (axis !== 'y') desired.y = centerParent.y;
+  if (axis !== 'z') desired.z = centerParent.z;
+  const shift = desired.clone().sub(node.position);
+  if (shift.lengthSq() < 1e-12) return node;
+
+  // Preserve the exact rest pose while relocating only the rotation axis.
+  // Animation tracks keep targeting the same named node, but its children no
+  // longer orbit around an unrelated scene origin and therefore cannot dive
+  // through the foundation when the clip rotates.
+  const children = [...node.children];
+  children.forEach((child) => parent.attach(child));
+  node.position.copy(desired);
+  node.updateMatrixWorld(true);
+  children.forEach((child) => node.attach(child));
+  node.userData.rotationPivotStabilized = true;
+  node.userData.rotationPivotAxis = axis;
+  node.userData.rotationPivotShift = shift.toArray();
+  scene.updateMatrixWorld(true);
+  return node;
 }
 
 function decorateHaulTruckSemantics(handle, controller) {
@@ -278,6 +317,7 @@ export function attachBlenderVisualReplacement({
       imported.position.set(0, 0, 0);
       imported.rotation.set(0, 0, 0);
       imported.scale.set(1, 1, 1);
+      if (spec.rotationPivotRepair) stabilizeImportedRotationPivot(imported, spec.rotationPivotRepair);
       hostRoot.add(imported);
       if (spec.preserveProceduralOverlays?.length) {
         const overlays = preserveProceduralOverlays(hostRoot, fallback, spec.preserveProceduralOverlays);

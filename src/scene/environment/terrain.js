@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { getTerrainHeight, PIT_DESIGN, TERRAIN_EXTENT } from './terrainHeight.js';
+import { getReceptionEarthworkBand, getTerrainHeight, PIT_DESIGN, TERRAIN_EXTENT } from './terrainHeight.js';
 import { MINE_AUXILIARY_AREAS } from '../config/siteDesign.js';
 
 
@@ -52,6 +52,9 @@ export function createMineTerrain(material) {
   const activeFaceColor = new THREE.Color(0xa98462);
   const finalWallColor = new THREE.Color(0x858786);
   const alteredRockColor = new THREE.Color(0xb29d82);
+  const compactedFillColor = new THREE.Color(0xb99a73);
+  const earthworkFaceColor = new THREE.Color(0x967454);
+  const catchBermColor = new THREE.Color(0xaa8861);
   for (let index = 0; index < positions.count; index += 1) {
     const x = positions.getX(index);
     const z = positions.getZ(index);
@@ -86,6 +89,10 @@ export function createMineTerrain(material) {
     const sumpDistance = Math.hypot(x - sump.x, z - sump.z);
     const dampInfluence = 1 - THREE.MathUtils.smoothstep(sumpDistance, sump.radiusM * 1.2, sump.radiusM * 4.0);
     color.lerp(dampGroundColor, dampInfluence * 0.42);
+    const receptionBand = getReceptionEarthworkBand(x, z);
+    if (receptionBand === 'crest') color.lerp(compactedFillColor, 0.38);
+    if (receptionBand === 'upper-slope' || receptionBand === 'toe-slope') color.lerp(earthworkFaceColor, 0.48);
+    if (receptionBand === 'berm') color.lerp(catchBermColor, 0.55);
     color.multiplyScalar(terrainToneVariation(x, z));
     colors.push(color.r, color.g, color.b);
   }

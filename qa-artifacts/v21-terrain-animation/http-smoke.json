@@ -1,0 +1,22 @@
+﻿[
+    {
+        "url":  "http://127.0.0.1:4173/",
+        "status":  200,
+        "bytes":  498
+    },
+    {
+        "url":  "http://127.0.0.1:4173/models/pulpa-blender/RECEPTION-EARTHWORK-V21.glb",
+        "status":  200,
+        "bytes":  463796
+    },
+    {
+        "url":  "http://127.0.0.1:4173/models/pulpa-blender/MILL-01.glb",
+        "status":  200,
+        "bytes":  793344
+    },
+    {
+        "url":  "http://127.0.0.1:4173/models/pulpa-blender/SLURRY-PUMP-01.glb",
+        "status":  200,
+        "bytes":  461368
+    }
+]

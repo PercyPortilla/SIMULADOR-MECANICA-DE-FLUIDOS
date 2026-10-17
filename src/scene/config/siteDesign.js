@@ -71,6 +71,23 @@ export const TOPOGRAPHIC_ZONES = Object.freeze({
   recovery: Object.freeze({ id: 'recovery', center: [210, -90], size: [108, 60], elevation: 2.0 }),
 });
 
+// Reception is intentionally an engineered earthwork rather than a broad
+// procedural plateau. The crest keeps the authoritative ROM coordinates and
+// elevation, while the north/south/west edges step through a visible face,
+// catch berm and toe slope. The east side stays open for the existing
+// reception-to-crushing grade transition.
+export const RECEPTION_EARTHWORK = Object.freeze({
+  center: Object.freeze([...TOPOGRAPHIC_ZONES.reception.center]),
+  crestSizeM: Object.freeze([...TOPOGRAPHIC_ZONES.reception.size]),
+  crestElevationM: TOPOGRAPHIC_ZONES.reception.elevation,
+  upperSlopeRunM: 5.0,
+  bermWidthM: 5.0,
+  bermDropM: 1.0,
+  toeSlopeRunM: 10.0,
+  embankmentSide: 'south',
+  openEast: true,
+});
+
 export const PLANT_ZONE_DEFINITIONS = Object.freeze({
   Z1: Object.freeze({ id: 'Z1', key: 'reception', name: 'RECEPCIÓN ROM', position: { x: -110, z: -30 }, rotationY: 0, width: 24, depth: 38, elevationKey: 'reception', connections: ['Z2'] }),
   Z2: Object.freeze({ id: 'Z2', key: 'crushing', name: 'CHANCADO PRIMARIO', position: { x: -78, z: -30 }, rotationY: 0, width: 20, depth: 30, elevationKey: 'crushing', connections: ['Z3'] }),

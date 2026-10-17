@@ -4,7 +4,7 @@ Simulador académico de transporte, bombeo, reología y recuperación de pulpas 
 
 ## Estado actual
 
-**V20 · Laboratorio Académico Interactivo**
+**V21 · Terreno, animaciones y hardening de release**
 
 La versión actual integra:
 
@@ -18,6 +18,12 @@ La versión actual integra:
 - comparador A vs B con explicación causal;
 - laboratorio interactivo con hipótesis previa, contraste contra el solver y conclusión;
 - informe HTML autónomo e imprimible de cada práctica.
+- pivotes de animación estabilizados para molino y bombas, sin alterar posiciones físicas ni endpoints;
+- grizzly ROM, reclaim de stockpile y contenido del sump con movimiento visible gobernado por el toggle global de animaciones;
+- recepción sobre terraplén industrial con desniveles, talud, berma y transición de pie;
+- overlay Blender visual del terraplén generado desde la misma topografía autoritativa de Three.js;
+- contrato métrico 1 unidad = 1 m y auditoría de escala industrial sobre los GLB principales;
+- CI en GitHub para ejecutar pruebas y build antes de aceptar regresiones.
 
 ## Arquitectura
 
@@ -27,6 +33,8 @@ La versión actual integra:
 - **Pruebas:** Vitest
 
 Three.js continúa siendo el runtime autoritativo. Las geometrías paramétricas de conveyors, piping, endpoints, diámetros y topografía no se sustituyen por modelos rígidos cuando dependen del estado del simulador.
+
+El terreno Blender de V21 es una capa visual opcional. La elevación que gobierna equipos, caminos y cimentaciones sigue proviniendo de `getTerrainHeight()`; si el GLB no carga, el terreno procedural conserva toda la geometría funcional.
 
 ## Circuito principal
 

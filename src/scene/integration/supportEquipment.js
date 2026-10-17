@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { createIndustrialMaterial } from '../materials/industrialMaterials.js';
-import { createSuspendedSolidsCloud } from '../../equipment/common/slurryVisuals.js';
+import { animateSuspendedSolids, createSuspendedSolidsCloud } from '../../equipment/common/slurryVisuals.js';
 import { attachBlenderVisualReplacement } from './blenderVisualReplacement.js';
 
 function port(id, type, localPosition, direction, nominalDiameterM = 0.25) {
@@ -27,12 +27,13 @@ export function createSumpEquipment({ id = 'SUMP-01', position = new THREE.Vecto
   const slurry = mesh(new THREE.CylinderGeometry(2.02, 2.02, 1.65, 32), new THREE.MeshStandardMaterial({ color: 0x7d654c, roughness: 0.72, transparent: true, opacity: 0.9 }), `${id}-slurry`);
   slurry.position.y = 1.15;
   slurry.userData.inspectionInterior = true;
+  slurry.userData.slurrySurface = true;
   root.add(slurry);
   const base = mesh(new THREE.CylinderGeometry(2.55, 2.55, 0.24, 32), createIndustrialMaterial('concrete'), `${id}-base`);
   base.position.y = 0.12;
   root.add(base);
-  root.userData.slurrySurface = slurry;
   const suspendedSolids = createSuspendedSolidsCloud({ name: `${id}-suspended-solids`, radius: 1.82, height: 1.35, count: 90, size: 0.055, opacity: 0.52, seed: 11, y: 1.2 });
+  suspendedSolids.userData.inspectionInterior = true;
   root.add(suspendedSolids);
   root.userData.suspendedSolids = suspendedSolids;
   const ports = new Map([
@@ -40,7 +41,24 @@ export function createSumpEquipment({ id = 'SUMP-01', position = new THREE.Vecto
     ['outlet', port('outlet', 'slurryOut', [2.2, 0.85, 0], [1, 0, 0], 0.3)],
   ]);
   attachBlenderVisualReplacement({ hostRoot: root, instanceId: id });
-  return { id, type: 'sump', dimensions: Object.freeze({ length: 5.1, width: 5.1, height: 3.3 }), transform: root, group3D: root, ports, metadata: Object.freeze({ category: 'sump' }) };
+  let elapsed = 0;
+  return {
+    id,
+    type: 'sump',
+    dimensions: Object.freeze({ length: 5.1, width: 5.1, height: 3.3 }),
+    transform: root,
+    group3D: root,
+    ports,
+    metadata: Object.freeze({ category: 'sump' }),
+    update(dt) {
+      if (!Number.isFinite(dt) || dt <= 0) return;
+      const safeDt = Math.min(dt, 0.1);
+      elapsed += safeDt;
+      slurry.rotation.y += safeDt * 0.22;
+      slurry.position.y = 1.15 + Math.sin(elapsed * 1.8) * 0.035;
+      animateSuspendedSolids(suspendedSolids, safeDt, elapsed, { speed: 0.22, phase: 0.8 });
+    },
+  };
 }
 
 function createIrregularStockpileGeometry(radius, height, phase = 0, radialSegments = 64, heightSegments = 12) {
@@ -100,11 +118,68 @@ export function createStockpileReclaimEquipment({ id = 'STOCKPILE-RECLAIM', posi
   feeder.rotation.y = -0.22;
   root.add(feeder);
 
+  const reclaimMotion = new THREE.Group();
+  reclaimMotion.name = `${id}-motion`;
+  reclaimMotion.userData.blenderProceduralOverlay = true;
+  reclaimMotion.userData.reclaimMotion = true;
+  root.add(reclaimMotion);
+
+  const feederBed = mesh(new THREE.BoxGeometry(5.8, 0.12, 1.86), steel.clone(), `${id}-reclaim-feeder-bed`);
+  feederBed.position.set(24.0, 0.995, 10.2);
+  feederBed.rotation.y = -0.22;
+  feederBed.userData.reclaimFeeder = true;
+  feederBed.userData.basePosition = feederBed.position.toArray();
+  reclaimMotion.add(feederBed);
+
+  const grizzly = new THREE.Group();
+  grizzly.name = `${id}-reclaim-grizzly`;
+  grizzly.userData.reclaimGrizzly = true;
+  for (let index = -3; index <= 3; index += 1) {
+    const bar = mesh(new THREE.BoxGeometry(0.10, 0.10, 3.15), steel.clone(), `${id}-reclaim-grizzly-bar-${index + 4}`);
+    bar.position.set(21.5 + index * 0.68, 3.64, 12.0);
+    grizzly.add(bar);
+  }
+  reclaimMotion.add(grizzly);
+
+  const movingOre = [];
+  for (let index = 0; index < 10; index += 1) {
+    const radius = 0.14 + (index % 3) * 0.025;
+    const ore = mesh(new THREE.DodecahedronGeometry(radius, 0), oreMat, `${id}-reclaim-ore-${index + 1}`);
+    ore.position.set(21.2 + (index % 5) * 1.05, 1.15 + radius * 0.3, 9.75 + Math.floor(index / 5) * 0.72);
+    ore.userData.reclaimOre = true;
+    ore.userData.travelOffset = (index / 10) * 5.6;
+    reclaimMotion.add(ore);
+    movingOre.push(ore);
+  }
+
   const ports = new Map([
     ['feedIn', port('feedIn', 'materialIn', [-13.0, 9.4, 0], [1, -0.3, 0], 0.6)],
     ['reclaimOut', port('reclaimOut', 'materialOut', [27.0, 1.15, 8.9], [1, 0, 0], 0.6)],
     ['loaderDump', port('loaderDump', 'materialIn', [21.5, 3.65, 12.0], [0, -1, 0], 0.6)],
   ]);
   attachBlenderVisualReplacement({ hostRoot: root, instanceId: id });
-  return { id, type: 'stockpile-reclaim', dimensions: Object.freeze({ length: 50, width: 40, height: 10 }), transform: root, group3D: root, ports, metadata: Object.freeze({ category: 'stockpile-reclaim' }) };
+  let elapsed = 0;
+  return {
+    id,
+    type: 'stockpile-reclaim',
+    dimensions: Object.freeze({ length: 50, width: 40, height: 10 }),
+    transform: root,
+    group3D: root,
+    ports,
+    metadata: Object.freeze({ category: 'stockpile-reclaim' }),
+    update(dt) {
+      if (!Number.isFinite(dt) || dt <= 0) return;
+      const safeDt = Math.min(dt, 0.1);
+      elapsed += safeDt;
+      const base = feederBed.userData.basePosition;
+      feederBed.position.set(base[0] + Math.sin(elapsed * 16) * 0.022, base[1], base[2]);
+      grizzly.position.y = Math.sin(elapsed * 19 + 0.7) * 0.03;
+      grizzly.position.z = Math.cos(elapsed * 17) * 0.014;
+      movingOre.forEach((ore, index) => {
+        ore.userData.travelOffset = (ore.userData.travelOffset + safeDt * 0.48) % 5.6;
+        ore.position.x = 21.2 + ore.userData.travelOffset;
+        ore.rotation.y += safeDt * (0.25 + index * 0.012);
+      });
+    },
+  };
 }
