@@ -152,6 +152,40 @@ export function createStockpileReclaimEquipment({ id = 'STOCKPILE-RECLAIM', posi
     movingOre.push(ore);
   }
 
+  // V24 Block 2: material arriving from CV-02 visibly settles toward the main
+  // pile while reclaim ore continues toward CV-03. This is a neutral visual cue,
+  // not an inventory/capacity calculation.
+  const feedLandingOre = [];
+  const feedFlow = new THREE.Group();
+  feedFlow.name = `${id}-v24-feed-flow`;
+  feedFlow.userData.blenderProceduralOverlay = true;
+  feedFlow.userData.visualOnly = true;
+  root.add(feedFlow);
+  const feedStart = new THREE.Vector3(-12.8, 9.25, 0);
+  const feedEnd = new THREE.Vector3(-4.7, 7.55, 0);
+  for (let index = 0; index < 10; index += 1) {
+    const radius = 0.13 + (index % 3) * 0.022;
+    const ore = mesh(new THREE.DodecahedronGeometry(radius, 0), oreMat, `${id}-feed-landing-ore-${index + 1}`);
+    ore.userData.stockpileFeedOre = true;
+    ore.userData.visualOnly = true;
+    ore.userData.travelPhase = index / 10;
+    feedFlow.add(ore);
+    feedLandingOre.push(ore);
+  }
+
+  function updateFeedLandingOre(dt) {
+    feedLandingOre.forEach((ore, index) => {
+      ore.userData.travelPhase = (ore.userData.travelPhase + dt * 0.10) % 1;
+      const phase = ore.userData.travelPhase;
+      ore.position.copy(feedStart).lerp(feedEnd, phase);
+      ore.position.y += Math.sin(phase * Math.PI) * 0.22;
+      ore.position.z += Math.sin(index * 1.73 + phase * Math.PI * 2) * 0.34;
+      ore.rotation.x += dt * 0.22;
+      ore.rotation.z += dt * 0.18;
+    });
+  }
+  updateFeedLandingOre(0);
+
   const ports = new Map([
     ['feedIn', port('feedIn', 'materialIn', [-13.0, 9.4, 0], [1, -0.3, 0], 0.6)],
     ['reclaimOut', port('reclaimOut', 'materialOut', [27.0, 1.15, 8.9], [1, 0, 0], 0.6)],
@@ -180,6 +214,7 @@ export function createStockpileReclaimEquipment({ id = 'STOCKPILE-RECLAIM', posi
         ore.position.x = 21.2 + ore.userData.travelOffset;
         ore.rotation.y += safeDt * (0.25 + index * 0.012);
       });
+      updateFeedLandingOre(safeDt);
     },
   };
 }

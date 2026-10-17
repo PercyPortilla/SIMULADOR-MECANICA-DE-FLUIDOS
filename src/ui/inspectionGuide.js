@@ -2,6 +2,10 @@ function entry(purpose, input, output, keyVariable, calculationImpact) {
   return Object.freeze({ purpose, input, output, keyVariable, calculationImpact });
 }
 
+function hotspot(component, functionText, processLink) {
+  return Object.freeze({ component, function: functionText, processLink });
+}
+
 const visualTransferImpact = 'Representa la continuidad del proceso en 3D; no añade una ecuación hidráulica independiente ni altera los resultados de cálculo.';
 const conveyorImpact = 'Representa transporte de mineral y continuidad de planta; velocidad de faja y capacidad no forman parte del solver reológico/hidráulico actual.';
 const mobileImpact = 'Aporta contexto operacional y entrenamiento visual; su movimiento no modifica reología, hidráulica ni recuperación.';
@@ -275,6 +279,50 @@ export const INSPECTION_GUIDE = Object.freeze({
   ),
 });
 
+export const INSPECTION_COMPONENT_HOTSPOTS = Object.freeze({
+  'PRIMARY-CRUSHER': Object.freeze([
+    hotspot('Zona de alimentación', 'Recibe el mineral desde CV-01 y lo conduce hacia la cámara de chancado.', 'Entrada de mineral ROM/chancable.'),
+    hotspot('Mandíbula móvil y fija', 'Generan la compresión mecánica que reduce el tamaño del mineral.', 'Reducción de tamaño representada visualmente; PULPA LAB no calcula P80.'),
+    hotspot('Excéntrica y volantes', 'Transforman el giro del accionamiento en el movimiento oscilante de la mandíbula.', 'Movimiento mecánico educativo, sin modelo de potencia de chancado.'),
+    hotspot('Accionamiento', 'Entrega movimiento al conjunto excéntrico de la chancadora.', 'No altera el solver hidráulico/reológico.'),
+    hotspot('Descarga', 'Entrega mineral chancado hacia CV-02.', 'Continuidad visual hacia stockpile.'),
+  ]),
+  'MILL-01': Object.freeze([
+    hotspot('Shell', 'Contiene la carga y define el cuerpo rotatorio del molino.', 'Geometría de equipo; no determina por sí sola la reología ingresada.'),
+    hotspot('Carga interna', 'Representa mineral/medios dentro del volumen de molienda.', 'Interior educativo; no es DEM ni calcula distribución granulométrica.'),
+    hotspot('Liners', 'Protegen el shell y ayudan al levantamiento de la carga.', 'Componente mecánico mostrado para inspección.'),
+    hotspot('Accionamiento', 'Motor, reducción y corona transmiten el giro al molino.', 'No se usa para calcular energía específica de molienda.'),
+    hotspot('Descarga', 'Entrega la pulpa formada hacia SUMP-01.', 'Conecta molienda con el circuito húmedo.'),
+  ]),
+  'SLURRY-PUMP-01': Object.freeze([
+    hotspot('Succión', 'Recibe la pulpa desde SUMP-01.', 'Entrada hidráulica al equipo.'),
+    hotspot('Carcasa / voluta', 'Conduce el flujo desde el impulsor hacia la descarga.', 'Geometría visual; no sustituye la curva de bomba ingresada.'),
+    hotspot('Impulsor', 'Transfiere energía mecánica al fluido.', 'Relacionable con carga y potencia calculadas, sin CFD.'),
+    hotspot('Motor y acoplamiento', 'Accionan el eje de la bomba.', 'La eficiencia de bomba/motor es un dato explícito del caso.'),
+    hotspot('Descarga', 'Envía pulpa presurizada hacia CLASS-01.', 'Salida asociada a la presión/carga requerida del circuito.'),
+  ]),
+  'CLASS-01': Object.freeze([
+    hotspot('Feed', 'Distribuye la alimentación de pulpa al cluster.', 'Entrada desde la bomba de clasificación.'),
+    hotspot('Vortex finder / overflow', 'Representa la salida superior de la fracción clasificada.', 'Overflow visual hacia lixiviación; no se calcula d50.'),
+    hotspot('Apex / underflow', 'Representa la descarga inferior de la fracción gruesa.', 'Underflow visual de retorno a molienda.'),
+    hotspot('Manifold', 'Reparte la alimentación entre los ciclones del cluster.', 'Continuidad de proceso, no balance de partición calibrado.'),
+  ]),
+  'CIP-ADSORPTION': Object.freeze([
+    hotspot('Feed', 'Recibe la pulpa lixiviada que ingresa al tren de adsorción.', 'Entrada del proceso CIP.'),
+    hotspot('Tanques y agitadores', 'Mantienen contacto visualmente representado entre pulpa y carbón.', 'Animación educativa; no resuelve transferencia de masa intrínseca.'),
+    hotspot('Interstage screens', 'Representan la retención de carbón entre etapas.', 'Separación operacional mostrada sin solver de clasificación.'),
+    hotspot('Flujo de carbón', 'Representa el avance/retorno conceptual del carbón entre etapas.', 'La recuperación sigue gobernada por eficiencias explícitas.'),
+    hotspot('Descarga', 'Entrega la corriente de proceso hacia las etapas posteriores.', 'Continuidad de la ruta CIP→elución.'),
+  ]),
+  'ELUTION-SKID': Object.freeze([
+    hotspot('Columna de elución', 'Representa la etapa donde el oro se desorbe del carbón cargado.', 'Proceso educativo; no calcula equilibrio de desorción.'),
+    hotspot('Tanque de solución', 'Contiene la solución de proceso del skid.', 'Nivel visual, no balance transiente del tanque.'),
+    hotspot('Intercambiador de calor', 'Representa el acondicionamiento térmico de la solución.', 'No introduce un modelo térmico independiente.'),
+    hotspot('Bombas / header', 'Recirculan y conducen la solución dentro del skid.', 'Continuidad visual; no añade curvas hidráulicas nuevas.'),
+    hotspot('Solución pregnant', 'Salida de solución rica hacia EW-CELLS.', 'Conexión de proceso hacia electrowinning.'),
+  ]),
+});
+
 export const PRESENTATION_STOP_IDS = Object.freeze([
   'EXCAVATOR-01',
   'TRUCK-01',
@@ -299,6 +347,10 @@ export const PRESENTATION_STOP_IDS = Object.freeze([
 
 export function getInspectionGuideEntry(id) {
   return INSPECTION_GUIDE[id] ?? null;
+}
+
+export function getInspectionComponentHotspots(id) {
+  return INSPECTION_COMPONENT_HOTSPOTS[id] ?? Object.freeze([]);
 }
 
 export function getInspectionStage(id) {

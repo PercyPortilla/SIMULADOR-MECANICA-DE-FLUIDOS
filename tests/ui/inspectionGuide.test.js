@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { INSPECTION_CIRCUIT_ORDER } from '../../src/scene/inspection/equipmentInspection.js';
 import {
   INSPECTION_GUIDE,
+  INSPECTION_COMPONENT_HOTSPOTS,
   PRESENTATION_STOP_IDS,
+  getInspectionComponentHotspots,
   getInspectionGuideEntry,
   getInspectionRelatedResult,
   getInspectionStage,
@@ -40,6 +42,27 @@ describe('inspection educational guide', () => {
   it('does not claim every visual pipe is an independent hydraulic model', () => {
     expect(getInspectionGuideEntry('P-LEACH-R01-R02').calculationImpact).toContain('Pipe 1');
     expect(getInspectionGuideEntry('P-LEACH-R02-R03').calculationImpact).toContain('no es un segundo Pipe 1');
+  });
+
+  it('adds compact component hotspots only to the V24 priority equipment', () => {
+    expect(Object.keys(INSPECTION_COMPONENT_HOTSPOTS).sort()).toEqual([
+      'CIP-ADSORPTION',
+      'CLASS-01',
+      'ELUTION-SKID',
+      'MILL-01',
+      'PRIMARY-CRUSHER',
+      'SLURRY-PUMP-01',
+    ]);
+    Object.keys(INSPECTION_COMPONENT_HOTSPOTS).forEach((id) => {
+      const hotspots = getInspectionComponentHotspots(id);
+      expect(hotspots.length).toBeGreaterThanOrEqual(4);
+      hotspots.forEach((item) => {
+        expect(item.component.length).toBeGreaterThan(3);
+        expect(item.function.length).toBeGreaterThan(15);
+        expect(item.processLink.length).toBeGreaterThan(15);
+      });
+    });
+    expect(getInspectionComponentHotspots('R-01')).toEqual([]);
   });
 
   it('defines a compact presentation route as an ordered unique subsequence of the circuit', () => {

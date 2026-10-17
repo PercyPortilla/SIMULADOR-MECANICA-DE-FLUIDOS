@@ -1,0 +1,146 @@
+﻿{
+    "baseline":  "V23 f4d112a3c1b858e39a12c8b18ef53763f47ebf17",
+    "change_count":  35,
+    "changes":  [
+                    {
+                        "state":  "modified",
+                        "path":  "CHECKPOINT.txt"
+                    },
+                    {
+                        "state":  "modified",
+                        "path":  "README.md"
+                    },
+                    {
+                        "state":  "modified",
+                        "path":  "src\\equipment\\classification\\cycloneCluster.js"
+                    },
+                    {
+                        "state":  "modified",
+                        "path":  "src\\equipment\\mining\\wheelLoader.js"
+                    },
+                    {
+                        "state":  "modified",
+                        "path":  "src\\equipment\\recovery\\cip.js"
+                    },
+                    {
+                        "state":  "modified",
+                        "path":  "src\\main.js"
+                    },
+                    {
+                        "state":  "modified",
+                        "path":  "src\\releaseInfo.js"
+                    },
+                    {
+                        "state":  "modified",
+                        "path":  "src\\scene\\baseEnvironment.js"
+                    },
+                    {
+                        "state":  "modified",
+                        "path":  "src\\scene\\environment\\mineProps.js"
+                    },
+                    {
+                        "state":  "new",
+                        "path":  "src\\scene\\environment\\operationalSurfaceDetails.js"
+                    },
+                    {
+                        "state":  "new",
+                        "path":  "src\\scene\\infrastructure\\industrialInfrastructure.js"
+                    },
+                    {
+                        "state":  "new",
+                        "path":  "src\\scene\\infrastructure\\industrialSafety.js"
+                    },
+                    {
+                        "state":  "new",
+                        "path":  "src\\scene\\infrastructure\\processInstrumentation.js"
+                    },
+                    {
+                        "state":  "modified",
+                        "path":  "src\\scene\\integration\\blenderVisualReplacement.js"
+                    },
+                    {
+                        "state":  "modified",
+                        "path":  "src\\scene\\integration\\integratedMobile.js"
+                    },
+                    {
+                        "state":  "modified",
+                        "path":  "src\\scene\\integration\\integratedPlant.js"
+                    },
+                    {
+                        "state":  "modified",
+                        "path":  "src\\scene\\integration\\supportEquipment.js"
+                    },
+                    {
+                        "state":  "new",
+                        "path":  "src\\scene\\performance\\secondaryShadowPolicy.js"
+                    },
+                    {
+                        "state":  "modified",
+                        "path":  "src\\styles.css"
+                    },
+                    {
+                        "state":  "modified",
+                        "path":  "src\\ui\\inspectionGuide.js"
+                    },
+                    {
+                        "state":  "modified",
+                        "path":  "tests\\scene\\baseEnvironment.test.js"
+                    },
+                    {
+                        "state":  "modified",
+                        "path":  "tests\\scene\\blenderVisualReplacement.test.js"
+                    },
+                    {
+                        "state":  "new",
+                        "path":  "tests\\scene\\industrialInfrastructureV24.test.js"
+                    },
+                    {
+                        "state":  "new",
+                        "path":  "tests\\scene\\industrialSafetyV24.test.js"
+                    },
+                    {
+                        "state":  "new",
+                        "path":  "tests\\scene\\integratedMobileV24.test.js"
+                    },
+                    {
+                        "state":  "new",
+                        "path":  "tests\\scene\\materialFlowV24.test.js"
+                    },
+                    {
+                        "state":  "new",
+                        "path":  "tests\\scene\\operationalSurfaceV24.test.js"
+                    },
+                    {
+                        "state":  "new",
+                        "path":  "tests\\scene\\performanceV24.test.js"
+                    },
+                    {
+                        "state":  "new",
+                        "path":  "tests\\scene\\processAliveV24.test.js"
+                    },
+                    {
+                        "state":  "new",
+                        "path":  "tests\\scene\\processInstrumentationV24.test.js"
+                    },
+                    {
+                        "state":  "modified",
+                        "path":  "tests\\ui\\inspectionGuide.test.js"
+                    },
+                    {
+                        "state":  "modified",
+                        "path":  "tests\\ui\\releaseInfo.test.js"
+                    },
+                    {
+                        "state":  "new",
+                        "path":  "tools\\make_v24_checkpoint.py"
+                    },
+                    {
+                        "state":  "new",
+                        "path":  "tools\\v24OperationRealismAudit.mjs"
+                    },
+                    {
+                        "state":  "new",
+                        "path":  "V24_OPERATION_INDUSTRIAL_REALISM_CHECKPOINT.md"
+                    }
+                ]
+}

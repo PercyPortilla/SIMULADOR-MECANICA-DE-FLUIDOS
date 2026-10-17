@@ -69,7 +69,7 @@ export function createWheelLoaderAsset() {
   armPivot.add(tubeBetween('loader-lift-cylinder-r', [0.25, 0.0, 0.72], [2.3, 1.15, 0.72], 0.11, createEquipmentMaterial('paintedGreySteel'), 16, { role: 'structure', lodTier: 1 }));
   armPivot.add(tubeBetween('loader-tilt-cylinder', [1.8, 0.85, 0], [3.45, 0.95, 0], 0.1, createEquipmentMaterial('stainlessSteel'), 16, { role: 'interior', lodTier: 1 }));
 
-  return createAssetHandle({
+  const handle = createAssetHandle({
     root,
     id: 'WHEEL-LOADER-GENERIC-LARGE',
     category: 'wheel-loader',
@@ -105,9 +105,16 @@ export function createWheelLoaderAsset() {
       articulation.rotation.y = THREE.MathUtils.degToRad(articulateDeg);
       armPivot.rotation.z = THREE.MathUtils.degToRad(liftDeg);
       bucketPivot.rotation.z = THREE.MathUtils.degToRad(bucketDeg);
-      wheels.forEach((wheel) => { wheel.rotation.z -= dt * 0.72; });
+      if (!root.userData.integrationManagedAnimation) {
+        wheels.forEach((wheel) => { wheel.rotation.z -= dt * 0.72; });
+      }
       ore.visible = t >= 5 && t < 19.3;
     },
     lodDistances: [23, 58],
   });
+  handle.advanceWheelTravel = (distanceM) => {
+    if (!Number.isFinite(distanceM) || Math.abs(distanceM) < 1e-8) return;
+    wheels.forEach((wheel) => { wheel.rotation.z -= distanceM / 1.25; });
+  };
+  return handle;
 }

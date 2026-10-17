@@ -59,6 +59,8 @@ describe('base 3D environment', () => {
     expect(environment.geotechnicalSystem.root.visible).toBe(false);
     expect(environment.geotechnicalSystem.root.userData.visualOnly).toBe(true);
     expect(environment.scene.getObjectByName('TRUCK-01')).toBeTruthy();
+    expect(environment.scene.getObjectByName('TRUCK-02')).toBeTruthy();
+    expect(environment.scene.getObjectByName('TRUCK-03')).toBeTruthy();
     expect(environment.inspectionControlLimits.minDistance).toBeCloseTo(0.8);
     expect(environment.inspectionControlLimits.maxDistance).toBe(1200);
     expect(environment.scene.getObjectByName('EXCAVATOR-01')).toBeTruthy();

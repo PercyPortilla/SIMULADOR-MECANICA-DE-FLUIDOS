@@ -35,6 +35,7 @@ import {
 import { PALETTE_PRESETS, getPalettePreset } from './ui/palettes.js';
 import {
   PRESENTATION_STOP_IDS,
+  getInspectionComponentHotspots,
   getInspectionGuideEntry,
   getInspectionRelatedResult,
   getInspectionStage,
@@ -1225,6 +1226,19 @@ async function initializeEnvironment(canvas) {
       const next = inspectionTargets.find((item) => item.id === target.nextId);
       const stage = getInspectionStage(id);
       const relatedResult = getInspectionRelatedResult(id);
+      const componentHotspots = getInspectionComponentHotspots(id);
+      const componentHotspotsHtml = componentHotspots.length
+        ? `<section class="inspection-component-hotspots" aria-label="Componentes clave de ${target.label}">
+            <h4>COMPONENTES CLAVE</h4>
+            ${componentHotspots.map((item) => `
+              <article>
+                <strong>${item.component}</strong>
+                <span>${item.function}</span>
+                <small>${item.processLink}</small>
+              </article>
+            `).join('')}
+          </section>`
+        : '';
       inspectionGuide.innerHTML = `
         <header><span>GUÍA DE PROCESO</span><strong>${target.label}</strong></header>
         <p class="inspection-guide-purpose"><b>Qué hace:</b> ${guide.purpose}</p>
@@ -1236,6 +1250,7 @@ async function initializeEnvironment(canvas) {
           <div><dt>Variable clave</dt><dd>${guide.keyVariable}</dd></div>
           <div class="inspection-guide-impact"><dt>Qué cambia en el cálculo</dt><dd>${guide.calculationImpact}</dd></div>
         </dl>
+        ${componentHotspotsHtml}
         <div class="inspection-context-legend" aria-label="Leyenda de contexto del circuito">
           <span><i data-context="upstream"></i>Anterior</span>
           <span><i data-context="selected"></i>Seleccionado</span>

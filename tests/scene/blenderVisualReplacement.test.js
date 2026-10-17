@@ -13,6 +13,8 @@ import { createIntegratedPlant } from '../../src/scene/integration/integratedPla
 import { createJawCrusherAsset } from '../../src/equipment/crushing/jawCrusher.js';
 import { createBallMillAsset } from '../../src/equipment/grinding/ballMill.js';
 import { createSlurryPumpAsset } from '../../src/equipment/classification/slurryPump.js';
+import { createCycloneClusterAsset } from '../../src/equipment/classification/cycloneCluster.js';
+import { createCipAsset } from '../../src/equipment/recovery/cip.js';
 import { createElutionAsset } from '../../src/equipment/recovery/elution.js';
 
 afterEach(() => {
@@ -30,6 +32,8 @@ describe('Blender visual replacements', () => {
       'STOCKPILE-RECLAIM',
       'EXCAVATOR-01',
       'TRUCK-01',
+      'TRUCK-02',
+      'TRUCK-03',
       'LOADER-01',
       'MILL-01',
       'SUMP-01',
@@ -79,6 +83,9 @@ describe('Blender visual replacements', () => {
 
   it('keeps haul-truck dynamics under semantic control instead of a canned clip', () => {
     expect(BLENDER_REPLACEMENT_SPECS['TRUCK-01'].semanticControl).toBe('haul-truck');
+    expect(BLENDER_REPLACEMENT_SPECS['TRUCK-02'].semanticControl).toBe('haul-truck');
+    expect(BLENDER_REPLACEMENT_SPECS['TRUCK-03'].semanticControl).toBe('haul-truck');
+    expect(BLENDER_REPLACEMENT_SPECS['LOADER-01'].semanticControl).toBe('wheel-loader');
     expect(BLENDER_REPLACEMENT_SPECS['EXCAVATOR-01'].playAllAnimations).toBe(true);
     expect(BLENDER_REPLACEMENT_SPECS['LOADER-01'].playAllAnimations).toBe(true);
   });
@@ -97,6 +104,26 @@ describe('Blender visual replacements', () => {
     expect(spec.keepProceduralUpdate).toBe(true);
     expect(spec.preserveProceduralOverlays).toContain('cyclone-1-swirl');
     expect(spec.preserveProceduralOverlays).toContain('cyclone-manifold-suspended-solids');
+    expect(spec.preserveProceduralOverlays).toContain('CLASS-01-v24-mechanical-access');
+    const asset = createCycloneClusterAsset();
+    const overlay = asset.root.getObjectByName('CLASS-01-v24-mechanical-access');
+    expect(overlay?.userData.v24MechanicalDetail).toBe(true);
+    expect(overlay?.getObjectByName('cyclone-service-ladder')).toBeTruthy();
+  });
+
+  it('adds only missing CIP access/pump hardware over the Blender train', () => {
+    const spec = BLENDER_REPLACEMENT_SPECS['CIP-ADSORPTION'];
+    expect(spec.preserveProceduralOverlays).toEqual([
+      'cip-access-ladder',
+      'cip-service-deck',
+      'cip-pump-a-skid',
+      'cip-pump-a-motor',
+      'cip-pump-b-skid',
+      'cip-pump-b-motor',
+    ]);
+    const asset = createCipAsset();
+    spec.preserveProceduralOverlays.forEach((name) => expect(asset.root.getObjectByName(name), name).toBeTruthy());
+    expect(spec.preserveProceduralOverlays.some((name) => /shell|tank|rail|agitator/i.test(name))).toBe(false);
   });
 
   it('keeps the ROM grizzly procedural overlay active over the Blender shell', () => {
@@ -124,7 +151,7 @@ describe('Blender visual replacements', () => {
 
   it('preserves only the stockpile reclaim motion overlay over its static GLB shell', () => {
     const spec = BLENDER_REPLACEMENT_SPECS['STOCKPILE-RECLAIM'];
-    expect(spec.preserveProceduralOverlays).toEqual(['STOCKPILE-RECLAIM-motion']);
+    expect(spec.preserveProceduralOverlays).toEqual(['STOCKPILE-RECLAIM-motion', 'STOCKPILE-RECLAIM-v24-feed-flow']);
   });
 
   it('preserves only educational interiors for mill, pumps and elution without procedural shell updates', () => {
@@ -148,6 +175,10 @@ describe('Blender visual replacements', () => {
 
     const elution = BLENDER_REPLACEMENT_SPECS['ELUTION-SKID'];
     expect(elution.keepProceduralUpdate).not.toBe(true);
+    expect(elution.educationalHostProcessNodes.map((item) => item.name)).toEqual([
+      'elution-column-solution',
+      'elution-tank-liquid',
+    ]);
     expect(elution.preserveProceduralOverlays).toContain('elution-column-solution');
     expect(elution.preserveProceduralOverlays).toContain('elution-tank-liquid');
     expect(elution.preserveProceduralOverlays.filter((name) => name.startsWith('elution-hx-tube-'))).toHaveLength(9);

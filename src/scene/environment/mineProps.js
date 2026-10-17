@@ -463,7 +463,7 @@ function createLampPosts() {
   const steel = createIndustrialMaterial('darkSteel');
   const lamp = createIndustrialMaterial('safetyYellow', { emissive: 0xffcf70, emissiveIntensity: 0.22 });
   const points = [
-    [-112, -26], [-78, -34], [-44, -36], [-8, -38], [46, -34], [92, -30], [138, -28],
+    [-102, -14], [-78, -34], [-44, -36], [-8, -38], [46, -34], [92, -30], [138, -28],
     [182, -18], [228, -4], [178, -102], [220, -110], [258, -96], [184, 45], [218, 47],
   ];
   points.forEach(([x, z], index) => {
@@ -490,7 +490,9 @@ function createIndustrialControlBuilding() {
   const dark = createIndustrialMaterial('darkSteel', { color: 0x495257 });
   const safety = createIndustrialMaterial('safetyYellow');
 
-  const x = 274; const z = -72; const baseY = getTerrainHeight(x, z);
+  // V24: place the existing MCC/control room in the utility cluster instead of
+  // overlapping the ROAD-04 recovery access alignment.
+  const x = 120; const z = -105; const baseY = getTerrainHeight(x, z);
   addBox(root, 'control-mcc-pad', [18, 0.22, 11], [x, baseY + 0.11, z], concrete);
   addBox(root, 'control-mcc-building', [15, 4.4, 8.5], [x, baseY + 2.42, z], wall);
   addBox(root, 'control-mcc-flat-roof', [15.8, 0.28, 9.3], [x, baseY + 4.74, z], roof);

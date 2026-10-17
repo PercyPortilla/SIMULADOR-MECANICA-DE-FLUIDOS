@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { clone as cloneSkeletonAware } from 'three/addons/utils/SkeletonUtils.js';
+import { SECONDARY_SHADOW_DETAIL } from '../performance/secondaryShadowPolicy.js';
 
 export const BLENDER_REPLACEMENT_SPECS = Object.freeze({
   'ROM-HOPPER': Object.freeze({
@@ -19,7 +20,7 @@ export const BLENDER_REPLACEMENT_SPECS = Object.freeze({
   }),
   'STOCKPILE-RECLAIM': Object.freeze({
     url: 'models/pulpa-blender/STOCKPILE-RECLAIM.glb',
-    preserveProceduralOverlays: Object.freeze(['STOCKPILE-RECLAIM-motion']),
+    preserveProceduralOverlays: Object.freeze(['STOCKPILE-RECLAIM-motion', 'STOCKPILE-RECLAIM-v24-feed-flow']),
   }),
   'EXCAVATOR-01': Object.freeze({
     url: 'models/pulpa-blender/MINING-SHOVEL.glb',
@@ -30,9 +31,18 @@ export const BLENDER_REPLACEMENT_SPECS = Object.freeze({
     url: 'models/pulpa-blender/HAUL-TRUCK.glb',
     semanticControl: 'haul-truck',
   }),
+  'TRUCK-02': Object.freeze({
+    url: 'models/pulpa-blender/HAUL-TRUCK.glb',
+    semanticControl: 'haul-truck',
+  }),
+  'TRUCK-03': Object.freeze({
+    url: 'models/pulpa-blender/HAUL-TRUCK.glb',
+    semanticControl: 'haul-truck',
+  }),
   'LOADER-01': Object.freeze({
     url: 'models/pulpa-blender/WHEEL-LOADER.glb',
     playAllAnimations: true,
+    semanticControl: 'wheel-loader',
     materialLoadNode: 'WHEEL-LOADER_BUCKET_ORE',
   }),
   'MILL-01': Object.freeze({
@@ -44,6 +54,7 @@ export const BLENDER_REPLACEMENT_SPECS = Object.freeze({
   }),
   'SUMP-01': Object.freeze({
     url: 'models/pulpa-blender/SUMP-01.glb',
+    keepProceduralUpdate: true,
     preserveProceduralOverlays: Object.freeze(['SUMP-01-slurry', 'SUMP-01-suspended-solids']),
   }),
   'SLURRY-PUMP-01': Object.freeze({
@@ -64,23 +75,28 @@ export const BLENDER_REPLACEMENT_SPECS = Object.freeze({
       'cyclone-5-swirl',
       'cyclone-6-swirl',
       'cyclone-manifold-suspended-solids',
+      'CLASS-01-v24-mechanical-access',
     ]),
   }),
   'R-01': Object.freeze({
     url: 'models/pulpa-blender/LEACH-REACTOR.glb',
     expectedAnimation: 'LEACH_REACTOR_Agitator',
+    educationalProcessNodes: Object.freeze([{ name: 'LEACH-REACTOR_SLURRY', mode: 'liquid', phase: 0.0 }]),
   }),
   'R-02': Object.freeze({
     url: 'models/pulpa-blender/LEACH-REACTOR.glb',
     expectedAnimation: 'LEACH_REACTOR_Agitator',
+    educationalProcessNodes: Object.freeze([{ name: 'LEACH-REACTOR_SLURRY', mode: 'liquid', phase: 0.9 }]),
   }),
   'R-03': Object.freeze({
     url: 'models/pulpa-blender/LEACH-REACTOR.glb',
     expectedAnimation: 'LEACH_REACTOR_Agitator',
+    educationalProcessNodes: Object.freeze([{ name: 'LEACH-REACTOR_SLURRY', mode: 'liquid', phase: 1.8 }]),
   }),
   'R-04': Object.freeze({
     url: 'models/pulpa-blender/LEACH-REACTOR.glb',
     expectedAnimation: 'LEACH_REACTOR_Agitator',
+    educationalProcessNodes: Object.freeze([{ name: 'LEACH-REACTOR_SLURRY', mode: 'liquid', phase: 2.7 }]),
   }),
   'PUMP-01': Object.freeze({
     url: 'models/pulpa-blender/SLURRY-PUMP-01.glb',
@@ -92,9 +108,27 @@ export const BLENDER_REPLACEMENT_SPECS = Object.freeze({
   'CIP-ADSORPTION': Object.freeze({
     url: 'models/pulpa-blender/CIP-ADSORPTION.glb',
     expectedAnimation: 'CIP_Agitators',
+    educationalProcessNodes: Object.freeze([
+      { name: 'CIP-ADSORPTION_SLURRY_-500', mode: 'liquid', phase: 0.0 },
+      { name: 'CIP-ADSORPTION_SLURRY_-167', mode: 'liquid', phase: 0.7 },
+      { name: 'CIP-ADSORPTION_SLURRY_+167', mode: 'liquid', phase: 1.4 },
+      { name: 'CIP-ADSORPTION_SLURRY_+500', mode: 'liquid', phase: 2.1 },
+    ]),
+    preserveProceduralOverlays: Object.freeze([
+      'cip-access-ladder',
+      'cip-service-deck',
+      'cip-pump-a-skid',
+      'cip-pump-a-motor',
+      'cip-pump-b-skid',
+      'cip-pump-b-motor',
+    ]),
   }),
   'ELUTION-SKID': Object.freeze({
     url: 'models/pulpa-blender/ELUTION-SKID.glb',
+    educationalHostProcessNodes: Object.freeze([
+      { name: 'elution-column-solution', mode: 'liquid', phase: 0.3 },
+      { name: 'elution-tank-liquid', mode: 'liquid', phase: 1.1 },
+    ]),
     preserveProceduralOverlays: Object.freeze([
       'elution-column-solution',
       'elution-tank-liquid',
@@ -111,16 +145,25 @@ export const BLENDER_REPLACEMENT_SPECS = Object.freeze({
   }),
   'EW-CELLS': Object.freeze({
     url: 'models/pulpa-blender/EW-CELLS.glb',
+    educationalProcessNodes: Object.freeze([
+      { name: 'EW-CELLS_ELECTROLYTE_1', mode: 'liquid', phase: 0.0 },
+      { name: 'EW-CELLS_ELECTROLYTE_2', mode: 'liquid', phase: 0.8 },
+      { name: 'EW-CELLS_ELECTROLYTE_3', mode: 'liquid', phase: 1.6 },
+      { name: 'EW-CELLS_ELECTROLYTE_4', mode: 'liquid', phase: 2.4 },
+    ]),
   }),
   'SMELTING-FURNACE': Object.freeze({
     url: 'models/pulpa-blender/SMELTING-FURNACE.glb',
     expectedAnimation: 'SMELTING_FURNACE_Tilt',
+    educationalProcessNodes: Object.freeze([
+      { name: 'SMELTING-FURNACE_MELT', mode: 'glow', phase: 0.0 },
+      { name: 'SMELTING-FURNACE_CRUCIBLE_GLOW', mode: 'glow', phase: 1.1 },
+    ]),
   }),
 });
 
 const loader = new GLTFLoader();
 const sourceCache = new Map();
-const MINOR_SHADOW_DETAIL = /(_RAIL_POST|_LADDER_RUNG|_MOTOR_FIN|_FLYWHEEL_SPOKE|_JAW_RIB)/i;
 
 export function cloneBlenderReplacementSource(source) {
   // Each equipment instance needs its own Object3D transforms and animation
@@ -130,7 +173,7 @@ export function cloneBlenderReplacementSource(source) {
 }
 
 export function shouldCastImportedShadow(object) {
-  return !MINOR_SHADOW_DETAIL.test(String(object?.name || ''));
+  return !SECONDARY_SHADOW_DETAIL.test(String(object?.name || ''));
 }
 
 function inferInspectionRole(object) {
@@ -172,6 +215,43 @@ function getImportedNode(controller, name) {
 
 function restRotation(node, axisIndex) {
   return Number(node?.userData?.blenderRestRotation?.[axisIndex] ?? 0);
+}
+
+export function updateImportedEducationalProcessVisuals(scene, descriptors = [], elapsedSeconds = 0) {
+  if (!scene || !Array.isArray(descriptors) || !Number.isFinite(elapsedSeconds)) return 0;
+  let updated = 0;
+  descriptors.forEach((descriptor) => {
+    const node = scene.getObjectByName?.(descriptor.name);
+    if (!node) return;
+    node.userData.v24EducationalProcessVisual = true;
+    node.userData.visualOnly = true;
+    node.userData.physicsModel = 'neutral-educational-cue';
+    const phase = Number(descriptor.phase || 0);
+    if (descriptor.mode === 'liquid') {
+      node.userData.v24RestScale ||= node.scale.toArray();
+      node.userData.v24RestRotationY ??= node.rotation.y;
+      const [sx, sy, sz] = node.userData.v24RestScale;
+      node.scale.set(sx, sy * (1 + Math.sin(elapsedSeconds * 1.35 + phase) * 0.0045), sz);
+      node.rotation.y = Number(node.userData.v24RestRotationY) + Math.sin(elapsedSeconds * 0.42 + phase) * 0.012;
+      updated += 1;
+      return;
+    }
+    if (descriptor.mode === 'glow') {
+      node.traverse((object) => {
+        if (!object.material) return;
+        const materials = Array.isArray(object.material) ? object.material : [object.material];
+        materials.filter(Boolean).forEach((material) => {
+          if (!Number.isFinite(material.emissiveIntensity)) return;
+          material.userData.v24RestEmissiveIntensity ??= material.emissiveIntensity;
+          const base = Number(material.userData.v24RestEmissiveIntensity || 0);
+          material.emissiveIntensity = Math.max(0, base * (1 + Math.sin(elapsedSeconds * 2.5 + phase) * 0.10));
+          material.needsUpdate = true;
+        });
+      });
+      updated += 1;
+    }
+  });
+  return updated;
 }
 
 export function stabilizeImportedRotationPivot(scene, { nodeName, axis = 'x' } = {}) {
@@ -255,6 +335,31 @@ function decorateHaulTruckSemantics(handle, controller) {
   handle.root.userData.blenderSemanticControl = 'haul-truck';
 }
 
+function decorateWheelLoaderSemantics(handle, controller) {
+  const originalAdvanceWheelTravel = handle.advanceWheelTravel?.bind(handle);
+  const wheelRadiusM = 1.25;
+  let cumulativeTravelM = 0;
+  const wheelNames = ['FL', 'FR', 'RL', 'RR'].map((code) => `WHEEL-LOADER_WHEEL_${code}`);
+
+  const syncWheelTravel = () => {
+    wheelNames.forEach((name) => {
+      const wheel = getImportedNode(controller, name);
+      if (wheel) wheel.rotation.z = restRotation(wheel, 2) - cumulativeTravelM / wheelRadiusM;
+    });
+  };
+
+  if (originalAdvanceWheelTravel) {
+    handle.advanceWheelTravel = (distanceM) => {
+      originalAdvanceWheelTravel(distanceM);
+      if (!Number.isFinite(distanceM) || Math.abs(distanceM) < 1e-8) return;
+      cumulativeTravelM += distanceM;
+      syncWheelTravel();
+    };
+  }
+  handle.syncSemanticWheelTravel = syncWheelTravel;
+  handle.root.userData.blenderSemanticControl = 'wheel-loader';
+}
+
 function makeFallbackGroup(hostRoot, instanceId) {
   const fallback = new THREE.Group();
   fallback.name = `${instanceId}-PROCEDURAL-FALLBACK`;
@@ -328,6 +433,7 @@ export function attachBlenderVisualReplacement({
   let enabled = true;
   let disposed = false;
   let materialLoadVisible = true;
+  let educationalElapsed = 0;
 
   hostRoot.userData.blenderVisualStatus = 'loading';
 
@@ -390,8 +496,17 @@ export function attachBlenderVisualReplacement({
     get loaded() { return Boolean(imported); },
     get scene() { return imported; },
     update(dt) {
-      if (!enabled || !mixer || !Number.isFinite(dt) || dt <= 0) return;
-      mixer.update(Math.min(dt, 0.1));
+      if (!enabled || !Number.isFinite(dt) || dt <= 0) return;
+      const safeDt = Math.min(dt, 0.1);
+      if (mixer) mixer.update(safeDt);
+      if (imported && spec.educationalProcessNodes?.length) {
+        educationalElapsed += safeDt;
+        updateImportedEducationalProcessVisuals(imported, spec.educationalProcessNodes, educationalElapsed);
+      }
+      if (spec.educationalHostProcessNodes?.length) {
+        educationalElapsed += imported && spec.educationalProcessNodes?.length ? 0 : safeDt;
+        updateImportedEducationalProcessVisuals(hostRoot, spec.educationalHostProcessNodes, educationalElapsed);
+      }
     },
     setAnimationEnabled(value) {
       enabled = Boolean(value);
@@ -436,11 +551,17 @@ export function decorateHandleWithBlenderReplacement(handle, instanceId) {
   if (spec.semanticControl === 'haul-truck') {
     decorateHaulTruckSemantics(handle, controller);
   }
+  if (spec.semanticControl === 'wheel-loader') {
+    decorateWheelLoaderSemantics(handle, controller);
+  }
 
   if (spec.materialLoadNode) {
     handle.setMaterialLoadVisible = (visible) => controller?.setMaterialLoadVisible(visible);
   }
-  handle.setVisualAnimationTime = (seconds) => controller?.setAnimationTime(seconds);
+  handle.setVisualAnimationTime = (seconds) => {
+    controller?.setAnimationTime(seconds);
+    handle.syncSemanticWheelTravel?.();
+  };
 
   handle.update = (dt) => {
     if (!controller?.loaded || spec.keepProceduralUpdate) originalUpdate?.(dt);

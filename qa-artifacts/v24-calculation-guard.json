@@ -1,0 +1,14 @@
+﻿{
+    "baseline":  "V23 f4d112a3c1b858e39a12c8b18ef53763f47ebf17",
+    "protected_dirs":  [
+                           "controller",
+                           "core",
+                           "state",
+                           "process",
+                           "reporting"
+                       ],
+    "differences":  0,
+    "items":  [
+
+              ]
+}

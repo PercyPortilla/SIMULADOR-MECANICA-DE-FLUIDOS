@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { boxMesh, createAssetHandle, cylinderMesh, tubeBetween } from '../common/assetUtils.js';
 import { createEquipmentMaterial } from '../common/materialLibrary.js';
-import { createHandrail } from '../common/components.js';
+import { createHandrail, createLadder } from '../common/components.js';
 import { animateSuspendedSolids, createSuspendedSolidsCloud } from '../common/slurryVisuals.js';
 
 const DIMENSIONS = Object.freeze({ length: 5.4, width: 5.4, height: 5.4 });
@@ -44,6 +44,19 @@ export function createCycloneClusterAsset() {
   const rail = createHandrail({ length: 4.5, name: 'cyclone-platform-rail', posts: 4 });
   rail.position.set(0, 2.7, -2.45);
   root.add(rail);
+
+  // V24 Block 3: the Blender cluster already provides platforms/rails, but it
+  // has no access ladder. Keep this as one minimal hybrid overlay rather than
+  // duplicating the complete procedural frame.
+  const mechanicalAccess = new THREE.Group();
+  mechanicalAccess.name = 'CLASS-01-v24-mechanical-access';
+  mechanicalAccess.userData.v24MechanicalDetail = true;
+  const accessLadder = createLadder({ height: 2.62, width: 0.72, name: 'cyclone-service-ladder' });
+  accessLadder.position.set(-2.46, 0.04, -2.34);
+  mechanicalAccess.add(accessLadder);
+  root.add(mechanicalAccess);
+  root.userData.v24MechanicalDetail = true;
+  root.userData.v24MechanicalDetailParts = 1;
 
   const feedManifold = cylinderMesh('cyclone-feed-manifold', 0.28, 0.28, 3.2, createEquipmentMaterial('carbonSteelPipe'), [0, 3.68, 0], 28, { role: 'structure' });
   root.add(feedManifold);

@@ -67,6 +67,15 @@ export function createCipAsset() {
     pump.position.set(x, 0.62, -3.0);
     root.add(pump);
   }
+  root.userData.v24MechanicalDetail = true;
+  root.userData.v24MechanicalDetailParts = Object.freeze([
+    'cip-access-ladder',
+    'cip-service-deck',
+    'cip-pump-a-skid',
+    'cip-pump-a-motor',
+    'cip-pump-b-skid',
+    'cip-pump-b-motor',
+  ]);
 
   for (let i = 0; i < 3; i += 1) {
     const x0 = tanks[i].position.x + 1.55;

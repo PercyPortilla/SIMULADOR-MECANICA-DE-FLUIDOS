@@ -5,6 +5,8 @@ import { createHaulRoads } from './environment/haulRoads.js';
 import { createIndustrialPads } from './environment/industrialPads.js';
 import { createCivilInfrastructure } from './environment/civilInfrastructure.js';
 import { createMineProps } from './environment/mineProps.js';
+import { createOperationalSurfaceDetails } from './environment/operationalSurfaceDetails.js';
+import { applySecondaryShadowPolicy } from './performance/secondaryShadowPolicy.js';
 import { getTerrainHeight, getTerrainZone, getZoneElevation } from './environment/terrainHeight.js';
 import { getSiteOverviewBounds } from './config/siteDesign.js';
 import { getPlantLayoutBounds, getPlantZone } from './layout/plantLayout.js';
@@ -20,6 +22,9 @@ import { createIntegratedAnimations } from './integration/integratedAnimations.j
 import { createEquipmentInspectionSystem } from './inspection/equipmentInspection.js';
 import { createGeotechnicalSystem } from './geotech/geotechnicalSystem.js';
 import { attachReceptionEarthworkBlenderOverlay } from './integration/blenderTerrainOverlay.js';
+import { createProcessInstrumentation } from './infrastructure/processInstrumentation.js';
+import { createIndustrialSafety } from './infrastructure/industrialSafety.js';
+import { createIndustrialInfrastructure } from './infrastructure/industrialInfrastructure.js';
 
 export const INSPECTION_CONTROL_LIMITS = Object.freeze({ minDistance: 0.8, maxDistance: 1200 });
 
@@ -288,6 +293,9 @@ export function createBaseScene() {
   const mineProps = createMineProps();
   environmentRoot.add(mineProps);
 
+  const operationalSurfaceDetails = createOperationalSurfaceDetails();
+  environmentRoot.add(operationalSurfaceDetails);
+
   const processRoute = getProcessRoute();
   environmentRoot.userData.processRouteId = processRoute.id;
   environmentRoot.userData.processRouteValidated = processRoute.validation.isValidated;
@@ -302,6 +310,15 @@ export function createBaseScene() {
     pipe1State: getState().transport.pipe1,
   });
   environmentRoot.add(integratedPiping.root);
+
+  const processInstrumentation = createProcessInstrumentation({ equipmentSystem });
+  environmentRoot.add(processInstrumentation.root);
+
+  const industrialSafety = createIndustrialSafety();
+  environmentRoot.add(industrialSafety);
+
+  const industrialInfrastructure = createIndustrialInfrastructure();
+  environmentRoot.add(industrialInfrastructure);
 
   const mobileEquipment = createIntegratedMobile({
     plantRoot: equipmentSystem.root,
@@ -392,6 +409,11 @@ export function createBaseScene() {
   groundBounce.userData.lightingRole = 'ground-bounce';
   environmentRoot.add(groundBounce);
 
+  // V24 Block 11: tiny repeated details retain geometry/material richness but do
+  // not need their own shadow-map silhouettes. Major equipment, terrain and
+  // structural members keep normal cast/receive behavior.
+  applySecondaryShadowPolicy(environmentRoot);
+
   return {
     scene,
     environmentRoot,
@@ -404,10 +426,14 @@ export function createBaseScene() {
     industrialPads,
     civilInfrastructure,
     mineProps,
+    operationalSurfaceDetails,
     processRoute,
     equipmentSystem,
     pipe1System,
     integratedPiping,
+    processInstrumentation,
+    industrialSafety,
+    industrialInfrastructure,
     mineralFrontEnd,
     frontEndConveyors,
     grindingFeedConveyor,

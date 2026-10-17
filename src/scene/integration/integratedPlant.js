@@ -38,6 +38,59 @@ function structuralMemberBetween(name, start, end, thickness, material) {
   return mesh;
 }
 
+function createMaterialTransferCascade({ name, start, end, count = 12, radius = 0.11, speedMps = 1.15 } = {}) {
+  const group = new THREE.Group();
+  group.name = name;
+  group.userData.visualOnly = true;
+  group.userData.educationalMaterialFlow = true;
+  group.userData.sourcePoint = start.toArray();
+  group.userData.targetPoint = end.toArray();
+
+  const geometry = new THREE.DodecahedronGeometry(radius, 0);
+  const material = createIndustrialMaterial('mineral', { color: 0x7f6046, roughness: 1, metalness: 0 });
+  const instances = new THREE.InstancedMesh(geometry, material, count);
+  instances.name = `${name}-ore-instances`;
+  instances.castShadow = false;
+  instances.receiveShadow = false;
+  instances.userData.inspectionRole = 'interior';
+  group.add(instances);
+
+  const travel = end.clone().sub(start);
+  const length = Math.max(0.25, travel.length());
+  const tangent = travel.clone().normalize();
+  const reference = Math.abs(tangent.y) > 0.9 ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 1, 0);
+  const side = new THREE.Vector3().crossVectors(tangent, reference).normalize();
+  const phases = Array.from({ length: count }, (_, index) => (index / count + (index % 4) * 0.017) % 1);
+  const matrix = new THREE.Matrix4();
+  const quaternion = new THREE.Quaternion();
+  const scale = new THREE.Vector3();
+  const position = new THREE.Vector3();
+
+  function render() {
+    phases.forEach((phase, index) => {
+      position.copy(start).lerp(end, phase);
+      position.addScaledVector(side, Math.sin(index * 2.37 + phase * Math.PI * 2) * radius * 1.35);
+      quaternion.setFromEuler(new THREE.Euler(phase * 2.1 + index * 0.17, index * 0.41, phase * 1.3));
+      const s = 0.78 + (index % 4) * 0.09;
+      scale.set(s, s * 0.86, s);
+      matrix.compose(position, quaternion, scale);
+      instances.setMatrixAt(index, matrix);
+    });
+    instances.instanceMatrix.needsUpdate = true;
+  }
+  render();
+
+  return {
+    root: group,
+    update(dt) {
+      if (!Number.isFinite(dt) || dt <= 0) return;
+      const delta = Math.min(dt, 0.1) * speedMps / length;
+      phases.forEach((phase, index) => { phases[index] = (phase + delta) % 1; });
+      render();
+    },
+  };
+}
+
 function createStockpileFeedTransferTower(source, target) {
   const root = new THREE.Group();
   root.name = 'CV-02-STOCKPILE-TRANSFER-TOWER';
@@ -388,6 +441,27 @@ export function createIntegratedPlant() {
   const stockpileFeedTower = createStockpileFeedTransferTower(cv02Source, cv02Target);
   root.add(stockpileFeedTower);
 
+  // V24 Block 2: short, visual-only transfer cascades close the perceptual gaps
+  // between moving belts and the receiving equipment. They use the existing
+  // authoritative ports/directions and never alter route geometry or capacity.
+  const materialTransfers = [];
+  const transferSpecs = [
+    ['CV-01-TO-CRUSHER-MATERIAL', 'PRIMARY-CRUSHER', 'feedIn', 1.10, 0.34, 14],
+    ['CV-02-TO-STOCKPILE-MATERIAL', 'STOCKPILE-RECLAIM', 'feedIn', 1.25, 0.48, 16],
+    ['CV-03-TO-MILL-MATERIAL', 'MILL-01', 'feedIn', 1.05, 0.40, 14],
+  ];
+  transferSpecs.forEach(([name, equipmentId, portId, upstreamM, liftM, count]) => {
+    const target = registry.getPortWorldPosition(equipmentId, portId);
+    const direction = registry.getPortWorldDirection(equipmentId, portId);
+    const start = target.clone().addScaledVector(direction, -upstreamM).add(new THREE.Vector3(0, liftM, 0));
+    const end = target.clone().addScaledVector(direction, 0.10);
+    const transfer = createMaterialTransferCascade({ name, start, end, count });
+    transfer.root.userData.receivingEquipmentId = equipmentId;
+    transfer.root.userData.receivingPortId = portId;
+    root.add(transfer.root);
+    materialTransfers.push(transfer);
+  });
+
   // Material chute from ROM hopper to apron feeder remains external to the frozen
   // catalog assets, but now has explicit converging geometry and its own material flow.
   const romOut = registry.getPortWorldPosition('ROM-HOPPER', 'dischargeOut');
@@ -402,6 +476,7 @@ export function createIntegratedPlant() {
     registry,
     conveyors,
     stockpileFeedTower,
+    materialTransfers,
     stockpile,
     sump,
     getEquipment: (id) => registry.getEquipment(id),
@@ -412,6 +487,7 @@ export function createIntegratedPlant() {
       registry.updateAssets(dt);
       if (animationsEnabled) {
         romFeederTransfer.update(dt);
+        materialTransfers.forEach((transfer) => transfer.update(dt));
         stockpile.update?.(dt);
         sump.update?.(dt);
       }

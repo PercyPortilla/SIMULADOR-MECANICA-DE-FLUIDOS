@@ -1,0 +1,19 @@
+{
+  "boot": {
+    "title": "PULPA LAB V2",
+    "releaseTag": "V23 · Detalle industrial e Inspección",
+    "sceneError": "",
+    "targets": 38,
+    "animationsEnabled": true,
+    "haulTruckGlbRequested": true,
+    "shovelGlbRequested": true,
+    "loaderGlbRequested": true
+  },
+  "toggle": {
+    "found": true,
+    "offStateChecked": false,
+    "resumedChecked": true
+  },
+  "runtimeErrors": [],
+  "networkFailures": []
+}
