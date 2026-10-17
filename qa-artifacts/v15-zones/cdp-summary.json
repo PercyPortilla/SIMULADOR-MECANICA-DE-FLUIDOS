@@ -1,0 +1,21 @@
+{
+  "cameras": [
+    "general",
+    "reception",
+    "crushing",
+    "grinding",
+    "leaching",
+    "recovery"
+  ],
+  "runtimeErrors": [],
+  "networkFailures": [],
+  "loadedHybridModules": [
+    "CONVEYOR-HEAD-MODULE.glb",
+    "CONVEYOR-IDLER-MODULE.glb",
+    "CONVEYOR-TAIL-MODULE.glb",
+    "CONVEYOR-TRANSFER-HOOD.glb",
+    "PIPE-FLANGE-MODULE.glb",
+    "PIPE-SADDLE-MODULE.glb",
+    "PIPE-VALVE-MODULE.glb"
+  ]
+}

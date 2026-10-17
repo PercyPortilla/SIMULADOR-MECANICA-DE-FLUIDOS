@@ -1,0 +1,13 @@
+{
+  "baseline": "V19_ACADEMIC_COMPARATOR",
+  "changed": [
+    "src/main.js",
+    "src/styles.css",
+    "src/ui/inspectionGuide.js"
+  ],
+  "added": [
+    "src/ui/academicLab.js",
+    "src/ui/academicLabReport.js"
+  ],
+  "missing": []
+}

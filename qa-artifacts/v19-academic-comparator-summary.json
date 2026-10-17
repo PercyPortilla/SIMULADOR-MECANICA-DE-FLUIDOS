@@ -1,0 +1,30 @@
+{
+  "runtimeErrors": [],
+  "networkFailures": [],
+  "initialState": {
+    "solids": "35",
+    "model": "bingham",
+    "left": "newtonian-reference",
+    "right": "high-solids-bingham"
+  },
+  "defaultComparison": {
+    "rows": 9,
+    "text": "A · Newtoniano\nB · Sólidos altos\nA: turbulent · validated\nB: laminar · validated-laminar\nMétrica\tA\tB\tΔ B−A\nDensidad de pulpa\t1278.6 kg/m³\t1452.1 kg/m³\t+173.4 kg/m³ (+13.6%)\nCaudal\t0.02121 m³/s\t0.01590 m³/s\t-0.005301 m³/s (-25.0%)\nRe / Re*\t28,770\t447.7\t-28,322 (-98.4%)\nΔP requerida\t79.57 kPa\t128.4 kPa\t+48.85 kPa (+61.4%)\nCarga total\t6.346 m\t9.018 m\t+2.672 m (+42.1%)\nPotencia eléctrica\t2.351 kW\t2.846 kW\t+0.4947 kW (+21.0%)\nEnergía anual\t18.81 MWh/año\t22.77 MWh/año\t+3.958 MWh/año (+21.0%)\nResidencia lixiviación\t4.716 h\t6.288 h\t+1.572 h (+33.3%)\nConversión CSTR\t35.97 %\t44.23 %\t+8.265 % (+23.0%)\n¿POR QUÉ CAMBIA?\nConstitución de la pulpa\n\nLa composición cambia la densidad de mezcla. PULPA LAB no infiere automáticamente τ₀, K, n o μp desde Cw; cualquier cambio reológico adicional proviene de entradas explícitas.\n\nLey constitutiva\n\nCambió el modelo o sus parámetros reológicos, por lo que cambia la relación entre esfuerzo y tasa de corte y, con ella, la pérdida distribuida calculada.\n\nVelocidad y caudal\n\nCon diámetro fijo, Q = V·πD²/4. Cambiar V modifica directamente el caudal, los términos dinámicos de pérdida y el tiempo de residencia aguas abajo.",
+    "solids": "35",
+    "model": "bingham"
+  },
+  "staticHeadComparison": "A · Newtoniano\nB · Carga estática\nA: turbulent · validated\nB: turbulent · validated\nMétrica\tA\tB\tΔ B−A\nΔP requerida\t79.57 kPa\t279.7 kPa\t+200.1 kPa (+251.5%)\nCarga total\t6.346 m\t22.30 m\t+15.96 m (+251.5%)\nPotencia eléctrica\t2.351 kW\t8.265 kW\t+5.914 kW (+251.5%)\nEnergía anual\t18.81 MWh/año\t66.12 MWh/año\t+47.31 MWh/año (+251.5%)\n¿POR QUÉ CAMBIA?\nLongitud hidráulica\n\nLa pérdida distribuida aumenta con la longitud hidráulica del tramo. En el simulador, L es una entrada de cálculo y no desplaza físicamente los equipos 3D.\n\nCarga estática\n\nEl desnivel cambia la componente estática ρgΔz y, por tanto, la presión requerida, la carga total y la potencia de bombeo.",
+  "scopeComparison": "A · Herschel–Bulkley\nB · Power Law\nA: laminar · validated-laminar\nB: turbulent · educational-estimate\nMétrica\tA\tB\tΔ B−A\nDensidad de pulpa\t1389.3 kg/m³\t1331.7 kg/m³\t-57.59 kg/m³ (-4.1%)\nCaudal\t0.01590 m³/s\t0.01767 m³/s\t+0.001767 m³/s (+11.1%)\nRe / Re*\t1043.8\t6167.4\t+5123.6 (+490.9%)\nΔP requerida\t92.24 kPa\t78.61 kPa\t-13.64 kPa (-14.8%)\nCarga total\t6.771 m\t6.019 m\t-0.7515 m (-11.1%)\nPotencia eléctrica\t2.044 kW\t1.936 kW\t-0.1087 kW (-5.3%)\nEnergía anual\t16.36 MWh/año\t15.49 MWh/año\t-0.8695 MWh/año (-5.3%)\nResidencia lixiviación\t6.288 h\t5.659 h\t-0.6288 h (-10.0%)\nConversión CSTR\t44.23 %\t41.10 %\t-3.136 % (-7.1%)\n¿POR QUÉ CAMBIA?\nConstitución de la pulpa\n\nLa composición cambia la densidad de mezcla. PULPA LAB no infiere automáticamente τ₀, K, n o μp desde Cw; cualquier cambio reológico adicional proviene de entradas explícitas.\n\nLey constitutiva\n\nCambió el modelo o sus parámetros reológicos, por lo que cambia la relación entre esfuerzo y tasa de corte y, con ella, la pérdida distribuida calculada.\n\nVelocidad y caudal\n\nCon diámetro fijo, Q = V·πD²/4. Cambiar V modifica directamente el caudal, los términos dinámicos de pérdida y el tiempo de residencia aguas abajo.\n\nLímite de aplicabilidad\n\nAl menos uno de los casos está fuera de la rama no Newtoniana laminar validada. Prioriza modelStatus y resultQuality sobre el valor numérico de ΔP.",
+  "mobile": {
+    "documentWidth": 390,
+    "viewportWidth": 390,
+    "panel": {
+      "x": 20,
+      "width": 350
+    },
+    "table": {
+      "x": 31,
+      "width": 328
+    }
+  }
+}

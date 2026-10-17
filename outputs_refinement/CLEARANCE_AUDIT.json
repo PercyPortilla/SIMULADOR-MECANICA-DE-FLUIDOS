@@ -1,0 +1,703 @@
+{
+  "generatedAt": "2026-10-10T20:57:03.964Z",
+  "checks": 139,
+  "passed": 139,
+  "failed": [],
+  "checksDetail": [
+    {
+      "id": "fixed-overlap:ROM-HOPPER:SLURRY-PUMP-01",
+      "ok": true,
+      "details": "gapX=210.85 gapZ=19.07"
+    },
+    {
+      "id": "fixed-overlap:ROM-HOPPER:SMELTING-FURNACE",
+      "ok": true,
+      "details": "gapX=342.55 gapZ=52.50"
+    },
+    {
+      "id": "fixed-overlap:APRON-FEEDER:ROM-HOPPER",
+      "ok": true,
+      "details": "gapX=0.65 gapZ=-6.00"
+    },
+    {
+      "id": "fixed-overlap:APRON-FEEDER:PRIMARY-CRUSHER",
+      "ok": true,
+      "details": "gapX=4.50 gapZ=-3.50"
+    },
+    {
+      "id": "fixed-overlap:APRON-FEEDER:MILL-01",
+      "ok": true,
+      "details": "gapX=169.90 gapZ=19.55"
+    },
+    {
+      "id": "fixed-overlap:APRON-FEEDER:SLURRY-PUMP-01",
+      "ok": true,
+      "details": "gapX=201.80 gapZ=22.27"
+    },
+    {
+      "id": "fixed-overlap:APRON-FEEDER:CLASS-01",
+      "ok": true,
+      "details": "gapX=218.50 gapZ=21.90"
+    },
+    {
+      "id": "fixed-overlap:APRON-FEEDER:R-01",
+      "ok": true,
+      "details": "gapX=255.40 gapZ=50.80"
+    },
+    {
+      "id": "fixed-overlap:APRON-FEEDER:R-02",
+      "ok": true,
+      "details": "gapX=275.40 gapZ=50.80"
+    },
+    {
+      "id": "fixed-overlap:APRON-FEEDER:R-03",
+      "ok": true,
+      "details": "gapX=295.40 gapZ=50.80"
+    },
+    {
+      "id": "fixed-overlap:APRON-FEEDER:R-04",
+      "ok": true,
+      "details": "gapX=315.40 gapZ=50.80"
+    },
+    {
+      "id": "fixed-overlap:APRON-FEEDER:CIP-ADSORPTION",
+      "ok": true,
+      "details": "gapX=259.30 gapZ=54.90"
+    },
+    {
+      "id": "fixed-overlap:APRON-FEEDER:ELUTION-SKID",
+      "ok": true,
+      "details": "gapX=286.50 gapZ=55.80"
+    },
+    {
+      "id": "fixed-overlap:APRON-FEEDER:EW-CELLS",
+      "ok": true,
+      "details": "gapX=308.80 gapZ=55.70"
+    },
+    {
+      "id": "fixed-overlap:APRON-FEEDER:SMELTING-FURNACE",
+      "ok": true,
+      "details": "gapX=333.50 gapZ=55.70"
+    },
+    {
+      "id": "fixed-overlap:PRIMARY-CRUSHER:ROM-HOPPER",
+      "ok": true,
+      "details": "gapX=13.55 gapZ=-6.70"
+    },
+    {
+      "id": "fixed-overlap:PRIMARY-CRUSHER:SLURRY-PUMP-01",
+      "ok": true,
+      "details": "gapX=191.90 gapZ=21.57"
+    },
+    {
+      "id": "fixed-overlap:PRIMARY-CRUSHER:R-01",
+      "ok": true,
+      "details": "gapX=245.50 gapZ=50.10"
+    },
+    {
+      "id": "fixed-overlap:PRIMARY-CRUSHER:R-02",
+      "ok": true,
+      "details": "gapX=265.50 gapZ=50.10"
+    },
+    {
+      "id": "fixed-overlap:PRIMARY-CRUSHER:R-03",
+      "ok": true,
+      "details": "gapX=285.50 gapZ=50.10"
+    },
+    {
+      "id": "fixed-overlap:PRIMARY-CRUSHER:R-04",
+      "ok": true,
+      "details": "gapX=305.50 gapZ=50.10"
+    },
+    {
+      "id": "fixed-overlap:PRIMARY-CRUSHER:SMELTING-FURNACE",
+      "ok": true,
+      "details": "gapX=323.60 gapZ=55.00"
+    },
+    {
+      "id": "fixed-overlap:MILL-01:ROM-HOPPER",
+      "ok": true,
+      "details": "gapX=178.95 gapZ=16.35"
+    },
+    {
+      "id": "fixed-overlap:MILL-01:PRIMARY-CRUSHER",
+      "ok": true,
+      "details": "gapX=160.00 gapZ=18.85"
+    },
+    {
+      "id": "fixed-overlap:MILL-01:SLURRY-PUMP-01",
+      "ok": true,
+      "details": "gapX=21.30 gapZ=-3.38"
+    },
+    {
+      "id": "fixed-overlap:MILL-01:R-01",
+      "ok": true,
+      "details": "gapX=74.90 gapZ=25.15"
+    },
+    {
+      "id": "fixed-overlap:MILL-01:R-02",
+      "ok": true,
+      "details": "gapX=94.90 gapZ=25.15"
+    },
+    {
+      "id": "fixed-overlap:MILL-01:R-03",
+      "ok": true,
+      "details": "gapX=114.90 gapZ=25.15"
+    },
+    {
+      "id": "fixed-overlap:MILL-01:R-04",
+      "ok": true,
+      "details": "gapX=134.90 gapZ=25.15"
+    },
+    {
+      "id": "fixed-overlap:MILL-01:SMELTING-FURNACE",
+      "ok": true,
+      "details": "gapX=153.00 gapZ=78.05"
+    },
+    {
+      "id": "fixed-overlap:SLURRY-PUMP-01:SMELTING-FURNACE",
+      "ok": true,
+      "details": "gapX=126.90 gapZ=80.78"
+    },
+    {
+      "id": "fixed-overlap:CLASS-01:ROM-HOPPER",
+      "ok": true,
+      "details": "gapX=227.55 gapZ=18.70"
+    },
+    {
+      "id": "fixed-overlap:CLASS-01:PRIMARY-CRUSHER",
+      "ok": true,
+      "details": "gapX=208.60 gapZ=21.20"
+    },
+    {
+      "id": "fixed-overlap:CLASS-01:MILL-01",
+      "ok": true,
+      "details": "gapX=38.00 gapZ=-3.75"
+    },
+    {
+      "id": "fixed-overlap:CLASS-01:SLURRY-PUMP-01",
+      "ok": true,
+      "details": "gapX=11.90 gapZ=-3.03"
+    },
+    {
+      "id": "fixed-overlap:CLASS-01:R-01",
+      "ok": true,
+      "details": "gapX=31.50 gapZ=23.50"
+    },
+    {
+      "id": "fixed-overlap:CLASS-01:R-02",
+      "ok": true,
+      "details": "gapX=51.50 gapZ=23.50"
+    },
+    {
+      "id": "fixed-overlap:CLASS-01:R-03",
+      "ok": true,
+      "details": "gapX=71.50 gapZ=23.50"
+    },
+    {
+      "id": "fixed-overlap:CLASS-01:R-04",
+      "ok": true,
+      "details": "gapX=91.50 gapZ=23.50"
+    },
+    {
+      "id": "fixed-overlap:CLASS-01:ELUTION-SKID",
+      "ok": true,
+      "details": "gapX=62.60 gapZ=80.50"
+    },
+    {
+      "id": "fixed-overlap:CLASS-01:EW-CELLS",
+      "ok": true,
+      "details": "gapX=84.90 gapZ=80.40"
+    },
+    {
+      "id": "fixed-overlap:CLASS-01:SMELTING-FURNACE",
+      "ok": true,
+      "details": "gapX=109.60 gapZ=80.40"
+    },
+    {
+      "id": "fixed-overlap:R-01:ROM-HOPPER",
+      "ok": true,
+      "details": "gapX=264.45 gapZ=47.60"
+    },
+    {
+      "id": "fixed-overlap:R-01:SLURRY-PUMP-01",
+      "ok": true,
+      "details": "gapX=48.80 gapZ=25.88"
+    },
+    {
+      "id": "fixed-overlap:R-01:R-02",
+      "ok": true,
+      "details": "gapX=12.40 gapZ=-7.60"
+    },
+    {
+      "id": "fixed-overlap:R-01:R-03",
+      "ok": true,
+      "details": "gapX=32.40 gapZ=-7.60"
+    },
+    {
+      "id": "fixed-overlap:R-01:R-04",
+      "ok": true,
+      "details": "gapX=52.40 gapZ=-7.60"
+    },
+    {
+      "id": "fixed-overlap:R-01:SMELTING-FURNACE",
+      "ok": true,
+      "details": "gapX=70.50 gapZ=109.30"
+    },
+    {
+      "id": "fixed-overlap:R-02:ROM-HOPPER",
+      "ok": true,
+      "details": "gapX=284.45 gapZ=47.60"
+    },
+    {
+      "id": "fixed-overlap:R-02:SLURRY-PUMP-01",
+      "ok": true,
+      "details": "gapX=68.80 gapZ=25.88"
+    },
+    {
+      "id": "fixed-overlap:R-02:R-03",
+      "ok": true,
+      "details": "gapX=12.40 gapZ=-7.60"
+    },
+    {
+      "id": "fixed-overlap:R-02:R-04",
+      "ok": true,
+      "details": "gapX=32.40 gapZ=-7.60"
+    },
+    {
+      "id": "fixed-overlap:R-02:SMELTING-FURNACE",
+      "ok": true,
+      "details": "gapX=50.50 gapZ=109.30"
+    },
+    {
+      "id": "fixed-overlap:R-03:ROM-HOPPER",
+      "ok": true,
+      "details": "gapX=304.45 gapZ=47.60"
+    },
+    {
+      "id": "fixed-overlap:R-03:SLURRY-PUMP-01",
+      "ok": true,
+      "details": "gapX=88.80 gapZ=25.88"
+    },
+    {
+      "id": "fixed-overlap:R-03:R-04",
+      "ok": true,
+      "details": "gapX=12.40 gapZ=-7.60"
+    },
+    {
+      "id": "fixed-overlap:R-03:SMELTING-FURNACE",
+      "ok": true,
+      "details": "gapX=30.50 gapZ=109.30"
+    },
+    {
+      "id": "fixed-overlap:R-04:ROM-HOPPER",
+      "ok": true,
+      "details": "gapX=324.45 gapZ=47.60"
+    },
+    {
+      "id": "fixed-overlap:R-04:SLURRY-PUMP-01",
+      "ok": true,
+      "details": "gapX=108.80 gapZ=25.88"
+    },
+    {
+      "id": "fixed-overlap:R-04:SMELTING-FURNACE",
+      "ok": true,
+      "details": "gapX=10.50 gapZ=109.30"
+    },
+    {
+      "id": "fixed-overlap:CIP-ADSORPTION:ROM-HOPPER",
+      "ok": true,
+      "details": "gapX=268.35 gapZ=51.70"
+    },
+    {
+      "id": "fixed-overlap:CIP-ADSORPTION:PRIMARY-CRUSHER",
+      "ok": true,
+      "details": "gapX=249.40 gapZ=54.20"
+    },
+    {
+      "id": "fixed-overlap:CIP-ADSORPTION:MILL-01",
+      "ok": true,
+      "details": "gapX=78.80 gapZ=77.25"
+    },
+    {
+      "id": "fixed-overlap:CIP-ADSORPTION:SLURRY-PUMP-01",
+      "ok": true,
+      "details": "gapX=52.70 gapZ=79.97"
+    },
+    {
+      "id": "fixed-overlap:CIP-ADSORPTION:CLASS-01",
+      "ok": true,
+      "details": "gapX=35.40 gapZ=79.60"
+    },
+    {
+      "id": "fixed-overlap:CIP-ADSORPTION:R-01",
+      "ok": true,
+      "details": "gapX=-3.70 gapZ=108.50"
+    },
+    {
+      "id": "fixed-overlap:CIP-ADSORPTION:R-02",
+      "ok": true,
+      "details": "gapX=2.30 gapZ=108.50"
+    },
+    {
+      "id": "fixed-overlap:CIP-ADSORPTION:R-03",
+      "ok": true,
+      "details": "gapX=22.30 gapZ=108.50"
+    },
+    {
+      "id": "fixed-overlap:CIP-ADSORPTION:R-04",
+      "ok": true,
+      "details": "gapX=42.30 gapZ=108.50"
+    },
+    {
+      "id": "fixed-overlap:CIP-ADSORPTION:ELUTION-SKID",
+      "ok": true,
+      "details": "gapX=13.40 gapZ=-6.50"
+    },
+    {
+      "id": "fixed-overlap:CIP-ADSORPTION:EW-CELLS",
+      "ok": true,
+      "details": "gapX=35.70 gapZ=-6.60"
+    },
+    {
+      "id": "fixed-overlap:CIP-ADSORPTION:SMELTING-FURNACE",
+      "ok": true,
+      "details": "gapX=60.40 gapZ=-6.60"
+    },
+    {
+      "id": "fixed-overlap:ELUTION-SKID:ROM-HOPPER",
+      "ok": true,
+      "details": "gapX=295.55 gapZ=52.60"
+    },
+    {
+      "id": "fixed-overlap:ELUTION-SKID:PRIMARY-CRUSHER",
+      "ok": true,
+      "details": "gapX=276.60 gapZ=55.10"
+    },
+    {
+      "id": "fixed-overlap:ELUTION-SKID:MILL-01",
+      "ok": true,
+      "details": "gapX=106.00 gapZ=78.15"
+    },
+    {
+      "id": "fixed-overlap:ELUTION-SKID:SLURRY-PUMP-01",
+      "ok": true,
+      "details": "gapX=79.90 gapZ=80.88"
+    },
+    {
+      "id": "fixed-overlap:ELUTION-SKID:R-01",
+      "ok": true,
+      "details": "gapX=23.50 gapZ=109.40"
+    },
+    {
+      "id": "fixed-overlap:ELUTION-SKID:R-02",
+      "ok": true,
+      "details": "gapX=3.50 gapZ=109.40"
+    },
+    {
+      "id": "fixed-overlap:ELUTION-SKID:R-03",
+      "ok": true,
+      "details": "gapX=-0.50 gapZ=109.40"
+    },
+    {
+      "id": "fixed-overlap:ELUTION-SKID:R-04",
+      "ok": true,
+      "details": "gapX=19.50 gapZ=109.40"
+    },
+    {
+      "id": "fixed-overlap:ELUTION-SKID:EW-CELLS",
+      "ok": true,
+      "details": "gapX=12.90 gapZ=-5.70"
+    },
+    {
+      "id": "fixed-overlap:ELUTION-SKID:SMELTING-FURNACE",
+      "ok": true,
+      "details": "gapX=37.60 gapZ=-5.70"
+    },
+    {
+      "id": "fixed-overlap:EW-CELLS:ROM-HOPPER",
+      "ok": true,
+      "details": "gapX=317.85 gapZ=52.50"
+    },
+    {
+      "id": "fixed-overlap:EW-CELLS:PRIMARY-CRUSHER",
+      "ok": true,
+      "details": "gapX=298.90 gapZ=55.00"
+    },
+    {
+      "id": "fixed-overlap:EW-CELLS:MILL-01",
+      "ok": true,
+      "details": "gapX=128.30 gapZ=78.05"
+    },
+    {
+      "id": "fixed-overlap:EW-CELLS:SLURRY-PUMP-01",
+      "ok": true,
+      "details": "gapX=102.20 gapZ=80.78"
+    },
+    {
+      "id": "fixed-overlap:EW-CELLS:R-01",
+      "ok": true,
+      "details": "gapX=45.80 gapZ=109.30"
+    },
+    {
+      "id": "fixed-overlap:EW-CELLS:R-02",
+      "ok": true,
+      "details": "gapX=25.80 gapZ=109.30"
+    },
+    {
+      "id": "fixed-overlap:EW-CELLS:R-03",
+      "ok": true,
+      "details": "gapX=5.80 gapZ=109.30"
+    },
+    {
+      "id": "fixed-overlap:EW-CELLS:R-04",
+      "ok": true,
+      "details": "gapX=-4.20 gapZ=109.30"
+    },
+    {
+      "id": "fixed-overlap:EW-CELLS:SMELTING-FURNACE",
+      "ok": true,
+      "details": "gapX=13.90 gapZ=-5.80"
+    },
+    {
+      "id": "ROAD-02-clearance:ROM-HOPPER",
+      "ok": true,
+      "details": "distance=34.71 required=15.61"
+    },
+    {
+      "id": "ROAD-02-clearance:APRON-FEEDER",
+      "ok": true,
+      "details": "distance=35.59 required=12.68"
+    },
+    {
+      "id": "ROAD-02-clearance:PRIMARY-CRUSHER",
+      "ok": true,
+      "details": "distance=36.54 required=11.67"
+    },
+    {
+      "id": "ROAD-02-clearance:MILL-01",
+      "ok": true,
+      "details": "distance=63.23 required=14.36"
+    },
+    {
+      "id": "ROAD-02-clearance:SLURRY-PUMP-01",
+      "ok": true,
+      "details": "distance=62.62 required=10.99"
+    },
+    {
+      "id": "ROAD-02-clearance:CLASS-01",
+      "ok": true,
+      "details": "distance=62.99 required=12.07"
+    },
+    {
+      "id": "ROAD-02-clearance:R-01",
+      "ok": true,
+      "details": "distance=91.58 required=13.62"
+    },
+    {
+      "id": "ROAD-02-clearance:R-02",
+      "ok": true,
+      "details": "distance=90.87 required=13.62"
+    },
+    {
+      "id": "ROAD-02-clearance:R-03",
+      "ok": true,
+      "details": "distance=90.00 required=13.62"
+    },
+    {
+      "id": "ROAD-02-clearance:R-04",
+      "ok": true,
+      "details": "distance=87.36 required=13.62"
+    },
+    {
+      "id": "ROAD-02-clearance:CIP-ADSORPTION",
+      "ok": true,
+      "details": "distance=24.59 required=16.08"
+    },
+    {
+      "id": "ROAD-02-clearance:ELUTION-SKID",
+      "ok": true,
+      "details": "distance=25.48 required=13.72"
+    },
+    {
+      "id": "ROAD-02-clearance:EW-CELLS",
+      "ok": true,
+      "details": "distance=26.96 required=14.38"
+    },
+    {
+      "id": "ROAD-02-clearance:SMELTING-FURNACE",
+      "ok": true,
+      "details": "distance=30.00 required=12.95"
+    },
+    {
+      "id": "ROAD-03-clearance:ROM-HOPPER",
+      "ok": true,
+      "details": "distance=43.64 required=14.91"
+    },
+    {
+      "id": "ROAD-03-clearance:APRON-FEEDER",
+      "ok": true,
+      "details": "distance=53.76 required=11.98"
+    },
+    {
+      "id": "ROAD-03-clearance:PRIMARY-CRUSHER",
+      "ok": true,
+      "details": "distance=63.80 required=10.97"
+    },
+    {
+      "id": "ROAD-03-clearance:MILL-01",
+      "ok": true,
+      "details": "distance=115.74 required=13.66"
+    },
+    {
+      "id": "ROAD-03-clearance:SLURRY-PUMP-01",
+      "ok": true,
+      "details": "distance=112.39 required=10.29"
+    },
+    {
+      "id": "ROAD-03-clearance:CLASS-01",
+      "ok": true,
+      "details": "distance=109.48 required=11.37"
+    },
+    {
+      "id": "ROAD-03-clearance:R-01",
+      "ok": true,
+      "details": "distance=75.38 required=12.92"
+    },
+    {
+      "id": "ROAD-03-clearance:R-02",
+      "ok": true,
+      "details": "distance=73.12 required=12.92"
+    },
+    {
+      "id": "ROAD-03-clearance:R-03",
+      "ok": true,
+      "details": "distance=68.88 required=12.92"
+    },
+    {
+      "id": "ROAD-03-clearance:R-04",
+      "ok": true,
+      "details": "distance=64.45 required=12.92"
+    },
+    {
+      "id": "ROAD-03-clearance:CIP-ADSORPTION",
+      "ok": true,
+      "details": "distance=62.21 required=15.38"
+    },
+    {
+      "id": "ROAD-03-clearance:ELUTION-SKID",
+      "ok": true,
+      "details": "distance=63.32 required=13.02"
+    },
+    {
+      "id": "ROAD-03-clearance:EW-CELLS",
+      "ok": true,
+      "details": "distance=61.81 required=13.68"
+    },
+    {
+      "id": "ROAD-03-clearance:SMELTING-FURNACE",
+      "ok": true,
+      "details": "distance=58.23 required=12.25"
+    },
+    {
+      "id": "ROAD-04-clearance:ROM-HOPPER",
+      "ok": true,
+      "details": "distance=250.89 required=14.21"
+    },
+    {
+      "id": "ROAD-04-clearance:APRON-FEEDER",
+      "ok": true,
+      "details": "distance=240.42 required=11.28"
+    },
+    {
+      "id": "ROAD-04-clearance:PRIMARY-CRUSHER",
+      "ok": true,
+      "details": "distance=229.17 required=10.27"
+    },
+    {
+      "id": "ROAD-04-clearance:MILL-01",
+      "ok": true,
+      "details": "distance=84.90 required=12.96"
+    },
+    {
+      "id": "ROAD-04-clearance:SLURRY-PUMP-01",
+      "ok": true,
+      "details": "distance=69.35 required=9.59"
+    },
+    {
+      "id": "ROAD-04-clearance:CLASS-01",
+      "ok": true,
+      "details": "distance=65.12 required=10.67"
+    },
+    {
+      "id": "ROAD-04-clearance:R-01",
+      "ok": true,
+      "details": "distance=97.53 required=12.22"
+    },
+    {
+      "id": "ROAD-04-clearance:R-02",
+      "ok": true,
+      "details": "distance=104.65 required=12.22"
+    },
+    {
+      "id": "ROAD-04-clearance:R-03",
+      "ok": true,
+      "details": "distance=114.86 required=12.22"
+    },
+    {
+      "id": "ROAD-04-clearance:R-04",
+      "ok": true,
+      "details": "distance=127.40 required=12.22"
+    },
+    {
+      "id": "ROAD-04-clearance:CIP-ADSORPTION",
+      "ok": true,
+      "details": "distance=21.14 required=14.68"
+    },
+    {
+      "id": "ROAD-04-clearance:ELUTION-SKID",
+      "ok": true,
+      "details": "distance=35.97 required=12.32"
+    },
+    {
+      "id": "ROAD-04-clearance:EW-CELLS",
+      "ok": true,
+      "details": "distance=37.11 required=12.98"
+    },
+    {
+      "id": "ROAD-04-clearance:SMELTING-FURNACE",
+      "ok": true,
+      "details": "distance=31.53 required=11.55"
+    },
+    {
+      "id": "recovery-rack-vs-service-road",
+      "ok": true,
+      "details": "rack corridor distance=14.49 m"
+    },
+    {
+      "id": "loader-operating-cycle-length",
+      "ok": true,
+      "details": "13.00 m"
+    },
+    {
+      "id": "loader-route-vs-stockpile:loaderOutbound",
+      "ok": true,
+      "details": "normalized clearance=1.208"
+    },
+    {
+      "id": "loader-route-vs-stockpile:loaderReturn",
+      "ok": true,
+      "details": "normalized clearance=1.208"
+    },
+    {
+      "id": "loader-dump-standoff",
+      "ok": true,
+      "details": "8.14 m to reclaim hopper"
+    },
+    {
+      "id": "shovel-truck-loading-spacing",
+      "ok": true,
+      "details": "10.20 m root spacing"
+    }
+  ]
+}

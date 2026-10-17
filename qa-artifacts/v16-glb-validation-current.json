@@ -1,0 +1,255 @@
+﻿{
+  "total_glbs": 16,
+  "total_bytes": 4548972,
+  "files": {
+    "APRON-FEEDER.glb": {
+      "bytes": 331396,
+      "nodes": 73,
+      "animations": [
+        "Animation"
+      ],
+      "semantic_nodes": [
+        "APRON-FEEDER_PANS_GROUP"
+      ]
+    },
+    "CIP-ADSORPTION.glb": {
+      "bytes": 281756,
+      "nodes": 69,
+      "animations": [
+        "Animation"
+      ],
+      "semantic_nodes": [
+        "CIP-ADSORPTION_ROTATING_+1.67",
+        "CIP-ADSORPTION_ROTATING_+5.00",
+        "CIP-ADSORPTION_ROTATING_-1.67",
+        "CIP-ADSORPTION_ROTATING_-5.00"
+      ]
+    },
+    "CLASS-01.glb": {
+      "bytes": 433924,
+      "nodes": 63,
+      "animations": [],
+      "semantic_nodes": []
+    },
+    "ELUTION-SKID.glb": {
+      "bytes": 95112,
+      "nodes": 19,
+      "animations": [],
+      "semantic_nodes": []
+    },
+    "EW-CELLS.glb": {
+      "bytes": 100208,
+      "nodes": 61,
+      "animations": [],
+      "semantic_nodes": []
+    },
+    "HAUL-TRUCK.glb": {
+      "bytes": 301772,
+      "nodes": 146,
+      "animations": [],
+      "semantic_nodes": [
+        "HAUL-TRUCK_DUMP_PIVOT",
+        "HAUL-TRUCK_WHEEL_SPIN_RL1_HUB",
+        "HAUL-TRUCK_WHEEL_SPIN_RL1_TIRE",
+        "HAUL-TRUCK_WHEEL_SPIN_RL1_TREAD_01",
+        "HAUL-TRUCK_WHEEL_SPIN_RL1_TREAD_02",
+        "HAUL-TRUCK_WHEEL_SPIN_RL1_TREAD_03",
+        "HAUL-TRUCK_WHEEL_SPIN_RL1_TREAD_04",
+        "HAUL-TRUCK_WHEEL_SPIN_RL1_TREAD_05",
+        "HAUL-TRUCK_WHEEL_SPIN_RL1_TREAD_06",
+        "HAUL-TRUCK_WHEEL_SPIN_RL1_TREAD_07",
+        "HAUL-TRUCK_WHEEL_SPIN_RL1_TREAD_08",
+        "HAUL-TRUCK_WHEEL_SPIN_RL1_TREAD_09",
+        "HAUL-TRUCK_WHEEL_SPIN_RL1_TREAD_10",
+        "HAUL-TRUCK_WHEEL_SPIN_RL1_TREAD_11",
+        "HAUL-TRUCK_WHEEL_SPIN_RL1_TREAD_12",
+        "HAUL-TRUCK_WHEEL_SPIN_RL1_TREAD_13",
+        "HAUL-TRUCK_WHEEL_SPIN_RL1_TREAD_14",
+        "HAUL-TRUCK_WHEEL_SPIN_RL1_TREAD_15",
+        "HAUL-TRUCK_WHEEL_SPIN_RL1_TREAD_16",
+        "HAUL-TRUCK_WHEEL_SPIN_RL1",
+        "HAUL-TRUCK_WHEEL_SPIN_RL2_HUB",
+        "HAUL-TRUCK_WHEEL_SPIN_RL2_TIRE",
+        "HAUL-TRUCK_WHEEL_SPIN_RL2_TREAD_01",
+        "HAUL-TRUCK_WHEEL_SPIN_RL2_TREAD_02",
+        "HAUL-TRUCK_WHEEL_SPIN_RL2_TREAD_03",
+        "HAUL-TRUCK_WHEEL_SPIN_RL2_TREAD_04",
+        "HAUL-TRUCK_WHEEL_SPIN_RL2_TREAD_05",
+        "HAUL-TRUCK_WHEEL_SPIN_RL2_TREAD_06",
+        "HAUL-TRUCK_WHEEL_SPIN_RL2_TREAD_07",
+        "HAUL-TRUCK_WHEEL_SPIN_RL2_TREAD_08",
+        "HAUL-TRUCK_WHEEL_SPIN_RL2_TREAD_09",
+        "HAUL-TRUCK_WHEEL_SPIN_RL2_TREAD_10",
+        "HAUL-TRUCK_WHEEL_SPIN_RL2_TREAD_11",
+        "HAUL-TRUCK_WHEEL_SPIN_RL2_TREAD_12",
+        "HAUL-TRUCK_WHEEL_SPIN_RL2_TREAD_13",
+        "HAUL-TRUCK_WHEEL_SPIN_RL2_TREAD_14",
+        "HAUL-TRUCK_WHEEL_SPIN_RL2_TREAD_15",
+        "HAUL-TRUCK_WHEEL_SPIN_RL2_TREAD_16",
+        "HAUL-TRUCK_WHEEL_SPIN_RL2",
+        "HAUL-TRUCK_WHEEL_SPIN_RR1_HUB",
+        "HAUL-TRUCK_WHEEL_SPIN_RR1_TIRE",
+        "HAUL-TRUCK_WHEEL_SPIN_RR1_TREAD_01",
+        "HAUL-TRUCK_WHEEL_SPIN_RR1_TREAD_02",
+        "HAUL-TRUCK_WHEEL_SPIN_RR1_TREAD_03",
+        "HAUL-TRUCK_WHEEL_SPIN_RR1_TREAD_04",
+        "HAUL-TRUCK_WHEEL_SPIN_RR1_TREAD_05",
+        "HAUL-TRUCK_WHEEL_SPIN_RR1_TREAD_06",
+        "HAUL-TRUCK_WHEEL_SPIN_RR1_TREAD_07",
+        "HAUL-TRUCK_WHEEL_SPIN_RR1_TREAD_08",
+        "HAUL-TRUCK_WHEEL_SPIN_RR1_TREAD_09",
+        "HAUL-TRUCK_WHEEL_SPIN_RR1_TREAD_10",
+        "HAUL-TRUCK_WHEEL_SPIN_RR1_TREAD_11",
+        "HAUL-TRUCK_WHEEL_SPIN_RR1_TREAD_12",
+        "HAUL-TRUCK_WHEEL_SPIN_RR1_TREAD_13",
+        "HAUL-TRUCK_WHEEL_SPIN_RR1_TREAD_14",
+        "HAUL-TRUCK_WHEEL_SPIN_RR1_TREAD_15",
+        "HAUL-TRUCK_WHEEL_SPIN_RR1_TREAD_16",
+        "HAUL-TRUCK_WHEEL_SPIN_RR1",
+        "HAUL-TRUCK_WHEEL_SPIN_RR2_HUB",
+        "HAUL-TRUCK_WHEEL_SPIN_RR2_TIRE",
+        "HAUL-TRUCK_WHEEL_SPIN_RR2_TREAD_01",
+        "HAUL-TRUCK_WHEEL_SPIN_RR2_TREAD_02",
+        "HAUL-TRUCK_WHEEL_SPIN_RR2_TREAD_03",
+        "HAUL-TRUCK_WHEEL_SPIN_RR2_TREAD_04",
+        "HAUL-TRUCK_WHEEL_SPIN_RR2_TREAD_05",
+        "HAUL-TRUCK_WHEEL_SPIN_RR2_TREAD_06",
+        "HAUL-TRUCK_WHEEL_SPIN_RR2_TREAD_07",
+        "HAUL-TRUCK_WHEEL_SPIN_RR2_TREAD_08",
+        "HAUL-TRUCK_WHEEL_SPIN_RR2_TREAD_09",
+        "HAUL-TRUCK_WHEEL_SPIN_RR2_TREAD_10",
+        "HAUL-TRUCK_WHEEL_SPIN_RR2_TREAD_11",
+        "HAUL-TRUCK_WHEEL_SPIN_RR2_TREAD_12",
+        "HAUL-TRUCK_WHEEL_SPIN_RR2_TREAD_13",
+        "HAUL-TRUCK_WHEEL_SPIN_RR2_TREAD_14",
+        "HAUL-TRUCK_WHEEL_SPIN_RR2_TREAD_15",
+        "HAUL-TRUCK_WHEEL_SPIN_RR2_TREAD_16",
+        "HAUL-TRUCK_WHEEL_SPIN_RR2",
+        "HAUL-TRUCK_WHEEL_SPIN_FL_HUB",
+        "HAUL-TRUCK_WHEEL_SPIN_FL_TIRE",
+        "HAUL-TRUCK_WHEEL_SPIN_FL_TREAD_01",
+        "HAUL-TRUCK_WHEEL_SPIN_FL_TREAD_02",
+        "HAUL-TRUCK_WHEEL_SPIN_FL_TREAD_03",
+        "HAUL-TRUCK_WHEEL_SPIN_FL_TREAD_04",
+        "HAUL-TRUCK_WHEEL_SPIN_FL_TREAD_05",
+        "HAUL-TRUCK_WHEEL_SPIN_FL_TREAD_06",
+        "HAUL-TRUCK_WHEEL_SPIN_FL_TREAD_07",
+        "HAUL-TRUCK_WHEEL_SPIN_FL_TREAD_08",
+        "HAUL-TRUCK_WHEEL_SPIN_FL_TREAD_09",
+        "HAUL-TRUCK_WHEEL_SPIN_FL_TREAD_10",
+        "HAUL-TRUCK_WHEEL_SPIN_FL_TREAD_11",
+        "HAUL-TRUCK_WHEEL_SPIN_FL_TREAD_12",
+        "HAUL-TRUCK_WHEEL_SPIN_FL_TREAD_13",
+        "HAUL-TRUCK_WHEEL_SPIN_FL_TREAD_14",
+        "HAUL-TRUCK_WHEEL_SPIN_FL_TREAD_15",
+        "HAUL-TRUCK_WHEEL_SPIN_FL_TREAD_16",
+        "HAUL-TRUCK_WHEEL_SPIN_FL",
+        "HAUL-TRUCK_WHEEL_STEER_FL",
+        "HAUL-TRUCK_WHEEL_SPIN_FR_HUB",
+        "HAUL-TRUCK_WHEEL_SPIN_FR_TIRE",
+        "HAUL-TRUCK_WHEEL_SPIN_FR_TREAD_01",
+        "HAUL-TRUCK_WHEEL_SPIN_FR_TREAD_02",
+        "HAUL-TRUCK_WHEEL_SPIN_FR_TREAD_03",
+        "HAUL-TRUCK_WHEEL_SPIN_FR_TREAD_04",
+        "HAUL-TRUCK_WHEEL_SPIN_FR_TREAD_05",
+        "HAUL-TRUCK_WHEEL_SPIN_FR_TREAD_06",
+        "HAUL-TRUCK_WHEEL_SPIN_FR_TREAD_07",
+        "HAUL-TRUCK_WHEEL_SPIN_FR_TREAD_08",
+        "HAUL-TRUCK_WHEEL_SPIN_FR_TREAD_09",
+        "HAUL-TRUCK_WHEEL_SPIN_FR_TREAD_10",
+        "HAUL-TRUCK_WHEEL_SPIN_FR_TREAD_11",
+        "HAUL-TRUCK_WHEEL_SPIN_FR_TREAD_12",
+        "HAUL-TRUCK_WHEEL_SPIN_FR_TREAD_13",
+        "HAUL-TRUCK_WHEEL_SPIN_FR_TREAD_14",
+        "HAUL-TRUCK_WHEEL_SPIN_FR_TREAD_15",
+        "HAUL-TRUCK_WHEEL_SPIN_FR_TREAD_16",
+        "HAUL-TRUCK_WHEEL_SPIN_FR",
+        "HAUL-TRUCK_WHEEL_STEER_FR"
+      ]
+    },
+    "LEACH-REACTOR.glb": {
+      "bytes": 269148,
+      "nodes": 55,
+      "animations": [
+        "Animation"
+      ],
+      "semantic_nodes": [
+        "LEACH-REACTOR_ROTATING_GROUP"
+      ]
+    },
+    "MILL-01.glb": {
+      "bytes": 793344,
+      "nodes": 27,
+      "animations": [
+        "Animation"
+      ],
+      "semantic_nodes": [
+        "MILL-01_ROTATING_GROUP"
+      ]
+    },
+    "MINING-SHOVEL.glb": {
+      "bytes": 156224,
+      "nodes": 63,
+      "animations": [
+        "Animation"
+      ],
+      "semantic_nodes": []
+    },
+    "PRIMARY-CRUSHER.glb": {
+      "bytes": 248416,
+      "nodes": 63,
+      "animations": [
+        "Animation"
+      ],
+      "semantic_nodes": [
+        "PRIMARY-CRUSHER_MOVING_JAW_PLATE",
+        "PRIMARY-CRUSHER_MOVING_JAW"
+      ]
+    },
+    "ROM-HOPPER.glb": {
+      "bytes": 208508,
+      "nodes": 56,
+      "animations": [],
+      "semantic_nodes": []
+    },
+    "SLURRY-PUMP-01.glb": {
+      "bytes": 461368,
+      "nodes": 21,
+      "animations": [
+        "Animation"
+      ],
+      "semantic_nodes": [
+        "SLURRY-PUMP-01_ROTATING_GROUP"
+      ]
+    },
+    "SMELTING-FURNACE.glb": {
+      "bytes": 72684,
+      "nodes": 14,
+      "animations": [
+        "Animation"
+      ],
+      "semantic_nodes": []
+    },
+    "STOCKPILE-RECLAIM.glb": {
+      "bytes": 245356,
+      "nodes": 40,
+      "animations": [],
+      "semantic_nodes": []
+    },
+    "SUMP-01.glb": {
+      "bytes": 363556,
+      "nodes": 44,
+      "animations": [],
+      "semantic_nodes": []
+    },
+    "WHEEL-LOADER.glb": {
+      "bytes": 186200,
+      "nodes": 90,
+      "animations": [
+        "Animation"
+      ],
+      "semantic_nodes": []
+    }
+  },
+  "failures": []
+}

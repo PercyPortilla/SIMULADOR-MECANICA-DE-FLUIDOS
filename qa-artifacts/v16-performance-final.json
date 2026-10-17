@@ -1,0 +1,33 @@
+{
+  "label": "final",
+  "runtimeErrors": [],
+  "raw": {
+    "objects": 5548,
+    "meshes": 4742,
+    "instancedMeshes": 6,
+    "sprites": 32,
+    "shadowCasters": 4095,
+    "shadowReceivers": 4279,
+    "uniqueGeometries": 4191,
+    "uniqueMaterials": 2626
+  },
+  "visibleMeshes": 2395,
+  "visibleShadowCasters": 1865,
+  "blenderImportedMeshes": 1030,
+  "fallbackMeshes": 243,
+  "hybridMeshes": 281,
+  "rendererInfo": {
+    "memory": {
+      "geometries": 4172,
+      "textures": 59
+    },
+    "render": {
+      "frame": 43,
+      "calls": 2376,
+      "triangles": 363008,
+      "points": 431,
+      "lines": 80
+    },
+    "programs": 25
+  }
+}

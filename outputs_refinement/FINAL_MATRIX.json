@@ -1,0 +1,101 @@
+{
+  "checkpoint": "PULPA-LAB-INDUSTRIAL-REFINED-V1",
+  "rows": [
+    {
+      "system": "Montaje/estructuras",
+      "status": "PASS",
+      "evidence": "conveyor local frame + reactor walkway + modular recovery supports",
+      "remaining": "Visual browser pending"
+    },
+    {
+      "system": "Conveyors",
+      "status": "PASS",
+      "evidence": "3 conveyors port-aligned",
+      "remaining": "Visual browser pending"
+    },
+    {
+      "system": "Stockpile/reclaim",
+      "status": "PASS",
+      "evidence": "irregular geometry + loader route audit",
+      "remaining": "Visual browser pending"
+    },
+    {
+      "system": "Piping",
+      "status": "PASS",
+      "evidence": "port-to-port definitions + fittings/supports",
+      "remaining": "Submesh visual QA pending"
+    },
+    {
+      "system": "Slurry bright solids",
+      "status": "PASS",
+      "evidence": "preallocated Points in pipes/process vessels",
+      "remaining": "Perceptual browser QA pending"
+    },
+    {
+      "system": "Classification\u2192Leach",
+      "status": "PASS",
+      "evidence": "overflow and underflow connections present",
+      "remaining": "Browser pending"
+    },
+    {
+      "system": "R01\u2192R04",
+      "status": "PASS",
+      "evidence": "3 interstage routes present",
+      "remaining": "Browser pending"
+    },
+    {
+      "system": "Recovery",
+      "status": "PASS",
+      "evidence": "CIP/Elution/EW/Smelting links + industrial auxiliaries",
+      "remaining": "Browser pending"
+    },
+    {
+      "system": "Mobile clearances",
+      "status": "PASS",
+      "evidence": "139/139 static clearance audit",
+      "remaining": "Dynamic rendered contact pending"
+    },
+    {
+      "system": "Mill hierarchy",
+      "status": "PASS",
+      "evidence": "staticGroup/rotatingGroup contract",
+      "remaining": "Rendered no-sink pending"
+    },
+    {
+      "system": "Terrain/Roads",
+      "status": "PASS",
+      "evidence": "static geometry/refinement checks",
+      "remaining": "Browser pending"
+    },
+    {
+      "system": "9 cameras config",
+      "status": "PASS",
+      "evidence": "9 definitions; near 0.1/far 1600",
+      "remaining": "Visible clipping pending"
+    },
+    {
+      "system": "Performance contracts",
+      "status": "PASS",
+      "evidence": "single plant loop; no frame resource creation",
+      "remaining": "Browser FPS pending"
+    },
+    {
+      "system": "npm test",
+      "status": "NOT_VALIDATED",
+      "evidence": "vitest not found",
+      "remaining": "EAI_AGAIN / missing cache"
+    },
+    {
+      "system": "npm build",
+      "status": "NOT_VALIDATED",
+      "evidence": "vite not found",
+      "remaining": "EAI_AGAIN / missing cache"
+    },
+    {
+      "system": "Browser/WebGL end-to-end",
+      "status": "NOT_VALIDATED",
+      "evidence": "no runnable app without deps",
+      "remaining": "dependency installation blocked"
+    }
+  ]
+}

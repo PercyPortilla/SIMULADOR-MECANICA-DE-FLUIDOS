@@ -1,0 +1,180 @@
+{
+  "generatedAt": "2026-10-10T20:00:55.677Z",
+  "checks": 34,
+  "passed": 34,
+  "failed": [],
+  "maxRoadGradePct": 9.127,
+  "roadWidthRatio": 3.524,
+  "checksDetail": [
+    {
+      "id": "haul-road-width-ratio",
+      "ok": true,
+      "details": "ratio=3.524x"
+    },
+    {
+      "id": "haul-road-width-m",
+      "ok": true,
+      "details": "18.5 m"
+    },
+    {
+      "id": "haul-road-grade",
+      "ok": true,
+      "details": "max centerline segment grade=9.13%"
+    },
+    {
+      "id": "road-clearance:ROM-HOPPER",
+      "ok": true,
+      "details": "centerline distance=11.64 m; required=8.9 m"
+    },
+    {
+      "id": "road-clearance:APRON-FEEDER",
+      "ok": true,
+      "details": "centerline distance=21.93 m; required=10.5 m"
+    },
+    {
+      "id": "road-clearance:PRIMARY-CRUSHER",
+      "ok": true,
+      "details": "centerline distance=32.98 m; required=11 m"
+    },
+    {
+      "id": "masterplan-nonconnected-gap",
+      "ok": true,
+      "details": "minimum non-connected zone gap=34.00 m"
+    },
+    {
+      "id": "configured-module-gap",
+      "ok": true,
+      "details": "9 m"
+    },
+    {
+      "id": "mill-static-group",
+      "ok": true,
+      "details": "static group exists"
+    },
+    {
+      "id": "mill-rotating-group",
+      "ok": true,
+      "details": "rotating group exists"
+    },
+    {
+      "id": "mill-only-local-rotating-group",
+      "ok": true,
+      "details": "root not animated"
+    },
+    {
+      "id": "connection:P-MILL-TO-SUMP",
+      "ok": true,
+      "details": "P-MILL-TO-SUMP"
+    },
+    {
+      "id": "connection:P-SUMP-TO-PUMP",
+      "ok": true,
+      "details": "P-SUMP-TO-PUMP"
+    },
+    {
+      "id": "connection:P-PUMP-TO-CYCLONES",
+      "ok": true,
+      "details": "P-PUMP-TO-CYCLONES"
+    },
+    {
+      "id": "connection:P-CYCLONE-UNDERFLOW-RETURN",
+      "ok": true,
+      "details": "P-CYCLONE-UNDERFLOW-RETURN"
+    },
+    {
+      "id": "connection:P-CLASSIFICATION-TO-LEACH",
+      "ok": true,
+      "details": "P-CLASSIFICATION-TO-LEACH"
+    },
+    {
+      "id": "connection:P-LEACH-R01-R02",
+      "ok": true,
+      "details": "P-LEACH-R01-R02"
+    },
+    {
+      "id": "connection:P-LEACH-R02-R03",
+      "ok": true,
+      "details": "P-LEACH-R02-R03"
+    },
+    {
+      "id": "connection:P-LEACH-R03-R04",
+      "ok": true,
+      "details": "P-LEACH-R03-R04"
+    },
+    {
+      "id": "connection:P-R04-TO-CIP",
+      "ok": true,
+      "details": "P-R04-TO-CIP"
+    },
+    {
+      "id": "connection:P-ELUTION-TO-EW",
+      "ok": true,
+      "details": "P-ELUTION-TO-EW"
+    },
+    {
+      "id": "connection:MT-CIP-TO-ELUTION-CARBON",
+      "ok": true,
+      "details": "MT-CIP-TO-ELUTION-CARBON"
+    },
+    {
+      "id": "connection:MT-EW-TO-SMELTING-CATHODE",
+      "ok": true,
+      "details": "MT-EW-TO-SMELTING-CATHODE"
+    },
+    {
+      "id": "conveyor:CV-01-FEEDER-TO-CRUSHER",
+      "ok": true,
+      "details": "CV-01-FEEDER-TO-CRUSHER"
+    },
+    {
+      "id": "conveyor:CV-02-CRUSHER-TO-STOCKPILE",
+      "ok": true,
+      "details": "CV-02-CRUSHER-TO-STOCKPILE"
+    },
+    {
+      "id": "conveyor:CV-03-STOCKPILE-TO-GRINDING",
+      "ok": true,
+      "details": "CV-03-STOCKPILE-TO-GRINDING"
+    },
+    {
+      "id": "catalog-frozen-integration",
+      "ok": true,
+      "details": "catalog assets instantiated through integration layer"
+    },
+    {
+      "id": "truck-no-legacy-route",
+      "ok": true,
+      "details": "truck route derives from redesigned ROAD-01"
+    },
+    {
+      "id": "truck-dump-state",
+      "ok": true,
+      "details": "dump state integrated at ROM"
+    },
+    {
+      "id": "loader-route",
+      "ok": true,
+      "details": "loader has explicit safe cycle"
+    },
+    {
+      "id": "scene-fog-null",
+      "ok": true,
+      "details": "fog remains disabled"
+    },
+    {
+      "id": "single-main-loop",
+      "ok": true,
+      "details": "one recurring loop plus one initial scheduling call"
+    },
+    {
+      "id": "integrated-system-active",
+      "ok": true,
+      "details": "legacy equipment system not instantiated"
+    },
+    {
+      "id": "recovery-model-null",
+      "ok": true,
+      "details": "no fake recovery calculation"
+    }
+  ]
+}

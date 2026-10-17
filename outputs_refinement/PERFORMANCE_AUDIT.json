@@ -1,0 +1,28 @@
+{
+  "plantRequestAnimationFrameFiles": [
+    "src/scene/baseEnvironment.js"
+  ],
+  "allRequestAnimationFrameFiles": [
+    "src/equipmentLab.js",
+    "src/scene/baseEnvironment.js"
+  ],
+  "listenerFiles": [
+    "src/equipmentLab.js",
+    "src/main.js"
+  ],
+  "forbiddenPerUpdateFiles": [
+    "src/equipmentLab.js",
+    "src/scene/piping/pipe1.js"
+  ],
+  "singlePlantLoop": true,
+  "noGeometryMaterialOrListenersInUpdate": true,
+  "notes": "equipmentLab.js owns an isolated catalog-lab loop. pipe1.update() rebuilds geometry only when transport input state changes via subscription, not per animation frame. The integrated plant frame path allocates no geometry/material and registers no listeners.",
+  "stateDrivenResourceBuilderFiles": [
+    "src/scene/piping/pipe1.js"
+  ],
+  "isolatedLabFiles": [
+    "src/equipmentLab.js"
+  ],
+  "forbiddenPerFrameFiles": [],
+  "noGeometryMaterialOrListenersInPlantFrameLoop": true
+}

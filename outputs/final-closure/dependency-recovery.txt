@@ -1,0 +1,22 @@
+Dependency recovery evidence
+============================
+Project package manager: npm 10.9.2 / Node v22.16.0
+Required direct dependencies: three ^0.180.0, vite ^7.1.7, vitest ^3.2.4.
+
+Checked:
+- Project node_modules: absent.
+- User cache /home/oai/.npm: empty content cache.
+- Root cache /root/.npm: 340 cached objects, but only 3 exact tarballs from this lockfile are present (debug 4.4.3, ms 2.1.3, picocolors 1.1.1); 99/102 lockfile tarballs missing.
+- Project/user/system .npmrc: no proxy or mirror configured; registry remains https://registry.npmjs.org/.
+- Environment proxy variables: empty.
+- Local checkpoint ZIPs: no node_modules or dependency tarballs.
+- System/global node modules: no vite, vitest, or three.
+- DNS lookup for registry.npmjs.org: Temporary failure in name resolution.
+- Direct external connectivity test to 1.1.1.1:443: connection failed.
+
+Install attempts:
+- npm ci --no-audit --no-fund --prefer-offline: timed out waiting on network.
+- npm ci --offline --cache=/home/oai/.npm: ENOTCACHED at why-is-node-running-2.3.0.tgz.
+- npm ci --offline --cache=/root/.npm: ENOTCACHED at why-is-node-running-2.3.0.tgz.
+
+Result: a clean dependency install cannot be completed in this environment without external package access. package.json and package-lock.json were not altered.

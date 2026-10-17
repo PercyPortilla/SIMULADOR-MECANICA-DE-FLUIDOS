@@ -1,0 +1,40 @@
+{
+  "runtimeErrors": [],
+  "networkFailures": [],
+  "previewOnly": {
+    "selected": "high-solids-bingham",
+    "guideVisible": true,
+    "guideText": "SÓLIDOS ALTOS\nExaminar el efecto combinado de mayor densidad y una reología Bingham más resistente.\n\n¿Por qué una pulpa con más sólidos puede exigir más presión incluso si se reduce la velocidad?\n\nOBSERVA\nDensidad de pulpa\nEsfuerzo de pared\nΔP total\nPotencia eléctrica\n\nAlcance: Cw = 50 %, τ₀ = 12 Pa y μp = 0.12 Pa·s son entradas didácticas independientes; PULPA LAB no infiere reología desde Cw sin una correlación calibrada.",
+    "solidsBeforeLoad": "35"
+  },
+  "highSolidsLoaded": {
+    "solids": "50",
+    "model": "bingham",
+    "status": "Cargado: Sólidos altos. Compara KPIs, curvas y memoria de cálculo.",
+    "density": "1452.1 kg/m³",
+    "pressure": "128.42 kPa",
+    "power": "2.85 kW"
+  },
+  "metallurgyLoaded": {
+    "residence": "9.43 h",
+    "conversion": "57.12 %",
+    "recovery": "79.60 %",
+    "gold": "7.9600 kg/h"
+  },
+  "presentation": {
+    "active": "true",
+    "target": "SLURRY-PUMP-01",
+    "progress": "09 / 19",
+    "labelsChecked": false,
+    "guideText": "PRESENTACIÓN · 09/19\nBomba de clasificación · SLURRY-PUMP-01\n\nQué hace: Entrega energía a la pulpa para enviarla a clasificación.\n\nENTRADA\nPulpa desde sump.\n→\nSALIDA\nPulpa presurizada hacia ciclones.\n\nVARIABLE CLAVE: Presión requerida · eficiencia de bomba/motor",
+    "academicStatus": "Cargado: Carga estática. Compara KPIs, curvas y memoria de cálculo."
+  },
+  "mobile": {
+    "documentWidth": 390,
+    "viewportWidth": 390,
+    "panel": {
+      "x": 20,
+      "width": 350
+    }
+  }
+}n

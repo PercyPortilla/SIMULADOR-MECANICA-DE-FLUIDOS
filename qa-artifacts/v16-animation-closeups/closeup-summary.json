@@ -1,0 +1,16 @@
+{
+  "runtimeErrors": [],
+  "availability": {
+    "APRON-FEEDER": true,
+    "PRIMARY-CRUSHER": true,
+    "MILL-01": true,
+    "SLURRY-PUMP-01": true,
+    "CLASS-01": true,
+    "R-01": true,
+    "CIP-ADSORPTION": true,
+    "SMELTING-FURNACE": true,
+    "EXCAVATOR-01": true,
+    "LOADER-01": true,
+    "TRUCK-01": true
+  }
+}

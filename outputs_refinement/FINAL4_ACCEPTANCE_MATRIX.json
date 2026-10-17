@@ -1,0 +1,69 @@
+{
+  "checkpoint": "PULPA-LAB-FINAL-4-ISSUES-CLOSED",
+  "issues": [
+    {
+      "issue": "slurry-particles-outside-pipe",
+      "status": "CORREGIDO_TECNICAMENTE",
+      "evidence": [
+        "piecewise-linear flow path matches physical pipe segments",
+        "particle centres confined to 42% of slurry-core radius",
+        "minimum rendered pipe containment margin approximately 0.061 m including sprite radius",
+        "local tangent-normal-binormal frame used during animation",
+        "FINAL4_STATIC_AUDIT: 29/29 PASS"
+      ],
+      "runtime_visual_validation": "NO_VALIDADO_BROWSER"
+    },
+    {
+      "issue": "haul-truck-wheel-kinematics",
+      "status": "CORREGIDO_TECNICAMENTE",
+      "evidence": [
+        "explicit steerPivot -> spinPivot -> wheel hierarchy",
+        "wheel cylinder axis aligned to local Z",
+        "rolling angle = travelled distance / wheel radius",
+        "recursive name-based wheel rotation removed",
+        "FINAL4_STATIC_AUDIT: PASS"
+      ],
+      "runtime_visual_validation": "NO_VALIDADO_BROWSER"
+    },
+    {
+      "issue": "haul-truck-dump-direction",
+      "status": "CORREGIDO_TECNICAMENTE",
+      "evidence": [
+        "rear hinge at local negative X",
+        "positive local-Z rotation raises body front and unloads rearward",
+        "dump heading toward ROM preserved",
+        "48-degree kinematic check raises representative front point > 3 m",
+        "FINAL4_STATIC_AUDIT: PASS"
+      ],
+      "runtime_visual_validation": "NO_VALIDADO_BROWSER"
+    },
+    {
+      "issue": "haul-roads-visual-engineering",
+      "status": "RECONSTRUIDO_TECNICAMENTE",
+      "evidence": [
+        "engineered road surface with controlled crown/crossfall",
+        "curve widening",
+        "explicit shoulders",
+        "cut/fill transition strips to terrain",
+        "continuous berm geometry",
+        "flat wheel-track ribbons replace tube tracks",
+        "34/34 integration audit PASS",
+        "139/139 clearance audit PASS"
+      ],
+      "runtime_visual_validation": "NO_VALIDADO_BROWSER"
+    }
+  ],
+  "global_checks": {
+    "syntax": "113/113 PASS",
+    "relative_imports": "194/194 PASS",
+    "equipment_catalog": "129/129 PASS",
+    "integration": "34/34 PASS",
+    "clearances": "139/139 PASS",
+    "final4_specific": "29/29 PASS",
+    "package_json_unchanged": true,
+    "package_lock_unchanged": true,
+    "npm_test": "NO_VALIDADO_vitest_not_found",
+    "npm_build": "NO_VALIDADO_vite_not_found",
+    "browser_webgl": "NO_VALIDADO_dependencies_unavailable_and_environment_network_blocked"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "crushing": {
+    "changed_pixels": 5136,
+    "changed_pct": 0.4282,
+    "rms": 4.833
+  },
+  "grinding_off": {
+    "changed_pixels": 0,
+    "changed_pct": 0.0,
+    "rms": 0.0
+  },
+  "grinding": {
+    "changed_pixels": 254,
+    "changed_pct": 0.0212,
+    "rms": 0.4556
+  },
+  "leaching": {
+    "changed_pixels": 0,
+    "changed_pct": 0.0,
+    "rms": 0.0
+  },
+  "reception": {
+    "changed_pixels": 2817,
+    "changed_pct": 0.2349,
+    "rms": 2.9137
+  },
+  "recovery": {
+    "changed_pixels": 0,
+    "changed_pct": 0.0,
+    "rms": 0.0
+  }
+}

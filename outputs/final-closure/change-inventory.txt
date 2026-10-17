@@ -1,0 +1,10 @@
+ADDED V8_FINAL_CLOSURE_REPORT.md
+ADDED outputs/final-closure/dependency-recovery.txt
+ADDED outputs/final-closure/package-hashes.txt
+ADDED outputs/final-closure/integration-clearance-audit.json
+ADDED outputs/final-closure/change-inventory.txt
+ADDED outputs/final-closure/equipment-static-audit.json
+ADDED outputs/final-closure/integratedMobile-fix.diff
+ADDED outputs/final-closure/browser-validation.txt
+ADDED outputs/final-closure/integration-static-audit.json
+MODIFIED src/scene/integration/integratedMobile.js

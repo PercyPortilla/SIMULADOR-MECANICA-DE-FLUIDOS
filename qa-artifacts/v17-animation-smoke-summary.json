@@ -1,0 +1,36 @@
+{
+  "runtimeErrors": [],
+  "networkFailures": [],
+  "loadedGlbs": [
+    "APRON-FEEDER.glb",
+    "CIP-ADSORPTION.glb",
+    "CLASS-01.glb",
+    "CONVEYOR-HEAD-MODULE.glb",
+    "CONVEYOR-IDLER-MODULE.glb",
+    "CONVEYOR-TAIL-MODULE.glb",
+    "CONVEYOR-TRANSFER-HOOD.glb",
+    "ELUTION-SKID.glb",
+    "EW-CELLS.glb",
+    "HAUL-TRUCK.glb",
+    "LEACH-REACTOR.glb",
+    "MILL-01.glb",
+    "MINING-SHOVEL.glb",
+    "PIPE-FLANGE-MODULE.glb",
+    "PIPE-SADDLE-MODULE.glb",
+    "PIPE-VALVE-MODULE.glb",
+    "PRIMARY-CRUSHER.glb",
+    "ROM-HOPPER.glb",
+    "SLURRY-PUMP-01.glb",
+    "SMELTING-FURNACE.glb",
+    "STOCKPILE-RECLAIM.glb",
+    "SUMP-01.glb",
+    "WHEEL-LOADER.glb"
+  ],
+  "cameras": [
+    "reception",
+    "crushing",
+    "grinding",
+    "leaching",
+    "recovery"
+  ]
+}

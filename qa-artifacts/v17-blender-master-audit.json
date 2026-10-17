@@ -1,0 +1,104 @@
+{
+  "status": "PASS",
+  "filepath": "C:\\Users\\USER\\OneDrive\\Desktop\\CHATON\\pulpa-v13-working\\pulpa_audit\\blender\\PULPA_LAB_BLENDER_MASTER_V17.blend",
+  "objects": 998,
+  "actions": 26,
+  "roots": {
+    "MILL-01": {
+      "master_nodes": 27,
+      "glb_nodes": 27,
+      "glb_animations": 1
+    },
+    "SUMP-01": {
+      "master_nodes": 44,
+      "glb_nodes": 44,
+      "glb_animations": 0
+    },
+    "SLURRY-PUMP-01": {
+      "master_nodes": 21,
+      "glb_nodes": 21,
+      "glb_animations": 1
+    },
+    "CLASS-01": {
+      "master_nodes": 63,
+      "glb_nodes": 63,
+      "glb_animations": 0
+    },
+    "LEACH-REACTOR": {
+      "master_nodes": 55,
+      "glb_nodes": 55,
+      "glb_animations": 1
+    },
+    "CIP-ADSORPTION": {
+      "master_nodes": 69,
+      "glb_nodes": 69,
+      "glb_animations": 1
+    },
+    "ELUTION-SKID": {
+      "master_nodes": 19,
+      "glb_nodes": 19,
+      "glb_animations": 0
+    },
+    "EW-CELLS": {
+      "master_nodes": 61,
+      "glb_nodes": 61,
+      "glb_animations": 0
+    },
+    "SMELTING-FURNACE": {
+      "master_nodes": 14,
+      "glb_nodes": 14,
+      "glb_animations": 1
+    },
+    "ROM-HOPPER": {
+      "master_nodes": 56,
+      "glb_nodes": 56,
+      "glb_animations": 0
+    },
+    "APRON-FEEDER": {
+      "master_nodes": 73,
+      "glb_nodes": 73,
+      "glb_animations": 1
+    },
+    "PRIMARY-CRUSHER": {
+      "master_nodes": 63,
+      "glb_nodes": 63,
+      "glb_animations": 1
+    },
+    "STOCKPILE-RECLAIM": {
+      "master_nodes": 40,
+      "glb_nodes": 40,
+      "glb_animations": 0
+    },
+    "HAUL-TRUCK": {
+      "master_nodes": 146,
+      "glb_nodes": 146,
+      "glb_animations": 0
+    },
+    "MINING-SHOVEL": {
+      "master_nodes": 63,
+      "glb_nodes": 63,
+      "glb_animations": 1
+    },
+    "WHEEL-LOADER": {
+      "master_nodes": 90,
+      "glb_nodes": 90,
+      "glb_animations": 1
+    }
+  },
+  "missing_actions": [],
+  "unexpected_actions": [],
+  "zero_user_actions": [],
+  "duplicate_named_objects": [],
+  "missing_semantic_nodes": [],
+  "missing_collections": [],
+  "metadata": {
+    "master_version": "V17",
+    "runtime": "Three.js + Blender hybrid",
+    "units": "metres",
+    "frame_range": [
+      1,
+      960
+    ]
+  },
+  "failures": []
+}

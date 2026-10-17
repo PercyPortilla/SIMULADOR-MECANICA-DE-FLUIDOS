@@ -1,0 +1,12 @@
+{
+  "baseline_zip": "C:\\Users\\USER\\OneDrive\\Desktop\\CHATON\\PULPA_LAB_CHECKPOINT_V18_ACADEMIC_CASES.zip",
+  "baseline_sha256": "6aedd1598f3094c8fc5abece7d4cdd840f37e5febb9ac6e2d09b3d7ced219118",
+  "changed": [
+    "src/main.js",
+    "src/styles.css"
+  ],
+  "added": [
+    "src/ui/academicComparison.js"
+  ],
+  "missing": []
+}

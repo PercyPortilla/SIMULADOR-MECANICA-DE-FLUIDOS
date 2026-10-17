@@ -1,0 +1,93 @@
+{
+  "closeups": {
+    "APRON-FEEDER": {
+      "changed_pixels": 769,
+      "changed_pct": 0.0641,
+      "rms": 1.0846
+    },
+    "CIP-ADSORPTION": {
+      "changed_pixels": 274,
+      "changed_pct": 0.0228,
+      "rms": 0.0215
+    },
+    "CLASS-01": {
+      "changed_pixels": 6423,
+      "changed_pct": 0.5355,
+      "rms": 6.1125
+    },
+    "EXCAVATOR-01": {
+      "changed_pixels": 27948,
+      "changed_pct": 2.3303,
+      "rms": 11.6237
+    },
+    "LOADER-01": {
+      "changed_pixels": 35170,
+      "changed_pct": 2.9325,
+      "rms": 13.4943
+    },
+    "MILL-01": {
+      "changed_pixels": 11804,
+      "changed_pct": 0.9842,
+      "rms": 7.2005
+    },
+    "PRIMARY-CRUSHER": {
+      "changed_pixels": 18226,
+      "changed_pct": 1.5197,
+      "rms": 2.8094
+    },
+    "R-01": {
+      "changed_pixels": 2008,
+      "changed_pct": 0.1674,
+      "rms": 2.0079
+    },
+    "SLURRY-PUMP-01": {
+      "changed_pixels": 7729,
+      "changed_pct": 0.6444,
+      "rms": 6.2872
+    },
+    "SMELTING-FURNACE": {
+      "changed_pixels": 135,
+      "changed_pct": 0.0113,
+      "rms": 0.0156
+    },
+    "TRUCK-01": {
+      "changed_pixels": 22007,
+      "changed_pct": 1.8349,
+      "rms": 9.4663
+    }
+  },
+  "runtime": {
+    "crushing": {
+      "changed_pixels": 5136,
+      "changed_pct": 0.4282,
+      "rms": 4.833
+    },
+    "grinding_off": {
+      "changed_pixels": 0,
+      "changed_pct": 0.0,
+      "rms": 0.0
+    },
+    "grinding": {
+      "changed_pixels": 254,
+      "changed_pct": 0.0212,
+      "rms": 0.4556
+    },
+    "leaching": {
+      "changed_pixels": 0,
+      "changed_pct": 0.0,
+      "rms": 0.0
+    },
+    "reception": {
+      "changed_pixels": 2817,
+      "changed_pct": 0.2349,
+      "rms": 2.9137
+    },
+    "recovery": {
+      "changed_pixels": 0,
+      "changed_pct": 0.0,
+      "rms": 0.0
+    }
+  },
+  "closeups_all_moving": true,
+  "animations_off_static": true
+}

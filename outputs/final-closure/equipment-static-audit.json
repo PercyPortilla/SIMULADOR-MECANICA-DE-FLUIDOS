@@ -1,0 +1,9 @@
+{
+  "generatedAt": "2026-10-10T20:00:55.641Z",
+  "equipmentJsFiles": 20,
+  "requiredAssets": 15,
+  "checks": 129,
+  "passed": 129,
+  "failed": [],
+  "sha256": "2b064cde39e48401fa2b52dece13ec32ebb11cb10150a62fb44a9eed74765455"
+}

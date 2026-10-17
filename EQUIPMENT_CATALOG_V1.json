@@ -1,0 +1,22 @@
+{
+  "catalog": "PULPA LAB 3D Equipment Catalog V1",
+  "units": "1 Three.js unit = 1 meter",
+  "integrationStatus": "isolated-not-integrated",
+  "assets": [
+    {"key":"haulTruck","category":"mining-mobile","name":"Haul Truck 90-100 t","dimensionsM":{"length":10.0,"width":5.25,"height":5.05},"animation":["wheelRotation","steering","bodyHoist","loadState"],"ports":[]},
+    {"key":"miningShovel","category":"mining-mobile","name":"Mining Shovel","dimensionsM":{"length":9.9,"width":8.0,"height":8.1},"animation":["slew","boom","stick","bucket","oreLoad"],"ports":[]},
+    {"key":"wheelLoader","category":"mining-mobile","name":"Wheel Loader","dimensionsM":{"length":12.0,"width":3.75,"height":4.25},"animation":["articulation","wheelRotation","liftArms","bucket","oreLoad"],"ports":[]},
+    {"key":"romHopper","category":"reception","name":"ROM Hopper","dimensionsM":{"length":11.5,"width":9.2,"height":7.6},"animation":["materialFlow"],"ports":["materialIn","materialOut"]},
+    {"key":"apronFeeder","category":"reception","name":"Apron Feeder","dimensionsM":{"length":8.4,"width":2.8,"height":1.85},"animation":["movingPans","oreTransport","drive"],"ports":["materialIn","materialOut"]},
+    {"key":"jawCrusher","category":"crushing","name":"Primary Jaw Crusher","dimensionsM":{"length":5.4,"width":4.2,"height":4.7},"animation":["jawOscillation","flywheelRotation","oreFlow"],"ports":["materialIn","materialOut"]},
+    {"key":"conveyor","category":"conveying","name":"Modular Conveyor 16 m","dimensionsM":{"length":16.0,"width":3.48,"height":3.38},"animation":["beltMotion","pulleyRotation","oreTransport"],"ports":["materialIn","materialOut"]},
+    {"key":"ballMill","category":"grinding","name":"Ball Mill 4.5 x 7 m","dimensionsM":{"length":10.6,"width":6.1,"height":5.65},"animation":["shellRotation","trommel","internalCharge"],"ports":["materialIn","slurryOut"]},
+    {"key":"slurryPump","category":"classification","name":"Slurry Pump","dimensionsM":{"length":4.8,"width":2.65,"height":2.55},"animation":["impellerRotation","slurryPath"],"ports":["suction","discharge"]},
+    {"key":"cycloneCluster","category":"classification","name":"Hydrocyclone Cluster 6x500 mm","dimensionsM":{"length":5.4,"width":5.4,"height":5.4},"animation":["internalSwirl"],"ports":["slurryIn","overflow","underflow"]},
+    {"key":"leachReactor","category":"leaching","name":"Leach Reactor 7 m","dimensionsM":{"length":7.6,"width":7.6,"height":8.8},"animation":["agitation","slurrySurface"],"ports":["slurryIn","slurryOut","drain","reagentIn"]},
+    {"key":"cip","category":"recovery","name":"CIP Adsorption Module","dimensionsM":{"length":13.8,"width":7.4,"height":6.9},"animation":["agitation","internalSlurry"],"ports":["slurryIn","slurryOut","loadedCarbonOut","barrenCarbonIn"]},
+    {"key":"elution","category":"recovery","name":"Elution Skid","dimensionsM":{"length":9.4,"width":5.6,"height":6.4},"animation":["pumps","internalSolution"],"ports":["loadedCarbonIn","pregnantSolutionOut","barrenCarbonOut"]},
+    {"key":"electrowinning","category":"recovery","name":"Electrowinning Cells","dimensionsM":{"length":10.8,"width":5.8,"height":3.8},"animation":["electrolyteSurface"],"ports":["slurryIn","slurryOut","electrical"]},
+    {"key":"smelting","category":"recovery","name":"Smelting Furnace","dimensionsM":{"length":7.4,"width":5.8,"height":6.6},"animation":["tilt","internalGlow"],"ports":["materialIn","service","materialOut"]}
+  ]
+}

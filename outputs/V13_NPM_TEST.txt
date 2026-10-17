@@ -1,0 +1,5 @@
+
+> pulpa-lab-v2@0.0.0 test
+> vitest run --maxWorkers=1 --testTimeout=15000
+
+sh: 1: vitest: not found

@@ -1,0 +1,19 @@
+PULPA-LAB-V2-V20-INTERACTIVE-ACADEMIC-LAB-CHECKPOINT
+Project: PULPA LAB V2
+Date: 2026-10-17
+Status: V20 CLOSED — INTERACTIVE ACADEMIC LAB + PRACTICE REPORT VERIFIED
+Architecture: Three.js authoritative runtime + Blender industrial asset pipeline. No Babylon.js migration in V20.
+Baseline: V19 academic comparator + V18 cases + V17 presentation/master Blender.
+Laboratory: 5 guided experiments with pre-run hypotheses (sube/baja/igual/no sé), evaluation against V19 A-vs-B deltas, score and causal conclusion limited to encoded comparison insights.
+Practice report: standalone printable HTML with hypothesis, A/B cases, changed metrics, deltas, causal explanation, resultQuality/modelStatus scope and conclusion.
+Educational UX: Circuito 3D now precedes KPI/results; inspection guide adds Etapa and Resultado relacionado plus visible Anterior/Seleccionado/Siguiente legend matching the 3D context colors.
+Browser QA: production build HTTP 200, 0 runtime errors, 0 network failures; static-head experiment 5/5; report generated; intervention loads L=180 m, dz=20 m, V=1.2 m/s; mobile 390 px has no horizontal overflow.
+Tests: 65/65 test files PASS; 316/316 tests PASS; exit code 0; duration 172.04 s.
+Build: npm run build PASS; Vite 104 modules transformed. Three.js >500 kB chunk warning remains informational.
+Source guard vs V19: changed src/main.js, src/styles.css and src/ui/inspectionGuide.js; added src/ui/academicLab.js and src/ui/academicLabReport.js; 0 changes in controller/core/state/process/reporting calculation paths.
+Asset guard: public and dist each contain 23 GLB / 5,240,240 bytes; 0 hash mismatches.
+Blender master unchanged: blender/PULPA_LAB_BLENDER_MASTER_V17.blend — 688,141 bytes — SHA-256 E78577DAE8E533429B84FC13FC054036684F6D36AB5F1A3D76AB4CCA787CACA6.
+GitHub release target: PercyPortilla/SIMULADOR-MECANICA-DE-FLUIDOS.
+Report: V20_INTERACTIVE_ACADEMIC_LAB_CHECKPOINT.md
+Rule: preserve equations, process route, physical pipe diameters/endpoints, conveyors, cameras, V17 presentation, V18 cases, V19 comparator, Blender master and animation fallbacks.
+

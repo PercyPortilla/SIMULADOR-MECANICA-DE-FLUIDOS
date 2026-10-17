@@ -1,0 +1,110 @@
+import * as THREE from 'three';
+import { createIndustrialMaterial } from '../materials/industrialMaterials.js';
+import { createSuspendedSolidsCloud } from '../../equipment/common/slurryVisuals.js';
+import { attachBlenderVisualReplacement } from './blenderVisualReplacement.js';
+
+function port(id, type, localPosition, direction, nominalDiameterM = 0.25) {
+  return Object.freeze({ id, type, localPosition: new THREE.Vector3(...localPosition), direction: new THREE.Vector3(...direction).normalize(), nominalDiameterM });
+}
+
+function mesh(geometry, material, name) {
+  const item = new THREE.Mesh(geometry, material);
+  item.name = name;
+  item.castShadow = true;
+  item.receiveShadow = true;
+  return item;
+}
+
+export function createSumpEquipment({ id = 'SUMP-01', position = new THREE.Vector3() } = {}) {
+  const root = new THREE.Group();
+  root.name = id;
+  root.position.copy(position);
+  root.userData.inspectionKind = 'sump';
+  const shell = mesh(new THREE.CylinderGeometry(2.2, 2.2, 3.1, 32), createIndustrialMaterial('processSteel', { color: 0x6f8086, roughness: 0.48 }), `${id}-shell`);
+  shell.position.y = 1.65;
+  shell.userData.inspectionShell = true;
+  root.add(shell);
+  const slurry = mesh(new THREE.CylinderGeometry(2.02, 2.02, 1.65, 32), new THREE.MeshStandardMaterial({ color: 0x7d654c, roughness: 0.72, transparent: true, opacity: 0.9 }), `${id}-slurry`);
+  slurry.position.y = 1.15;
+  slurry.userData.inspectionInterior = true;
+  root.add(slurry);
+  const base = mesh(new THREE.CylinderGeometry(2.55, 2.55, 0.24, 32), createIndustrialMaterial('concrete'), `${id}-base`);
+  base.position.y = 0.12;
+  root.add(base);
+  root.userData.slurrySurface = slurry;
+  const suspendedSolids = createSuspendedSolidsCloud({ name: `${id}-suspended-solids`, radius: 1.82, height: 1.35, count: 90, size: 0.055, opacity: 0.52, seed: 11, y: 1.2 });
+  root.add(suspendedSolids);
+  root.userData.suspendedSolids = suspendedSolids;
+  const ports = new Map([
+    ['inlet', port('inlet', 'slurryIn', [-2.2, 2.3, 0], [1, 0, 0], 0.4)],
+    ['outlet', port('outlet', 'slurryOut', [2.2, 0.85, 0], [1, 0, 0], 0.3)],
+  ]);
+  attachBlenderVisualReplacement({ hostRoot: root, instanceId: id });
+  return { id, type: 'sump', dimensions: Object.freeze({ length: 5.1, width: 5.1, height: 3.3 }), transform: root, group3D: root, ports, metadata: Object.freeze({ category: 'sump' }) };
+}
+
+function createIrregularStockpileGeometry(radius, height, phase = 0, radialSegments = 64, heightSegments = 12) {
+  const geometry = new THREE.ConeGeometry(radius, height, radialSegments, heightSegments, false);
+  const position = geometry.attributes.position;
+  for (let i = 0; i < position.count; i += 1) {
+    const x = position.getX(i);
+    const y = position.getY(i);
+    const z = position.getZ(i);
+    const radial = Math.hypot(x, z);
+    if (radial < 1e-5) continue;
+    const angle = Math.atan2(z, x);
+    const normalizedHeight = THREE.MathUtils.clamp((y + height / 2) / height, 0, 1);
+    const edgeWeight = 1 - normalizedHeight * 0.72;
+    const variation = 1
+      + Math.sin(angle * 3 + phase) * 0.055 * edgeWeight
+      + Math.sin(angle * 7 - phase * 0.7) * 0.028 * edgeWeight
+      + Math.cos(angle * 11 + normalizedHeight * 4.2) * 0.015;
+    position.setX(i, x * variation);
+    position.setZ(i, z * variation * (1.03 + 0.04 * Math.sin(angle + phase)));
+  }
+  position.needsUpdate = true;
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+export function createStockpileReclaimEquipment({ id = 'STOCKPILE-RECLAIM', position = new THREE.Vector3() } = {}) {
+  const root = new THREE.Group();
+  root.name = id;
+  root.position.copy(position);
+  root.userData.inspectionKind = 'stockpile';
+  const oreMat = createIndustrialMaterial('terrain', { color: 0x806548, roughness: 1 });
+  const steel = createIndustrialMaterial('structuralSteel', { color: 0x4f5e62, metalness: 0.6 });
+  const compactedPad = createIndustrialMaterial('road', { color: 0x746854, roughness: 1 });
+
+  const pileA = mesh(createIrregularStockpileGeometry(13.5, 8.8, 0.7), oreMat, `${id}-pile-main`);
+  pileA.position.set(-2.0, 4.4, 0);
+  pileA.scale.z = 1.16;
+  root.add(pileA);
+  const pileB = mesh(createIrregularStockpileGeometry(7.8, 5.0, 2.1, 52, 10), oreMat.clone(), `${id}-pile-secondary`);
+  pileB.position.set(7.2, 2.5, -3.6);
+  pileB.scale.set(1.08, 1, 1.28);
+  root.add(pileB);
+
+  // Compacted operational pad: rectangular and subdued instead of a bright circular ring.
+  const pad = mesh(new THREE.BoxGeometry(44, 0.14, 35), compactedPad, `${id}-pad`);
+  pad.position.set(2.0, 0.07, 0.0);
+  root.add(pad);
+
+  const hopper = mesh(new THREE.CylinderGeometry(1.7, 3.2, 3.0, 4), steel, `${id}-hopper`);
+  hopper.position.set(21.5, 2.0, 12.0);
+  hopper.rotation.y = Math.PI / 4;
+  hopper.userData.inspectionShell = true;
+  root.add(hopper);
+  const feeder = mesh(new THREE.BoxGeometry(6.2, 0.45, 2.2), steel.clone(), `${id}-feeder`);
+  feeder.position.set(24.0, 0.72, 10.2);
+  feeder.rotation.y = -0.22;
+  root.add(feeder);
+
+  const ports = new Map([
+    ['feedIn', port('feedIn', 'materialIn', [-13.0, 9.4, 0], [1, -0.3, 0], 0.6)],
+    ['reclaimOut', port('reclaimOut', 'materialOut', [27.0, 1.15, 8.9], [1, 0, 0], 0.6)],
+    ['loaderDump', port('loaderDump', 'materialIn', [21.5, 3.65, 12.0], [0, -1, 0], 0.6)],
+  ]);
+  attachBlenderVisualReplacement({ hostRoot: root, instanceId: id });
+  return { id, type: 'stockpile-reclaim', dimensions: Object.freeze({ length: 50, width: 40, height: 10 }), transform: root, group3D: root, ports, metadata: Object.freeze({ category: 'stockpile-reclaim' }) };
+}

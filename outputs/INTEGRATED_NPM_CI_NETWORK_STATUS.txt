@@ -1,0 +1,1 @@
+Network npm ci attempt did not complete within the environment timeout; installation remained partial and was discarded.

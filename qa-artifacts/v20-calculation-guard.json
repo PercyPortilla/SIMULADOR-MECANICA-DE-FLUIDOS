@@ -1,0 +1,13 @@
+{
+  "baseline": "V19_ACADEMIC_COMPARATOR",
+  "calculation_prefixes": [
+    "src/controller/",
+    "src/core/",
+    "src/state/",
+    "src/process/",
+    "src/reporting/"
+  ],
+  "changed_count": 0,
+  "changed": [],
+  "status": "PASS"
+}

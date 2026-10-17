@@ -1,0 +1,6 @@
+{
+  "scope": "all JS/MJS excluding .git/node_modules",
+  "files": 112,
+  "passed": 112,
+  "failed": []
+}

@@ -1,0 +1,80 @@
+{
+  "metallurgical-scope": {
+    "model": "bingham",
+    "densityKgM3": 1278.648974668275,
+    "flowRateM3s": 0.021205750411731103,
+    "regime": "laminar",
+    "resultQuality": "validated-laminar",
+    "pressurePa": 86907.70657533615,
+    "powerW": 2568.203922091054,
+    "residenceTimeH": 9.43140403507528,
+    "leachConversion": 0.5712262589218333,
+    "overallRecovery": 0.7960049999999999,
+    "finalMetalKgH": 7.960049999999999
+  },
+  "newtonian-reference": {
+    "model": "newtonian",
+    "densityKgM3": 1278.648974668275,
+    "flowRateM3s": 0.021205750411731103,
+    "regime": "turbulent",
+    "resultQuality": "validated",
+    "pressurePa": 79570.4594300293,
+    "powerW": 2351.3814141861435,
+    "residenceTimeH": 4.71570201753764,
+    "leachConversion": 0.35967604149419385,
+    "overallRecovery": 0.67032,
+    "finalMetalKgH": 6.7032
+  },
+  "high-solids-bingham": {
+    "model": "bingham",
+    "densityKgM3": 1452.0547945205478,
+    "flowRateM3s": 0.015904312808798327,
+    "regime": "laminar",
+    "resultQuality": "validated-laminar",
+    "pressurePa": 128415.92482743633,
+    "powerW": 2846.1079126068544,
+    "residenceTimeH": 6.2876026900501865,
+    "leachConversion": 0.44232495485088685,
+    "overallRecovery": 0.67032,
+    "finalMetalKgH": 6.7032
+  },
+  "herschel-bulkley": {
+    "model": "hb",
+    "densityKgM3": 1389.2529488859764,
+    "flowRateM3s": 0.015904312808798327,
+    "regime": "laminar",
+    "resultQuality": "validated-laminar",
+    "pressurePa": 92244.3523182146,
+    "powerW": 2044.4300921319482,
+    "residenceTimeH": 6.2876026900501865,
+    "leachConversion": 0.44232495485088685,
+    "overallRecovery": 0.67032,
+    "finalMetalKgH": 6.7032
+  },
+  "power-law-scope": {
+    "model": "power",
+    "densityKgM3": 1331.6582914572864,
+    "flowRateM3s": 0.017671458676442587,
+    "regime": "turbulent",
+    "resultQuality": "educational-estimate",
+    "pressurePa": 78606.12722208828,
+    "powerW": 1935.7370804352308,
+    "residenceTimeH": 5.6588424210451675,
+    "leachConversion": 0.4109659799994172,
+    "overallRecovery": 0.67032,
+    "finalMetalKgH": 6.7032
+  },
+  "static-head-energy": {
+    "model": "newtonian",
+    "densityKgM3": 1278.648974668275,
+    "flowRateM3s": 0.021205750411731103,
+    "regime": "turbulent",
+    "resultQuality": "validated",
+    "pressurePa": 279685.7159969719,
+    "powerW": 8264.974201725327,
+    "residenceTimeH": 4.71570201753764,
+    "leachConversion": 0.35967604149419385,
+    "overallRecovery": 0.67032,
+    "finalMetalKgH": 6.7032
+  }
+}

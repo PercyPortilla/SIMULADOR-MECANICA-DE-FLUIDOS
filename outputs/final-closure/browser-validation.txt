@@ -1,0 +1,18 @@
+Browser / WebGL recovery evidence
+=================================
+Chromium found: Chrome/144.0.7559.96.
+
+Headless/ANGLE without Xvfb:
+- WebGL/WebGL2 context creation failed (EGL_NOT_INITIALIZED).
+
+Xvfb + Chromium + SwiftShader/ANGLE:
+- Blank-page WebGL probe succeeded: WebGL=true, WebGL2=true.
+- Therefore the browser stack can expose WebGL when an X display is present.
+
+Application navigation attempts:
+- http://127.0.0.1:4173/index.html -> net::ERR_BLOCKED_BY_ADMINISTRATOR.
+- file:///mnt/data/pulpa_integrated_work/pulpa_fases/index.html -> blocked by administrator (file links blocked).
+
+Because Vite/Three dependencies are also unavailable, no bundled application artifact exists that could bypass the blocked local navigation path.
+
+Result: real in-browser application/WebGL validation is technically impossible in this environment after the available recovery paths were exhausted.

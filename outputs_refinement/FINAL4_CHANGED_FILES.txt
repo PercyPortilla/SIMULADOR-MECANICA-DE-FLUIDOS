@@ -1,0 +1,25 @@
+Only in pulpa_final4_work: FINAL_4_ISSUES_AUDIT.md
+Only in pulpa_final4_work/outputs_refinement: FINAL4_CHANGED_FILES.txt
+Only in pulpa_final4_work/outputs_refinement: FINAL4_CLEARANCE_AUDIT.json
+Only in pulpa_final4_work/outputs_refinement: FINAL4_DIFF_CHECK.log
+Only in pulpa_final4_work/outputs_refinement: FINAL4_DIFF_CHECK.status
+Only in pulpa_final4_work/outputs_refinement: FINAL4_EQUIPMENT_AUDIT.json
+Only in pulpa_final4_work/outputs_refinement: FINAL4_IMPORT_VALIDATION.json
+Only in pulpa_final4_work/outputs_refinement: FINAL4_INTEGRATION_AUDIT.json
+Only in pulpa_final4_work/outputs_refinement: FINAL4_NPM_BUILD.log
+Only in pulpa_final4_work/outputs_refinement: FINAL4_NPM_BUILD.status
+Only in pulpa_final4_work/outputs_refinement: FINAL4_NPM_CI.log
+Only in pulpa_final4_work/outputs_refinement: FINAL4_NPM_CI_OFFLINE.log
+Only in pulpa_final4_work/outputs_refinement: FINAL4_NPM_CI_OFFLINE.status
+Only in pulpa_final4_work/outputs_refinement: FINAL4_NPM_TEST.log
+Only in pulpa_final4_work/outputs_refinement: FINAL4_NPM_TEST.status
+Only in pulpa_final4_work/outputs_refinement: FINAL4_PACKAGE_HASHES_AFTER.txt
+Only in pulpa_final4_work/outputs_refinement: FINAL4_PACKAGE_HASHES_BEFORE.txt
+Only in pulpa_final4_work/outputs_refinement: FINAL4_STATIC_AUDIT.json
+Only in pulpa_final4_work/outputs_refinement: FINAL4_SYNTAX_VALIDATION.json
+Files pulpa_final4_base/src/equipment/mining/haulTruck.js and pulpa_final4_work/src/equipment/mining/haulTruck.js differ
+Files pulpa_final4_base/src/scene/environment/haulRoads.js and pulpa_final4_work/src/scene/environment/haulRoads.js differ
+Files pulpa_final4_base/src/scene/integration/integratedAnimations.js and pulpa_final4_work/src/scene/integration/integratedAnimations.js differ
+Files pulpa_final4_base/src/scene/integration/integratedMobile.js and pulpa_final4_work/src/scene/integration/integratedMobile.js differ
+Files pulpa_final4_base/src/scene/piping/pipingEngine.js and pulpa_final4_work/src/scene/piping/pipingEngine.js differ
+Only in pulpa_final4_work/tools: final4StaticAudit.mjs

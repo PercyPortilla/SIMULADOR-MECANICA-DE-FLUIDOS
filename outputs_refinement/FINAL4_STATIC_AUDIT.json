@@ -1,0 +1,153 @@
+{
+  "generatedAt": "2026-10-11T21:42:04.305Z",
+  "checks": 29,
+  "passed": 29,
+  "failed": [],
+  "checksDetail": [
+    {
+      "id": "slurry-piecewise-linear-curve",
+      "ok": true,
+      "details": "particles follow same piecewise-linear route as pipe segments"
+    },
+    {
+      "id": "slurry-no-catmull-particle-route",
+      "ok": true,
+      "details": "no spline bowing in createFlowParticles"
+    },
+    {
+      "id": "slurry-radial-confinement",
+      "ok": true,
+      "details": "particle centres limited to 42% of slurry-core radius"
+    },
+    {
+      "id": "slurry-radial-data",
+      "ok": true,
+      "details": "per-particle radial offsets stored once"
+    },
+    {
+      "id": "slurry-local-frame-animation",
+      "ok": true,
+      "details": "local tangent/normal/binormal frame used during motion"
+    },
+    {
+      "id": "slurry-no-additive-glitter",
+      "ok": true,
+      "details": "normal blending avoids glitter-like additive halo"
+    },
+    {
+      "id": "slurry-particle-size-capped",
+      "ok": true,
+      "details": "point sprite size capped"
+    },
+    {
+      "id": "slurry-minimum-containment-margin",
+      "ok": true,
+      "details": "minimum pipe: fluidRadius=0.124 m, particle extent=0.063 m, margin=0.061 m"
+    },
+    {
+      "id": "truck-steer-pivot",
+      "ok": true,
+      "details": "explicit steering pivots"
+    },
+    {
+      "id": "truck-spin-pivot",
+      "ok": true,
+      "details": "explicit rolling pivots"
+    },
+    {
+      "id": "truck-wheel-hierarchy",
+      "ok": true,
+      "details": "steer -> spin -> wheel hierarchy"
+    },
+    {
+      "id": "truck-wheel-geometry-axis-z",
+      "ok": true,
+      "details": "wheel cylinders are oriented on local Z axis, matching spinPivot.rotation.z"
+    },
+    {
+      "id": "truck-distance-over-radius",
+      "ok": true,
+      "details": "rolling angle derived from travelled distance / tyre radius"
+    },
+    {
+      "id": "truck-no-name-recursive-wheel-rotation",
+      "ok": true,
+      "details": "integration no longer rotates wheel children by regex"
+    },
+    {
+      "id": "truck-steering-curve-derived",
+      "ok": true,
+      "details": "front steering follows route curvature"
+    },
+    {
+      "id": "truck-travel-derived",
+      "ok": true,
+      "details": "wheel travel tied to route distance"
+    },
+    {
+      "id": "dump-rear-hinge",
+      "ok": true,
+      "details": "rear hinge explicitly declared at negative local X"
+    },
+    {
+      "id": "dump-positive-local-z",
+      "ok": true,
+      "details": "positive local-Z raises front (+X) around rear hinge"
+    },
+    {
+      "id": "dump-no-negative-setter",
+      "ok": true,
+      "details": "setter no longer flips dump direction"
+    },
+    {
+      "id": "dump-rom-heading-preserved",
+      "ok": true,
+      "details": "truck rear remains oriented toward ROM during dump"
+    },
+    {
+      "id": "dump-kinematic-front-rises",
+      "ok": true,
+      "details": "48° positive rotation raises representative front point 3.12 m"
+    },
+    {
+      "id": "road-engineered-surface",
+      "ok": true,
+      "details": "engineered center/crown road surface"
+    },
+    {
+      "id": "road-curve-widening",
+      "ok": true,
+      "details": "primary haul road widens in curves"
+    },
+    {
+      "id": "road-shoulders",
+      "ok": true,
+      "details": "explicit shoulders"
+    },
+    {
+      "id": "road-cut-fill-transitions",
+      "ok": true,
+      "details": "road corridor transitions to terrain"
+    },
+    {
+      "id": "road-continuous-berms",
+      "ok": true,
+      "details": "continuous safety berm geometry"
+    },
+    {
+      "id": "road-no-rock-bead-berms",
+      "ok": true,
+      "details": "removed repeated boulder berms"
+    },
+    {
+      "id": "road-flat-track-ribbons",
+      "ok": true,
+      "details": "wheel tracks are flat ribbons, not round tubes"
+    },
+    {
+      "id": "road-crossfall-controlled",
+      "ok": true,
+      "details": "controlled crossfall/crown targets"
+    }
+  ]
+}

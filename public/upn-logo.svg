@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 120" role="img" aria-labelledby="title">
+  <title id="title">UPN - Universidad Privada del Norte</title>
+  <rect width="420" height="120" rx="8" fill="#ffb81c"/>
+  <path d="M24 85V46L54 18h18v22l-17 16v29H24zm48 0V56L55 40V18h18l30 28v39H72z" fill="#050505"/>
+  <text x="120" y="67" font-family="Arial Black,Arial,sans-serif" font-size="62" font-weight="900" fill="#050505">UPN</text>
+  <text x="121" y="91" font-family="Arial,Helvetica,sans-serif" font-size="13" font-weight="700" letter-spacing="1" fill="#050505">UNIVERSIDAD PRIVADA DEL NORTE</text>
+</svg>

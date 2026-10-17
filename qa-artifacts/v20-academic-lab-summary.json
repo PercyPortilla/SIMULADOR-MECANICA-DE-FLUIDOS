@@ -1,0 +1,57 @@
+{
+  "runtimeErrors": [],
+  "networkFailures": [],
+  "initial": {
+    "badge": "V20",
+    "experiment": "static-head-energy",
+    "predictionCount": 5,
+    "sceneBeforeKpis": true,
+    "sceneBeforeResults": true,
+    "sceneTop": 306,
+    "kpiTop": 1073,
+    "resultTop": 1368
+  },
+  "evaluation": {
+    "resultHidden": false,
+    "score": "5/5\nhipótesis coincidentes",
+    "rows": 5,
+    "status": "Evaluación completada: 5/5 predicciones coinciden con el modelo.",
+    "quality": "A · turbulent · validated\nB · turbulent · validated",
+    "conclusion": "Conclusión causal\n\nLongitud hidráulica: La pérdida distribuida aumenta con la longitud hidráulica del tramo. En el simulador, L es una entrada de cálculo y no desplaza físicamente los equipos 3D. Carga estática: El desnivel cambia la componente estática ρgΔz y, por tanto, la presión requerida, la carga total y la potencia de bombeo.",
+    "reportDisabled": false,
+    "loadBDisabled": false,
+    "activeLength": "100",
+    "activeDz": "5"
+  },
+  "report": {
+    "clickCount": 1,
+    "status": "Informe HTML generado. Puedes abrirlo, imprimirlo o guardarlo como PDF desde el navegador."
+  },
+  "loadedIntervention": {
+    "length": "180",
+    "dz": "20",
+    "velocity": "1.2",
+    "scenarioStatus": "Intervención del laboratorio cargada: Carga estática."
+  },
+  "inspection": {
+    "guide": "GUÍA DE PROCESO\nMolino · MILL-01\n\nQué hace: Representa molienda y preparación de la pulpa que entra al circuito húmedo.\n\nETAPA\nMolienda · bombeo · clasificación\nRESULTADO RELACIONADO\nDensidad de pulpa · comportamiento reológico\nENTRADA\nMineral + fase líquida de proceso.\nSALIDA\nPulpa hacia sump y clasificación.\nVARIABLE CLAVE\nConcentración de sólidos en masa\nQUÉ CAMBIA EN EL CÁLCULO\nEl % de sólidos ingresado modifica densidad y comportamiento reológico de la pulpa. El modelo no predice P80 ni energía específica de molienda.\nAnterior\nSeleccionado\nSiguiente\nAnterior: Faja · CV-03-STOCKPILE-TO-GRINDING\nSiguiente: Línea · P-MILL-TO-SUMP",
+    "legend": "Anterior\nSeleccionado\nSiguiente",
+    "camera": "inspection"
+  },
+  "mobile": {
+    "documentWidth": 390,
+    "viewportWidth": 390,
+    "panel": {
+      "x": 20,
+      "width": 350
+    },
+    "lab": {
+      "x": 31,
+      "width": 328
+    },
+    "table": {
+      "x": 31,
+      "width": 328
+    }
+  }
+}

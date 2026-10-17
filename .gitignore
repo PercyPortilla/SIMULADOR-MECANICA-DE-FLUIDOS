@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.vite/
+coverage/
+.vercel/
+__pycache__/
+*.pyc
+*.log
+*.zip
+.DS_Store
+Thumbs.db
+

@@ -1,0 +1,30 @@
+--- /tmp/pulpa_orig/pulpa_fases/src/scene/integration/integratedMobile.js	2026-10-10 19:48:42.000000000 +0000
++++ src/scene/integration/integratedMobile.js	2026-10-10 19:57:57.417614512 +0000
+@@ -102,6 +102,7 @@
+     let position;
+     let tangent;
+     let moving = false;
++    let preserveDumpHeading = false;
+     if (t < truckTimings.loading) {
+       position = loadedLane.getPoint(0);
+       tangent = loadedLane.getTangent(0.01);
+@@ -122,7 +123,10 @@
+       truck.setDumpAngle(angle);
+       truck.setLoaded(p < 0.58);
+       // Rear of the rigid truck points toward the ROM hopper during dumping.
++      // Preserve this heading for the dump phase instead of immediately replacing
++      // it with the terminal road tangent below.
+       truck.root.rotation.y = Math.PI;
++      preserveDumpHeading = true;
+     } else {
+       const p = (t - truckTimings.loading - truckTimings.haul - truckTimings.dump) / truckTimings.return;
+       position = returnLane.getPoint(p);
+@@ -132,7 +136,7 @@
+       moving = true;
+     }
+     truck.root.position.copy(position);
+-    orientAlong(truck.root, tangent);
++    if (!preserveDumpHeading) orientAlong(truck.root, tangent);
+     if (moving) rotateNamedWheels(truck.root, dt * 1.65);
+   }
+ 

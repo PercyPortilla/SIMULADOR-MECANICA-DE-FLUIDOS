@@ -1,0 +1,48 @@
+{
+  "runtimeErrors": [],
+  "networkFailures": [],
+  "first": {
+    "active": "true",
+    "selected": "EXCAVATOR-01",
+    "progress": "01 / 19",
+    "guide": "PRESENTACIÓN · 01/19\nExcavadora · EXCAVATOR-01\n\nQué hace: Carga mineral fragmentado desde el frente de mina hacia el camión.\n\nENTRADA\nMineral tronado en banco.\n→\nSALIDA\nCamión cargado hacia ROM.\n\nVARIABLE CLAVE: Ciclo de carguío · contexto operativo",
+    "camera": "inspection"
+  },
+  "second": {
+    "selected": "TRUCK-01",
+    "progress": "02 / 19"
+  },
+  "autoplay": {
+    "selected": "ROM-HOPPER",
+    "progress": "03 / 19",
+    "playing": "true"
+  },
+  "paused": "false",
+  "mobile": {
+    "documentWidth": 390,
+    "viewportWidth": 390,
+    "controls": {
+      "x": 27,
+      "y": 2756.53125,
+      "width": 336,
+      "height": 41
+    },
+    "guide": {
+      "x": 27,
+      "y": 2892.625,
+      "width": 336,
+      "height": 152.09375
+    },
+    "viewport": {
+      "x": 19,
+      "y": 2748.53125,
+      "width": 352,
+      "height": 304.1875
+    }
+  },
+  "exited": {
+    "active": "false",
+    "playerHidden": true,
+    "guidePresentationClass": false
+  }
+}

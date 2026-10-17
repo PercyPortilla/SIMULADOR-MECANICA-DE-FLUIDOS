@@ -1,0 +1,344 @@
+{
+  "generatedAt": "2026-10-10",
+  "checks": 56,
+  "passed": 56,
+  "failed": [],
+  "checksDetail": [
+    {
+      "id": "conveyor-local-frame",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "belt/pulleys/idlers/walkway/rails share conveyor-local-frame"
+    },
+    {
+      "id": "conveyor-carry-return-idlers",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "carrying and return idlers present"
+    },
+    {
+      "id": "conveyor-walkway-handrail",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "walkway and handrail present on conveyor asset"
+    },
+    {
+      "id": "conveyor-ore-bed",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "continuous ore bed plus discrete fragments"
+    },
+    {
+      "id": "stockpile-irregular",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "deterministic irregular stockpile geometry"
+    },
+    {
+      "id": "stockpile-no-circular-white-pad",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "compacted rectangular pad replaces circular ring"
+    },
+    {
+      "id": "pipe-port-model",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "physical/visual diameters remain distinct"
+    },
+    {
+      "id": "pipe-supports",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "engineered supports/shoes for long horizontal runs"
+    },
+    {
+      "id": "pipe-fittings",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "flanges + isolation valve generated"
+    },
+    {
+      "id": "slurry-particles-preallocated",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "preallocated Points stream follows pipe route"
+    },
+    {
+      "id": "flow-direction-metadata",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "route direction explicitly tagged"
+    },
+    {
+      "id": "slurry-subtle-bright-solids",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "small additive suspended-solids particles; not emitted as lights"
+    },
+    {
+      "id": "slurry-particles:sump",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "suspended solids cloud wired into sump"
+    },
+    {
+      "id": "slurry-particles:pump",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "suspended solids cloud wired into pump"
+    },
+    {
+      "id": "slurry-particles:cyclones",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "suspended solids cloud wired into cyclones"
+    },
+    {
+      "id": "slurry-particles:reactor",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "suspended solids cloud wired into reactor"
+    },
+    {
+      "id": "connection:P-MILL-TO-SUMP",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "P-MILL-TO-SUMP"
+    },
+    {
+      "id": "connection:P-SUMP-TO-PUMP",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "P-SUMP-TO-PUMP"
+    },
+    {
+      "id": "connection:P-PUMP-TO-CYCLONES",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "P-PUMP-TO-CYCLONES"
+    },
+    {
+      "id": "connection:P-CYCLONE-UNDERFLOW-RETURN",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "P-CYCLONE-UNDERFLOW-RETURN"
+    },
+    {
+      "id": "connection:P-CLASSIFICATION-TO-LEACH",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "P-CLASSIFICATION-TO-LEACH"
+    },
+    {
+      "id": "connection:P-LEACH-R01-R02",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "P-LEACH-R01-R02"
+    },
+    {
+      "id": "connection:P-LEACH-R02-R03",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "P-LEACH-R02-R03"
+    },
+    {
+      "id": "connection:P-LEACH-R03-R04",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "P-LEACH-R03-R04"
+    },
+    {
+      "id": "connection:P-R04-TO-CIP",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "P-R04-TO-CIP"
+    },
+    {
+      "id": "connection:P-ELUTION-TO-EW",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "P-ELUTION-TO-EW"
+    },
+    {
+      "id": "material-transfer:MT-CIP-TO-ELUTION-CARBON",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "MT-CIP-TO-ELUTION-CARBON"
+    },
+    {
+      "id": "material-transfer:MT-ELUTION-TO-CIP-BARREN-CARBON",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "MT-ELUTION-TO-CIP-BARREN-CARBON"
+    },
+    {
+      "id": "material-transfer:MT-EW-TO-SMELTING-CATHODE",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "MT-EW-TO-SMELTING-CATHODE"
+    },
+    {
+      "id": "rom-to-feeder-chute",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "ROM discharge physically bridged to apron feeder inlet"
+    },
+    {
+      "id": "conveyor:CV-01-FEEDER-TO-CRUSHER",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "CV-01-FEEDER-TO-CRUSHER"
+    },
+    {
+      "id": "conveyor:CV-02-CRUSHER-TO-STOCKPILE",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "CV-02-CRUSHER-TO-STOCKPILE"
+    },
+    {
+      "id": "conveyor:CV-03-STOCKPILE-TO-GRINDING",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "CV-03-STOCKPILE-TO-GRINDING"
+    },
+    {
+      "id": "local-foundations",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "individual embedded equipment foundations"
+    },
+    {
+      "id": "reactor-phase-offsets",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "R-01..R-04 receive staggered agitation phases"
+    },
+    {
+      "id": "reactor-walkway-under-rail",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "top rail has actual walkway support"
+    },
+    {
+      "id": "recovery-presence:CIP",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "CIP: cip-access-ladder, cip-pump-a, cip-carbon-transfer-header"
+    },
+    {
+      "id": "recovery-presence:Elution",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "Elution: elution-upper-platform, elution-solution-header, elution-pump-a"
+    },
+    {
+      "id": "recovery-presence:EW",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "EW: ew-service-walkway, ew-busbar-positive, ew-rectifier-cabinet"
+    },
+    {
+      "id": "recovery-presence:Smelting",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "Smelting: smelting-exhaust-stack, smelting-extraction-hood, smelting-platform"
+    },
+    {
+      "id": "terrain-irregular-benches",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "controlled non-concentric pit bench variation"
+    },
+    {
+      "id": "haul-road-wheel-tracks",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "subtle terrain-following haul-road wheel tracks"
+    },
+    {
+      "id": "mobile-routes-centralized",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "loader route defined in final layout and consumed by integrated mobile system"
+    },
+    {
+      "id": "shovel-oriented-to-loading",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "shovel pose corrected toward truck loading point"
+    },
+    {
+      "id": "loader-preallocated-scratch",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "loader update avoids temporary Vector3 allocation"
+    },
+    {
+      "id": "mill-static-group",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "mill static group retained"
+    },
+    {
+      "id": "mill-rotating-group",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "only local rotating group is animated"
+    },
+    {
+      "id": "mill-root-not-rotated",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "no root rotation assignment in mill update"
+    },
+    {
+      "id": "scene-fog-null",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "scene.fog remains null"
+    },
+    {
+      "id": "recovery-model-null",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "recoveryModel remains null"
+    },
+    {
+      "id": "inspection-distance",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "inspection orbit supports full-site context"
+    },
+    {
+      "id": "nine-camera-presets",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "9 expected preset definitions found"
+    },
+    {
+      "id": "camera-frustum-static",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "near=0.1, far=1600 declared for all presets"
+    },
+    {
+      "id": "single-plant-animation-loop",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "plant rAF files=['src/scene/baseEnvironment.js']"
+    },
+    {
+      "id": "equipment-lab-isolated-loop",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "all rAF files=['src/equipmentLab.js', 'src/scene/baseEnvironment.js']"
+    },
+    {
+      "id": "no-render-resource-per-update",
+      "status": "PASS",
+      "validation": "static",
+      "evidence": "No geometry/material/listener creation found in the plant per-frame animation path. equipmentLab.js is isolated; pipe1.update() is state-driven on input changes, not called from requestAnimationFrame."
+    }
+  ]
+}

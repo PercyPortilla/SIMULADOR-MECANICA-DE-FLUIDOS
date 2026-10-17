@@ -1,0 +1,113 @@
+{
+  "checkpoint": "V13_GEOTECHNICAL_3D_PHASED",
+  "date": "2026-10-12",
+  "scope": "Visual/didactic geotechnical subsystem only",
+  "checks": {
+    "visual_only_root": true,
+    "physics_coupled_false": true,
+    "hidden_by_default": true,
+    "ui_toggle_present": true,
+    "ui_toggle_default_unchecked": true,
+    "session_persistence": true,
+    "legend_disclaimer": true,
+    "pit_excavation_rock_logic": true,
+    "groundwater_conceptual": true,
+    "foundation_primary_crusher": true,
+    "foundation_mill": true,
+    "road_layers": true,
+    "stockpile_platform": true,
+    "soft_ground_r04": true,
+    "secondary_containment": true,
+    "label_camera_lod": true,
+    "dispose_present": true,
+    "tests_added": true,
+    "base_api_integrated": true,
+    "protected_physics_unchanged": true,
+    "source_change_scope_expected": true
+  },
+  "all_static_invariants_pass": true,
+  "protected_physics_changed_files": [],
+  "expected_changed_source_files": [
+    "src/main.js",
+    "src/scene/baseEnvironment.js",
+    "src/scene/geotech/geotechMaterials.js",
+    "src/scene/geotech/geotechModel.js",
+    "src/scene/geotech/geotechnicalSystem.js",
+    "src/styles.css",
+    "tests/scene/baseEnvironment.test.js",
+    "tests/scene/geotechnics.test.js"
+  ],
+  "named_area_audit": [
+    {
+      "element": "Tajo abierto",
+      "status": "PASS",
+      "audit": "Estratigrafía excavada revela roca; nivel freático conceptual deprimido hacia pit sump."
+    },
+    {
+      "element": "ROAD-01",
+      "status": "PASS",
+      "audit": "Sección constructiva visual de rodadura, base, subbase y relleno; trazado existente no modificado."
+    },
+    {
+      "element": "PRIMARY-CRUSHER",
+      "status": "PASS",
+      "audit": "Cimentación y relleno estructural visual derivados del perfil natural; equipo existente no movido."
+    },
+    {
+      "element": "Stockpile",
+      "status": "PASS",
+      "audit": "Plataforma granular, manta drenante y relleno estructural visual."
+    },
+    {
+      "element": "MILL-01",
+      "status": "PASS",
+      "audit": "Conjunto de cimentación profunda/dinámica visual hasta material competente conceptual."
+    },
+    {
+      "element": "SUMP-01",
+      "status": "PASS",
+      "audit": "Elemento existente preservado; el módulo geotécnico no altera su lógica ni posición."
+    },
+    {
+      "element": "SLURRY-PUMP-01",
+      "status": "PASS",
+      "audit": "Elemento existente preservado; sin cambios de hidráulica o animación."
+    },
+    {
+      "element": "CLASS-01",
+      "status": "PASS",
+      "audit": "Elemento existente preservado; sin cambios de proceso."
+    },
+    {
+      "element": "R-01…R-04",
+      "status": "PASS",
+      "audit": "Contención secundaria conceptual; R-04 incluye bolsillo cohesivo, purga y reemplazo localizado."
+    },
+    {
+      "element": "CIP",
+      "status": "PASS",
+      "audit": "Área existente preservada y asociada a contención secundaria conceptual."
+    },
+    {
+      "element": "Elución",
+      "status": "PASS",
+      "audit": "Área existente preservada y asociada a contención secundaria conceptual."
+    },
+    {
+      "element": "EW",
+      "status": "PASS",
+      "audit": "Área existente preservada y asociada a contención secundaria conceptual."
+    },
+    {
+      "element": "Fundición",
+      "status": "PASS",
+      "audit": "Área existente preservada; no se inventaron procesos adicionales."
+    }
+  ],
+  "runtime_validation": {
+    "npm_test": "NOT EXECUTED: vitest binary unavailable because node_modules could not be restored; final command exits 127.",
+    "npm_build": "NOT EXECUTED: vite binary unavailable because node_modules could not be restored; final command exits 127.",
+    "dependency_restore": "Earlier npm ci attempts failed due npm registry DNS EAI_AGAIN; no PASS is claimed.",
+    "dist": "Existing dist remains from previous built checkpoint and was not regenerated."
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "baseline": "V18_ACADEMIC_CASES",
+  "all_src_changed": [
+    "src/main.js",
+    "src/styles.css"
+  ],
+  "all_src_added": [
+    "src/ui/academicComparison.js"
+  ],
+  "all_src_missing": [],
+  "calculation_prefixes": [
+    "src/controller/",
+    "src/core/",
+    "src/state/",
+    "src/process/",
+    "src/reporting/"
+  ],
+  "calculation_changed_count": 0,
+  "calculation_changed": [],
+  "status": "PASS"
+}

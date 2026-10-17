@@ -1,0 +1,22 @@
+{
+  "checkpoint": "PULPA-LAB-INTEGRATED-V1",
+  "status": {
+    "catalog": "PASS",
+    "masterplan": "PASS_STATIC",
+    "solidCircuit": "PASS_STATIC",
+    "classification": "PASS_STATIC",
+    "classificationToLeaching": "PASS_STATIC",
+    "leachingTrain": "PASS_STATIC",
+    "recovery": "PASS_STATIC",
+    "piping": "PASS_STATIC",
+    "mobileRoutes": "PASS_STATIC",
+    "terrainRoads": "PASS_STATIC",
+    "inspection": "PASS_STATIC",
+    "cameras": "PASS_STATIC",
+    "syntax": "PASS",
+    "imports": "PASS",
+    "npmTest": "NOT_VALIDATED",
+    "npmBuild": "NOT_VALIDATED",
+    "browser": "NOT_VALIDATED"
+  }
+}

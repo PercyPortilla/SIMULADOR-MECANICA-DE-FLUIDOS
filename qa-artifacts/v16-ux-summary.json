@@ -1,0 +1,39 @@
+{
+  "runtimeErrors": [],
+  "desktop": {
+    "optionCount": 39,
+    "selected": "MILL-01",
+    "guideHidden": false,
+    "guideText": "GUÍA DE PROCESO\nMolino · MILL-01\n\nQué hace: Representa molienda y preparación de la pulpa que entra al circuito húmedo.\n\nENTRADA\nMineral + fase líquida de proceso.\nSALIDA\nPulpa hacia sump y clasificación.\nVARIABLE CLAVE\nConcentración de sólidos en masa\nQUÉ CAMBIA EN EL CÁLCULO\nEl % de sólidos ingresado modifica densidad y comportamiento reológico de la pulpa. El modelo no predice P80 ni energía específica de molienda.\nAnterior: Faja · CV-03-STOCKPILE-TO-GRINDING\nSiguiente: Línea · P-MILL-TO-SUMP",
+    "guideRect": {
+      "x": 393,
+      "y": 790.8125,
+      "width": 430,
+      "height": 239.1875
+    },
+    "viewportRect": {
+      "x": 379,
+      "y": 524,
+      "width": 1096,
+      "height": 520
+    },
+    "activeCameraButton": "inspection"
+  },
+  "mobile": {
+    "guideHidden": false,
+    "guideRect": {
+      "x": 27,
+      "y": 2868.296875,
+      "width": 336,
+      "height": 176.421875
+    },
+    "viewportRect": {
+      "x": 19,
+      "y": 2748.53125,
+      "width": 352,
+      "height": 304.1875
+    },
+    "documentWidth": 390,
+    "viewportWidth": 390
+  }
+}

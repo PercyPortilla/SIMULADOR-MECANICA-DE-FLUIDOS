@@ -1,0 +1,279 @@
+<!doctype html><html><head><meta charset="utf-8"><title>PULPA LAB · Memoria de cálculo · Regresión HB 35%</title><style>body{font-family:Arial,sans-serif;color:#17212a;margin:32px}header{border-bottom:8px solid #ffb81c;padding-bottom:14px;margin-bottom:24px}header strong{font-size:28px}article>h1{display:none}section{break-inside:avoid;margin:0 0 24px}h2{font-size:16px}table{width:100%;border-collapse:collapse;font-size:10px}th,td{padding:6px;border-bottom:1px solid #ccd2d6;text-align:left}thead th{background:#eef2f5}@page{size:A4;margin:14mm}@media print{body{margin:0}}</style></head><body><header><strong>UPN · PULPA LAB</strong><p>Memoria técnica reproducible · Unidades SI</p></header><article class="calculation-memo">
+    <h1>PULPA LAB · Memoria de cálculo · Regresión HB 35%</h1>
+    <section data-section="metadata">
+      <h2>Trazabilidad del modelo</h2>
+      <table>
+        <thead><tr><th>Variable</th><th>Valor</th><th>Unidad</th></tr></thead>
+        <tbody>
+        <tr>
+          <th scope="row">Escenario</th>
+          <td>Regresión HB 35%</td>
+          <td></td>
+        </tr>
+        <tr>
+          <th scope="row">Calidad del resultado</th>
+          <td>validated-laminar</td>
+          <td></td>
+        </tr>
+        <tr>
+          <th scope="row">Modo hidráulico</th>
+          <td>laminar-rheology</td>
+          <td></td>
+        </tr>
+        </tbody>
+      </table>
+    </section>
+    <section data-section="inputs">
+      <h2>Datos de entrada</h2>
+      <table>
+        <thead><tr><th>Variable</th><th>Valor</th><th>Unidad</th></tr></thead>
+        <tbody>
+        <tr>
+          <th scope="row">Sólidos Cw</th>
+          <td>35</td>
+          <td>% masa</td>
+        </tr>
+        <tr>
+          <th scope="row">Densidad sólido</th>
+          <td>4200</td>
+          <td>kg/m³</td>
+        </tr>
+        <tr>
+          <th scope="row">Densidad líquido</th>
+          <td>1000</td>
+          <td>kg/m³</td>
+        </tr>
+        <tr>
+          <th scope="row">Modelo reológico</th>
+          <td>hb</td>
+          <td></td>
+        </tr>
+        <tr>
+          <th scope="row">Diámetro Pipe 1</th>
+          <td>0.15</td>
+          <td>m</td>
+        </tr>
+        <tr>
+          <th scope="row">Longitud Pipe 1</th>
+          <td>100</td>
+          <td>m</td>
+        </tr>
+        <tr>
+          <th scope="row">Velocidad Pipe 1</th>
+          <td>1.5</td>
+          <td>m/s</td>
+        </tr>
+        <tr>
+          <th scope="row">Desnivel Pipe 1</th>
+          <td>0</td>
+          <td>m</td>
+        </tr>
+        <tr>
+          <th scope="row">Eficiencia bomba</th>
+          <td>0.75</td>
+          <td>0–1</td>
+        </tr>
+        <tr>
+          <th scope="row">Eficiencia motor</th>
+          <td>1</td>
+          <td>0–1</td>
+        </tr>
+        <tr>
+          <th scope="row">k lixiviación ingresado</th>
+          <td>0.1</td>
+          <td>h⁻¹</td>
+        </tr>
+        </tbody>
+      </table>
+    </section>
+    <section data-section="equations">
+      <h2>Ecuaciones y sustitución</h2>
+      <table>
+        <thead><tr><th>Variable</th><th>Valor</th><th>Unidad</th></tr></thead>
+        <tbody>
+        <tr>
+          <th scope="row">Densidad de mezcla</th>
+          <td>ρm = 1/[w/ρs + (1−w)/ρl]</td>
+          <td></td>
+        </tr>
+        <tr>
+          <th scope="row">Sustitución densidad</th>
+          <td>1/[0.35/4200 + 0.65/1000] = 1363.64</td>
+          <td>kg/m³</td>
+        </tr>
+        <tr>
+          <th scope="row">Caudal</th>
+          <td>Q = V·πD²/4</td>
+          <td></td>
+        </tr>
+        <tr>
+          <th scope="row">Sustitución caudal</th>
+          <td>1.5·π·0.15²/4 = 0.0265072</td>
+          <td>m³/s</td>
+        </tr>
+        <tr>
+          <th scope="row">Ley constitutiva</th>
+          <td>τ = τy + K·γ̇ⁿ</td>
+          <td></td>
+        </tr>
+        <tr>
+          <th scope="row">Esfuerzo de pared resuelto</th>
+          <td>τw = 33.6054</td>
+          <td>Pa</td>
+        </tr>
+        <tr>
+          <th scope="row">Presión total</th>
+          <td>ΔPtotal = ΣΔPdistribuida + ΣΔPmenor + ΣΔPestática</td>
+          <td></td>
+        </tr>
+        <tr>
+          <th scope="row">Sustitución presión</th>
+          <td>89614.5 + 3681.82 + 0 = 93296.3</td>
+          <td>Pa</td>
+        </tr>
+        <tr>
+          <th scope="row">Potencia</th>
+          <td>Ph = ΔP·Q; Pe = Ph/(ηbomba·ηmotor)</td>
+          <td></td>
+        </tr>
+        <tr>
+          <th scope="row">Sustitución potencia eléctrica</th>
+          <td>93296.3·0.0265072/(0.75·1) = 3297.36</td>
+          <td>W</td>
+        </tr>
+        <tr>
+          <th scope="row">CSTRs en serie</th>
+          <td>X = 1 − [1/(1 + k·τ/N)]ᴺ</td>
+          <td></td>
+        </tr>
+        </tbody>
+      </table>
+    </section>
+    <section data-section="results">
+      <h2>Resultados</h2>
+      <table>
+        <thead><tr><th>Variable</th><th>Valor</th><th>Unidad</th></tr></thead>
+        <tbody>
+        <tr>
+          <th scope="row">Densidad mezcla</th>
+          <td>1363.64</td>
+          <td>kg/m³</td>
+        </tr>
+        <tr>
+          <th scope="row">Caudal</th>
+          <td>0.0265072</td>
+          <td>m³/s</td>
+        </tr>
+        <tr>
+          <th scope="row">Presión total</th>
+          <td>93296.3</td>
+          <td>Pa</td>
+        </tr>
+        <tr>
+          <th scope="row">Carga total</th>
+          <td>6.97662</td>
+          <td>m</td>
+        </tr>
+        <tr>
+          <th scope="row">Régimen</th>
+          <td>laminar</td>
+          <td></td>
+        </tr>
+        <tr>
+          <th scope="row">Re* / Reynolds</th>
+          <td>730.402</td>
+          <td></td>
+        </tr>
+        <tr>
+          <th scope="row">Potencia eléctrica</th>
+          <td>3297.36</td>
+          <td>W</td>
+        </tr>
+        <tr>
+          <th scope="row">Energía anual</th>
+          <td>26378.9</td>
+          <td>kWh/año</td>
+        </tr>
+        <tr>
+          <th scope="row">Sólidos</th>
+          <td>45.5442</td>
+          <td>t/h</td>
+        </tr>
+        <tr>
+          <th scope="row">Tiempo residencia</th>
+          <td>0.523967</td>
+          <td>h</td>
+        </tr>
+        <tr>
+          <th scope="row">k efectivo</th>
+          <td>0.1</td>
+          <td>h⁻¹</td>
+        </tr>
+        <tr>
+          <th scope="row">Conversión lixiviación</th>
+          <td>0.0507247</td>
+          <td>fracción</td>
+        </tr>
+        <tr>
+          <th scope="row">Recuperación global</th>
+          <td>0.67032</td>
+          <td>fracción</td>
+        </tr>
+        </tbody>
+      </table>
+    </section>
+    <section data-section="assumptions">
+      <h2>Supuestos y alcance</h2>
+      <table>
+        <thead><tr><th>Variable</th><th>Valor</th><th>Unidad</th></tr></thead>
+        <tbody>
+        <tr>
+          <th scope="row">1</th>
+          <td>Unidades internas SI.</td>
+          <td></td>
+        </tr>
+        <tr>
+          <th scope="row">2</th>
+          <td>Modelo estacionario y homogéneo; no constituye CFD tridimensional.</td>
+          <td></td>
+        </tr>
+        <tr>
+          <th scope="row">3</th>
+          <td>La geometría 3D es representativa y no reemplaza diseño mecánico certificado.</td>
+          <td></td>
+        </tr>
+        </tbody>
+      </table>
+    </section>
+    <section data-section="warnings">
+      <h2>Advertencias</h2>
+      <table>
+        <thead><tr><th>Variable</th><th>Valor</th><th>Unidad</th></tr></thead>
+        <tbody>
+        <tr>
+          <th scope="row">1</th>
+          <td>Método orientativo legado; no incluye granulometría ni calibración de planta.</td>
+          <td></td>
+        </tr>
+        </tbody>
+      </table>
+    </section>
+    <section data-section="references">
+      <h2>Referencias aplicables</h2>
+      <table>
+        <thead><tr><th>Variable</th><th>Valor</th><th>Unidad</th></tr></thead>
+        <tbody>
+        <tr>
+          <th scope="row">1</th>
+          <td>Dodge–Metzner smooth-pipe Fanning correlation; implementation educativa con transición explícita.</td>
+          <td></td>
+        </tr>
+        <tr>
+          <th scope="row">2</th>
+          <td>Durand F_L legacy/orientativo; F_L es entrada explícita y no una calibración automática.</td>
+          <td></td>
+        </tr>
+        </tbody>
+      </table>
+    </section>
+  </article></body></html>
