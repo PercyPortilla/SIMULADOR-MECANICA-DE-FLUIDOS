@@ -44,14 +44,16 @@ describe('inspection educational guide', () => {
     expect(getInspectionGuideEntry('P-LEACH-R02-R03').calculationImpact).toContain('no es un segundo Pipe 1');
   });
 
-  it('adds compact component hotspots only to the V24 priority equipment', () => {
+  it('adds compact component hotspots to the V25 priority equipment without changing target count', () => {
     expect(Object.keys(INSPECTION_COMPONENT_HOTSPOTS).sort()).toEqual([
       'CIP-ADSORPTION',
       'CLASS-01',
       'ELUTION-SKID',
+      'EW-CELLS',
       'MILL-01',
       'PRIMARY-CRUSHER',
       'SLURRY-PUMP-01',
+      'SMELTING-FURNACE',
     ]);
     Object.keys(INSPECTION_COMPONENT_HOTSPOTS).forEach((id) => {
       const hotspots = getInspectionComponentHotspots(id);
@@ -63,6 +65,9 @@ describe('inspection educational guide', () => {
       });
     });
     expect(getInspectionComponentHotspots('R-01')).toEqual([]);
+    expect(getInspectionComponentHotspots('EW-CELLS').map((item) => item.component)).toContain('Ánodos y cátodos');
+    expect(getInspectionComponentHotspots('SMELTING-FURNACE').map((item) => item.component)).toContain('Mecanismo de inclinación');
+    expect(Object.keys(INSPECTION_GUIDE)).toHaveLength(38);
   });
 
   it('defines a compact presentation route as an ordered unique subsequence of the circuit', () => {

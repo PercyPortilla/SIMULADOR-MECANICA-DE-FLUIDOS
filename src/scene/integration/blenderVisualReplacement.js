@@ -26,6 +26,7 @@ export const BLENDER_REPLACEMENT_SPECS = Object.freeze({
     url: 'models/pulpa-blender/MINING-SHOVEL.glb',
     playAllAnimations: true,
     materialLoadNode: 'MINING-SHOVEL_BUCKET_ORE',
+    initialMaterialLoadVisible: false,
   }),
   'TRUCK-01': Object.freeze({
     url: 'models/pulpa-blender/HAUL-TRUCK.glb',
@@ -44,6 +45,7 @@ export const BLENDER_REPLACEMENT_SPECS = Object.freeze({
     playAllAnimations: true,
     semanticControl: 'wheel-loader',
     materialLoadNode: 'WHEEL-LOADER_BUCKET_ORE',
+    initialMaterialLoadVisible: false,
   }),
   'MILL-01': Object.freeze({
     url: 'models/pulpa-blender/MILL-01.glb',
@@ -155,6 +157,11 @@ export const BLENDER_REPLACEMENT_SPECS = Object.freeze({
   'SMELTING-FURNACE': Object.freeze({
     url: 'models/pulpa-blender/SMELTING-FURNACE.glb',
     expectedAnimation: 'SMELTING_FURNACE_Tilt',
+    animationPacing: Object.freeze({
+      cycleSeconds: 16,
+      activeStartSeconds: 8.8,
+      activeEndSeconds: 13.12,
+    }),
     educationalProcessNodes: Object.freeze([
       { name: 'SMELTING-FURNACE_MELT', mode: 'glow', phase: 0.0 },
       { name: 'SMELTING-FURNACE_CRUCIBLE_GLOW', mode: 'glow', phase: 1.1 },
@@ -430,10 +437,26 @@ export function attachBlenderVisualReplacement({
   const fallback = makeFallbackGroup(hostRoot, instanceId);
   let imported = null;
   let mixer = null;
+  let pacedAnimation = null;
+  let animationCycleElapsed = 0;
   let enabled = true;
   let disposed = false;
-  let materialLoadVisible = true;
+  let materialLoadVisible = spec.initialMaterialLoadVisible ?? true;
   let educationalElapsed = 0;
+
+  function applyPacedAnimationTime(seconds) {
+    if (!mixer || !pacedAnimation) return;
+    const { clip, cycleSeconds, activeStartSeconds, activeEndSeconds } = pacedAnimation;
+    const cycleTime = ((seconds % cycleSeconds) + cycleSeconds) % cycleSeconds;
+    animationCycleElapsed = cycleTime;
+    let clipTime = 0;
+    if (cycleTime >= activeEndSeconds) clipTime = clip.duration;
+    else if (cycleTime > activeStartSeconds) {
+      const progress = (cycleTime - activeStartSeconds) / (activeEndSeconds - activeStartSeconds);
+      clipTime = THREE.MathUtils.clamp(progress, 0, 1) * clip.duration;
+    }
+    mixer.setTime(clipTime);
+  }
 
   hostRoot.userData.blenderVisualStatus = 'loading';
 
@@ -472,8 +495,30 @@ export function attachBlenderVisualReplacement({
         const preferred = gltf.animations.find((clip) => clip.name === spec.expectedAnimation) ?? gltf.animations[0];
         const clipsToPlay = spec.playAllAnimations ? gltf.animations : (preferred ? [preferred] : []);
         clipsToPlay.forEach((clip) => mixer.clipAction(clip).play());
+        const pacing = spec.animationPacing;
+        if (preferred && pacing
+          && Number(pacing.cycleSeconds) > 0
+          && Number(pacing.activeStartSeconds) >= 0
+          && Number(pacing.activeEndSeconds) > Number(pacing.activeStartSeconds)
+          && Number(pacing.activeEndSeconds) <= Number(pacing.cycleSeconds)) {
+          pacedAnimation = {
+            clip: preferred,
+            cycleSeconds: Number(pacing.cycleSeconds),
+            activeStartSeconds: Number(pacing.activeStartSeconds),
+            activeEndSeconds: Number(pacing.activeEndSeconds),
+          };
+          hostRoot.userData.blenderAnimationPacing = {
+            cycleSeconds: pacedAnimation.cycleSeconds,
+            activeStartSeconds: pacedAnimation.activeStartSeconds,
+            activeEndSeconds: pacedAnimation.activeEndSeconds,
+          };
+          applyPacedAnimationTime(0);
+        }
         const phaseOffset = Number(hostRoot.userData.animationPhaseOffset || 0);
-        if (Number.isFinite(phaseOffset) && phaseOffset > 0) mixer.setTime(phaseOffset);
+        if (Number.isFinite(phaseOffset) && phaseOffset > 0) {
+          if (pacedAnimation) applyPacedAnimationTime(phaseOffset);
+          else mixer.setTime(phaseOffset);
+        }
         hostRoot.userData.blenderAnimationClips = gltf.animations.map((clip) => clip.name);
       } else {
         hostRoot.userData.blenderAnimationClips = [];
@@ -498,7 +543,10 @@ export function attachBlenderVisualReplacement({
     update(dt) {
       if (!enabled || !Number.isFinite(dt) || dt <= 0) return;
       const safeDt = Math.min(dt, 0.1);
-      if (mixer) mixer.update(safeDt);
+      if (mixer) {
+        if (pacedAnimation) applyPacedAnimationTime(animationCycleElapsed + safeDt);
+        else mixer.update(safeDt);
+      }
       if (imported && spec.educationalProcessNodes?.length) {
         educationalElapsed += safeDt;
         updateImportedEducationalProcessVisuals(imported, spec.educationalProcessNodes, educationalElapsed);
@@ -514,7 +562,8 @@ export function attachBlenderVisualReplacement({
     },
     setAnimationTime(seconds) {
       if (!mixer || !Number.isFinite(seconds) || seconds < 0) return;
-      mixer.setTime(seconds);
+      if (pacedAnimation) applyPacedAnimationTime(seconds);
+      else mixer.setTime(seconds);
     },
     setMaterialLoadVisible(value) {
       materialLoadVisible = Boolean(value);

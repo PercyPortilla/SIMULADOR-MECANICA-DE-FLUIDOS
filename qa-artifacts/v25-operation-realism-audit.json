@@ -1,0 +1,179 @@
+{
+  "revision": "V24",
+  "generatedAt": "2026-10-17T18:57:56.183Z",
+  "checks": 34,
+  "passed": 34,
+  "failed": [],
+  "checksDetail": [
+    {
+      "id": "scene-no-fog",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "inspection-target-count",
+      "ok": true,
+      "details": "38"
+    },
+    {
+      "id": "inspection-focus-profile-count",
+      "ok": true,
+      "details": "7"
+    },
+    {
+      "id": "mobile-three-trucks",
+      "ok": true,
+      "details": "3"
+    },
+    {
+      "id": "mobile-v24-fleet",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "material-transfer-count",
+      "ok": true,
+      "details": "3"
+    },
+    {
+      "id": "stockpile-feed-flow",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "classification-mechanical-access",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "cip-service-deck",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "instrument-count",
+      "ok": true,
+      "details": "12/12"
+    },
+    {
+      "id": "instrumentation-visual-only",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "industrial-safety",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "industrial-infrastructure",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "operational-surface-visual-only",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "inspection-priority-hotspot-ui",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "secondary-shadow-policy",
+      "ok": true,
+      "details": "1206"
+    },
+    {
+      "id": "shadow-caster-budget",
+      "ok": true,
+      "details": "2665"
+    },
+    {
+      "id": "key-sun",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "soft-fill",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "mobile:TRUCK-01",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "mobile:TRUCK-02",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "mobile:TRUCK-03",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "mobile:EXCAVATOR-01",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "mobile:LOADER-01",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "instrument-priority:SLURRY-PUMP-01",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "instrument-priority:PUMP-01",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "instrument-priority:CLASS-01",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "instrument-priority:R-01",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "instrument-priority:R-02",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "instrument-priority:R-03",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "instrument-priority:R-04",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "instrument-priority:CIP-ADSORPTION",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "instrument-priority:ELUTION-SKID",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "instrument-priority:EW-CELLS",
+      "ok": true,
+      "details": ""
+    }
+  ]
+}

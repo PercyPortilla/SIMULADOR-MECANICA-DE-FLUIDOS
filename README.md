@@ -4,7 +4,7 @@ Simulador académico de transporte, bombeo, reología y recuperación de pulpas 
 
 ## Estado actual
 
-**V24 · Operación y Realismo Industrial**
+**V25 · Rendimiento y Fidelidad Operacional**
 
 La versión actual integra:
 
@@ -45,6 +45,12 @@ La versión actual integra:
 - cues educativos de operación desde molienda hasta fundición, explícitamente no-CFD y sin inventar acoplamientos de proceso;
 - hotspots educativos compactos en equipos prioritarios, manteniendo los 38 targets y 7 focus profiles de Inspection;
 - iluminación diurna industrial consistente y política de sombras secundarias de bajo riesgo para reducir trabajo de shadow-map.
+- LOD adaptativo: responde con rapidez al movimiento de cámara, reduce recorridos repetidos en vista estática y mantiene un refresh de seguridad para assets asíncronos;
+- caché LOD por equipo con poda segura de fallbacks Blender ocultos e invalidación cuando llegan módulos híbridos, preservando Inspection y `Animaciones`;
+- fundición importada con pacing operacional de 16 s y dwell, en lugar de repetir continuamente el clip de inclinación de 5 s;
+- shovel y loader importados arrancan con el mineral del balde oculto hasta que su ciclo operacional realmente lo carga;
+- desfase reproducible de R-01..04 sobre la animación Blender y contrato real-loaded para estaciones HEAD/TAIL de conveyors;
+- hotspots educativos ampliados a EW-CELLS y SMELTING-FURNACE sin cambiar los 38 targets ni los 7 focus profiles.
 
 ## Arquitectura
 
@@ -55,7 +61,7 @@ La versión actual integra:
 
 Three.js continúa siendo el runtime autoritativo. Las geometrías paramétricas de conveyors, piping, endpoints, diámetros y topografía no se sustituyen por modelos rígidos cuando dependen del estado del simulador.
 
-El terreno Blender es una capa visual opcional. El overlay de recepción regenerado en V22 se conserva sin cambios en V24. La elevación que gobierna equipos, caminos y cimentaciones sigue proviniendo de `getTerrainHeight()`; si el GLB no carga, el terreno procedural conserva toda la geometría funcional.
+El terreno Blender es una capa visual opcional. El overlay de recepción regenerado en V22 se conserva sin cambios en V25. La elevación que gobierna equipos, caminos y cimentaciones sigue proviniendo de `getTerrainHeight()`; si el GLB no carga, el terreno procedural conserva toda la geometría funcional.
 
 ## Circuito principal
 

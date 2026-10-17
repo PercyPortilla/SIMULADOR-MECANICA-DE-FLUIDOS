@@ -520,6 +520,7 @@ export function createBaseEnvironment({ canvas }) {
     inspectionControls.enabled = mode === 'inspection';
     base.equipmentInspection.contextOverlay.visible = mode === 'inspection' && Boolean(base.equipmentInspection.targetId);
     if (inspectionControls.enabled) inspectionControls.update();
+    base.industrialAnimations.refreshLOD(base.cameras[activeCamera]);
     applyLabelVisibility();
     render();
   }
@@ -552,6 +553,7 @@ export function createBaseEnvironment({ canvas }) {
     // explicitly, so a static preset no longer burns GPU frames unnecessarily.
     if (animationsEnabled || inspectionControls.enabled) {
       if (animationsEnabled) base.industrialAnimations.update(delta, base.cameras[activeCamera]);
+      else base.industrialAnimations.updateViewLOD(delta, base.cameras[activeCamera]);
       if (inspectionControls.enabled) inspectionControls.update();
       render();
     }

@@ -1,0 +1,33 @@
+{
+  "baselineSha": "8812f8b75f90059b2f55fc06455fe8ecab3c954f",
+  "baselineSource": "git diff HEAD + untracked against published V24 checkout",
+  "scope": [
+    "src",
+    "tests",
+    "tools"
+  ],
+  "changedCount": 19,
+  "changedPaths": [
+    "src/equipment/common/assetUtils.js",
+    "src/releaseInfo.js",
+    "src/scene/baseEnvironment.js",
+    "src/scene/inspection/equipmentInspection.js",
+    "src/scene/integration/blenderModuleLibrary.js",
+    "src/scene/integration/blenderVisualReplacement.js",
+    "src/scene/integration/integratedAnimations.js",
+    "src/ui/inspectionGuide.js",
+    "tests/scene/blenderAnimationPlayback.test.js",
+    "tests/scene/blenderHybridInfrastructure.test.js",
+    "tests/scene/blenderModuleOptimization.test.js",
+    "tests/scene/blenderVisualReplacement.test.js",
+    "tests/scene/industrialAnimations.test.js",
+    "tests/scene/inspectionModes.test.js",
+    "tests/scene/performanceV25.test.js",
+    "tests/ui/inspectionGuide.test.js",
+    "tests/ui/releaseInfo.test.js",
+    "tools/make_v25_checkpoint.py",
+    "tools/v25PerformanceFidelityAudit.mjs"
+  ],
+  "protectedDirectoryChanges": 0,
+  "protectedChangedPaths": []
+}

@@ -150,6 +150,8 @@ export function createAssetHandle({
   let animationEnabled = true;
   let disposed = false;
   let elapsed = 0;
+  let lastLodStateKey = null;
+  const lodWorldPosition = new THREE.Vector3();
   root.name = id;
   root.userData.assetId = id;
   root.userData.category = category;
@@ -176,17 +178,28 @@ export function createAssetHandle({
     getBoundingBox() { root.updateMatrixWorld(true); return new THREE.Box3().setFromObject(root); },
     updateLOD(camera) {
       if (!camera) return;
-      const world = root.getWorldPosition(new THREE.Vector3());
+      const world = root.getWorldPosition(lodWorldPosition);
       const distance = camera.position.distanceTo(world);
       const tier = distance > lodDistances[1] ? 2 : distance > lodDistances[0] ? 1 : 0;
-      root.traverse((object) => {
-        if (!object.isMesh) return;
-        const objectTier = Number(object.userData.lodTier || 0);
-        const mode = root.userData.inspectionMode || 'normal';
-        const inspectionVisible = !(mode === 'interior' && (object.userData.inspectionRole || 'shell') === 'shell');
-        if (inspectionVisible) object.visible = objectTier <= (2 - tier);
-      });
+      const mode = root.userData.inspectionMode || 'normal';
+      const visualStatus = root.userData.blenderVisualStatus || '';
+      const contentRevision = Number(root.userData.lodContentRevision || 0);
+      const stateKey = `${tier}|${mode}|${visualStatus}|${contentRevision}`;
+      if (stateKey === lastLodStateKey) return;
+
+      const stack = [root];
+      while (stack.length) {
+        const object = stack.pop();
+        if (object !== root && object.userData?.blenderFallback && object.visible === false) continue;
+        if (object.isMesh) {
+          const objectTier = Number(object.userData.lodTier || 0);
+          const inspectionVisible = !(mode === 'interior' && (object.userData.inspectionRole || 'shell') === 'shell');
+          if (inspectionVisible) object.visible = objectTier <= (2 - tier);
+        }
+        for (let index = object.children.length - 1; index >= 0; index -= 1) stack.push(object.children[index]);
+      }
       root.userData.activeLodTier = tier;
+      lastLodStateKey = stateKey;
     },
     dispose() {
       if (disposed) return;

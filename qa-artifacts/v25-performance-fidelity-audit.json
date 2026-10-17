@@ -1,0 +1,75 @@
+{
+  "revision": "V25",
+  "scope": "performance-operational-fidelity",
+  "generatedAt": "2026-10-17T19:03:24.363Z",
+  "checks": 13,
+  "passed": 13,
+  "failed": [],
+  "checksDetail": [
+    {
+      "id": "scene-no-fog",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "release-identity",
+      "ok": true,
+      "details": "V25 · Rendimiento y Fidelidad Operacional"
+    },
+    {
+      "id": "inspection-target-count",
+      "ok": true,
+      "details": "38"
+    },
+    {
+      "id": "inspection-focus-profile-count",
+      "ok": true,
+      "details": "7"
+    },
+    {
+      "id": "lod-motion-interval",
+      "ok": true,
+      "details": "0.125"
+    },
+    {
+      "id": "lod-stationary-refresh",
+      "ok": true,
+      "details": "2"
+    },
+    {
+      "id": "ew-component-hotspots",
+      "ok": true,
+      "details": "4"
+    },
+    {
+      "id": "smelting-component-hotspots",
+      "ok": true,
+      "details": "5"
+    },
+    {
+      "id": "smelting-16s-pacing",
+      "ok": true,
+      "details": "{\"cycleSeconds\":16,\"activeStartSeconds\":8.8,\"activeEndSeconds\":13.12}"
+    },
+    {
+      "id": "mobile-loads-start-empty",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "reactor-phase-offsets",
+      "ok": true,
+      "details": "[0.63,1.26,1.8900000000000001,2.52]"
+    },
+    {
+      "id": "lod-state-cache",
+      "ok": true,
+      "details": "1/1"
+    },
+    {
+      "id": "shadow-caster-budget-preserved",
+      "ok": true,
+      "details": "2665"
+    }
+  ]
+}

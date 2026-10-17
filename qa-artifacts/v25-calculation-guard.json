@@ -1,0 +1,14 @@
+{
+  "baselineSha": "8812f8b75f90059b2f55fc06455fe8ecab3c954f",
+  "protectedDirectories": [
+    "src/controller",
+    "src/core",
+    "src/state",
+    "src/process",
+    "src/reporting"
+  ],
+  "filesV25": 31,
+  "filesV24": 31,
+  "differences": 0,
+  "diff": []
+}

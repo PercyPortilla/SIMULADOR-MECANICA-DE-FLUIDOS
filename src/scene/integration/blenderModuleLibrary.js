@@ -103,6 +103,14 @@ function applyVector3(target, value, fallback = [0, 0, 0]) {
   target.set(x, y, z);
 }
 
+function markLodContentChanged(object) {
+  let current = object;
+  while (current) {
+    current.userData.lodContentRevision = Number(current.userData.lodContentRevision || 0) + 1;
+    current = current.parent;
+  }
+}
+
 export function attachBlenderModule({
   parent,
   url,
@@ -147,6 +155,7 @@ export function attachBlenderModule({
       imported.userData.blenderHybridImported = true;
       host.add(imported);
       host.userData.blenderModuleStatus = 'loaded';
+      markLodContentChanged(host);
       host.updateMatrixWorld(true);
       onReady?.({ host, imported });
     })

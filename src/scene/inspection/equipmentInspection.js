@@ -324,6 +324,7 @@ export function createEquipmentInspectionSystem({ environmentRoot } = {}) {
 
   function restore() {
     if (!activeSnapshot) return;
+    activeSnapshot.target.userData.inspectionMode = 'normal';
     activeSnapshot.entries.forEach((entry) => {
       if (entry.object.isMesh) {
         const current = entry.object.material;
@@ -338,6 +339,7 @@ export function createEquipmentInspectionSystem({ environmentRoot } = {}) {
 
   function applyMode(target, mode) {
     restore();
+    target.userData.inspectionMode = mode;
     if (mode === 'normal') return;
     activeSnapshot = snapshotTarget(target);
     target.updateWorldMatrix?.(true, true);

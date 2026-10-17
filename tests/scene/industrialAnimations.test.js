@@ -88,7 +88,7 @@ it('animates only the sump liquid surface, never the whole sump equipment root',
   expect(liquid.position.distanceTo(liquidPosition)).toBeGreaterThan(0);
 });
 
-it('throttles LOD updates instead of traversing equipment every frame', () => {
+it('adapts LOD updates to camera motion and keeps a slow safety refresh while static', () => {
   let lodCalls = 0;
   const equipmentSystem = {
     conveyors: [],
@@ -107,8 +107,25 @@ it('throttles LOD updates instead of traversing equipment every frame', () => {
   expect(lodCalls).toBe(1);
 
   for (let index = 0; index < 8; index += 1) animations.update(0.016, camera);
+  expect(lodCalls).toBe(1);
+
+  camera.position.x += 1;
+  for (let index = 0; index < 8; index += 1) animations.update(0.016, camera);
   expect(lodCalls).toBe(2);
+
+  for (let index = 0; index < 21; index += 1) animations.update(0.1, camera);
+  expect(lodCalls).toBe(3);
+
+  animations.setEnabled(false);
+  camera.position.x += 1;
+  animations.updateViewLOD(0.13, camera);
+  expect(lodCalls).toBe(4);
+
+  const alternateCamera = new THREE.PerspectiveCamera();
+  animations.refreshLOD(alternateCamera);
+  expect(lodCalls).toBe(5);
   expect(animations.lodUpdateIntervalSeconds).toBe(0.125);
+  expect(animations.lodStationaryRefreshSeconds).toBe(2);
 });
 
 it('skips visual pipe particle and texture work when process flow is zero', () => {

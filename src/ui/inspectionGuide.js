@@ -321,6 +321,19 @@ export const INSPECTION_COMPONENT_HOTSPOTS = Object.freeze({
     hotspot('Bombas / header', 'Recirculan y conducen la solución dentro del skid.', 'Continuidad visual; no añade curvas hidráulicas nuevas.'),
     hotspot('Solución pregnant', 'Salida de solución rica hacia EW-CELLS.', 'Conexión de proceso hacia electrowinning.'),
   ]),
+  'EW-CELLS': Object.freeze([
+    hotspot('Celdas y electrolito', 'Contienen la solución rica donde se representa la electrodeposición del metal.', 'Proceso educativo; no resuelve campos eléctricos ni transporte electroquímico.'),
+    hotspot('Ánodos y cátodos', 'Representan los electrodos donde ocurre la transferencia de carga y deposición.', 'La recuperación calculada usa la eficiencia explícita de EW, no la geometría 3D del electrodo.'),
+    hotspot('Bus bars', 'Distribuyen visualmente la alimentación eléctrica a las celdas.', 'Detalle industrial sin modelo eléctrico de corriente o caída de tensión.'),
+    hotspot('Producto catódico', 'Representa el metal recuperado que pasa a la etapa de fundición.', 'Conecta EW con SMELTING-FURNACE sin introducir pérdidas adicionales.'),
+  ]),
+  'SMELTING-FURNACE': Object.freeze([
+    hotspot('Cuerpo y refractario', 'Contienen térmicamente la carga metálica durante la fundición representada.', 'Geometría educativa; PULPA LAB no resuelve transferencia de calor del horno.'),
+    hotspot('Baño fundido', 'Representa visualmente el metal en estado fundido dentro del horno.', 'Cue educativo de proceso; no es CFD ni simulación térmica multifásica.'),
+    hotspot('Mecanismo de inclinación', 'Inclina el horno durante la ventana operacional de colada.', 'Movimiento visual de ciclo; no modifica la eficiencia de fundición ingresada.'),
+    hotspot('Crisol / recepción', 'Recibe visualmente el metal vertido antes del producto final.', 'Continuidad de proceso hacia doré, sin balance transiente independiente.'),
+    hotspot('Producto doré', 'Representa la salida metálica final del circuito de recuperación.', 'La masa final proviene del balance y eficiencias explícitas del modelo.'),
+  ]),
 });
 
 export const PRESENTATION_STOP_IDS = Object.freeze([

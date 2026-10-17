@@ -1,25 +1,24 @@
-PULPA-LAB-V2-V24-OPERATION-INDUSTRIAL-REALISM-CHECKPOINT
+PULPA-LAB-V2-V25-PERFORMANCE-OPERATIONAL-FIDELITY-CHECKPOINT
 Project: PULPA LAB V2
 Date: 2026-10-17
-Status: V24 CLOSED — OPERATION + INDUSTRIAL REALISM + EDUCATIONAL PROCESS CUES VERIFIED
-Architecture: Three.js authoritative runtime + Blender industrial asset pipeline. No Babylon.js migration in V24.
-Baseline: V23 industrial detail/Inspection + V22 terrain authority + V21 animation grounding + V20 academic lab + earlier validated releases.
-Operational life: TRUCK-01..03 run staggered ROAD-01 cycles; truck/loader wheel rotation follows actual travel; excavator, loader and reclaim obey Animaciones ON/OFF.
-Material flow: visual-only ROM→apron→crusher→CV-02→stockpile/reclaim→CV-03→MILL continuity; no granular/CFD claim and no process-capacity mutation.
-Mechanical realism: minimum hybrid overlays only where GLB/procedural coverage was incomplete; CLASS-01 access and CIP service/pump hardware are preserved without duplicate shells.
-Instrumentation: PI/PT/FT/LT and visual branches are solverCoupled=false; authoritative hydraulic centerlines, endpoints, diameters, lengths and accessory K remain untouched.
-Safety/infrastructure: purposeful signage, extinguishers, eyewash, restricted fencing/gate, pedestrian cues, transformer yard, workshop, cable tray, pickup and 1.75 m scale cue; MCC/pole road conflicts resolved.
-Terrain/surface: overlays are visualOnly and authoritativeTerrain=false; ROAD-01..04 and getTerrainHeight() remain unchanged; scene.fog=null.
-Process life: neutral educational motion cues from grinding/recovery through smelting; no CFD and no invented solver coupling.
-Inspection: all 38 V23 targets and 7 V23 focus profiles preserved; V24 component hotspots added only to priority equipment.
-Lighting/performance: daylight key/fill/bounce with PCFSoftShadowMap; optional Night mode omitted; secondary shadow policy reduces repeated-detail shadow work without removing major equipment shadows.
-Calculation guard: 0 changes in src/controller, src/core, src/state, src/process and src/reporting versus published V23.
-Final full suite: 76/76 test files PASS; 384/384 tests PASS; duration 153.44 s after V24 release-metadata update.
-Publication clone validation: 76/76 test files PASS; 384/384 tests PASS; duration 174.05 s before commit/push.
-Build: npm run build PASS; Vite 7.3.7; 111 modules transformed. Three.js >500 kB chunk warning remains informational.
+Status: V25 CLOSED — PERFORMANCE + OPERATIONAL FIDELITY VERIFIED; READY FOR PUBLICATION
+Architecture: Three.js authoritative runtime + Blender/GLB industrial asset pipeline. No Babylon.js migration.
+Baseline: published V24 SHA 8812f8b75f90059b2f55fc06455fe8ecab3c954f; V24 remains rollback checkpoint.
+LOD: camera motion remains responsive at 0.125 s; static view refreshes every 2 s; per-equipment cache skips unchanged tier/mode/status/revision states; hidden Blender procedural fallbacks are pruned safely.
+Async GLB safety: Blender module loads increment LOD content revision so late HEAD/TAIL/idler/hood content invalidates the cache instead of becoming stale.
+Inspection: 38 targets and 7 focus profiles preserved; LOD respects Interior shell visibility; EW-CELLS and SMELTING-FURNACE receive component-level educational hotspots.
+Animation fidelity: SMELTING-FURNACE uses a 16 s operating cycle with tilt active from 8.8–13.12 s; shovel/loader bucket mineral starts hidden until the managed operational cycle loads it.
+Hybrid contracts: conveyor HEAD/TAIL real-loaded GLBs preserve a visible rotating pulley cue; R-01..04 Blender agitators receive deterministic phase offsets 0.63/1.26/1.89/2.52 s.
+Engineering guard: 0 changes in src/controller, src/core, src/state, src/process and src/reporting versus published V24.
+Physical GLBs: public 24 / dist 24 / hash mismatches 0. No GLB regeneration in V25.
+Final full suite (development workspace): 77/77 test files PASS; 393/393 tests PASS; duration 148.63 s after V25 release metadata.
+Publication clone validation: 77/77 test files PASS; 393/393 tests PASS; duration 147.46 s before commit/push.
+Build: npm run build PASS; Vite 7.3.7; 111 modules transformed. Existing Three.js >500 kB warning remains informational.
+Audits: V25 performance/fidelity 13/13; V24 compatibility 34/34; terrain/civil 14/14; visual scale 16/16; integration/clearance 157/157.
+Browser QA caveat: no redundant local headless-browser retry was made because the V24 environment repeatedly exited with code 13; V25 visual contracts are covered by real-GLB tests and runtime audits.
 Blender master unchanged: blender/PULPA_LAB_BLENDER_MASTER_V17.blend — SHA-256 E78577DAE8E533429B84FC13FC054036684F6D36AB5F1A3D76AB4CCA787CACA6.
 Terrain GLB unchanged: RECEPTION-EARTHWORK-V21.glb — SHA-256 59CB2AE7471EE5DE85A7E1186243C5C4D0D68E826897C4A8DF4DC6BE928FBA6A.
 GitHub release target: PercyPortilla/SIMULADOR-MECANICA-DE-FLUIDOS.
 Vercel production target: https://simulador-mecanica-de-fluidos.vercel.app
-Report: V24_OPERATION_INDUSTRIAL_REALISM_CHECKPOINT.md
-Rule: preserve equations, process route, physical pipe diameters/endpoints/centerlines, parametric conveyors, cameras, Inspection, V17 master Blender, V21 grounding and V22 terrain authority.
+Report: V25_PERFORMANCE_OPERATIONAL_FIDELITY_CHECKPOINT.md
+Rule: preserve equations, process route, physical pipe diameters/endpoints/centerlines, parametric conveyors, scene.fog=null, cameras, Inspection contracts, V17 master Blender, V21 grounding and V22 terrain authority.

@@ -143,6 +143,105 @@ describe('Blender animation playback through Three.js', () => {
     });
   }
 
+  it('paces SMELTING-FURNACE with a long dwell instead of looping the 5-second tilt continuously', async () => {
+    const sourceGltf = await loadGlb('SMELTING-FURNACE.glb');
+    vi.stubGlobal('window', {});
+    vi.spyOn(GLTFLoader.prototype, 'load').mockImplementation(function mockLoad(_url, onLoad) {
+      onLoad(sourceGltf);
+      return this;
+    });
+    resetBlenderReplacementCacheForTests();
+
+    const hostRoot = new THREE.Group();
+    const controller = attachBlenderVisualReplacement({ hostRoot, instanceId: 'SMELTING-FURNACE' });
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(controller.loaded).toBe(true);
+    expect(hostRoot.userData.blenderAnimationPacing).toEqual({
+      cycleSeconds: 16,
+      activeStartSeconds: 8.8,
+      activeEndSeconds: 13.12,
+    });
+
+    const pivot = controller.scene.getObjectByName('SMELTING-FURNACE_TILT_PIVOT');
+    expect(pivot).toBeTruthy();
+    controller.setAnimationTime(4);
+    const rest = pivot.quaternion.clone();
+    controller.setAnimationTime(11.392);
+    expect(rest.angleTo(pivot.quaternion)).toBeGreaterThan(0.4);
+    controller.setAnimationTime(14);
+    expect(rest.angleTo(pivot.quaternion)).toBeLessThan(1e-4);
+
+    controller.setAnimationTime(9.5);
+    const beforeFreeze = pivot.quaternion.clone();
+    controller.setAnimationEnabled(false);
+    controller.update(0.1);
+    expect(beforeFreeze.angleTo(pivot.quaternion)).toBeLessThan(1e-6);
+    controller.setAnimationEnabled(true);
+    controller.update(0.1);
+    expect(beforeFreeze.angleTo(pivot.quaternion)).toBeGreaterThan(0.005);
+    controller.dispose();
+  });
+
+  it('applies distinct host phase offsets to the real leach-reactor Blender animation', async () => {
+    const sourceGltf = await loadGlb('LEACH-REACTOR.glb');
+    vi.stubGlobal('window', {});
+    vi.spyOn(GLTFLoader.prototype, 'load').mockImplementation(function mockLoad(_url, onLoad) {
+      onLoad(sourceGltf);
+      return this;
+    });
+    resetBlenderReplacementCacheForTests();
+
+    const samples = [];
+    for (const [instanceId, phaseOffset] of [
+      ['R-01', 0.63],
+      ['R-02', 1.26],
+      ['R-03', 1.89],
+      ['R-04', 2.52],
+    ]) {
+      const hostRoot = new THREE.Group();
+      hostRoot.userData.animationPhaseOffset = phaseOffset;
+      const controller = attachBlenderVisualReplacement({ hostRoot, instanceId });
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(controller.loaded).toBe(true);
+      const agitator = controller.scene.getObjectByName('LEACH-REACTOR_ROTATING_GROUP');
+      expect(agitator).toBeTruthy();
+      samples.push(agitator.quaternion.clone());
+      controller.dispose();
+    }
+
+    for (let index = 1; index < samples.length; index += 1) {
+      expect(samples[index - 1].angleTo(samples[index])).toBeGreaterThan(0.25);
+    }
+  });
+
+  for (const [instanceId, filename, nodeName] of [
+    ['EXCAVATOR-01', 'MINING-SHOVEL.glb', 'MINING-SHOVEL_BUCKET_ORE'],
+    ['LOADER-01', 'WHEEL-LOADER.glb', 'WHEEL-LOADER_BUCKET_ORE'],
+  ]) {
+    it(`${instanceId} starts with imported bucket ore hidden until its managed cycle loads material`, async () => {
+      const sourceGltf = await loadGlb(filename);
+      vi.stubGlobal('window', {});
+      vi.spyOn(GLTFLoader.prototype, 'load').mockImplementation(function mockLoad(_url, onLoad) {
+        onLoad(sourceGltf);
+        return this;
+      });
+      resetBlenderReplacementCacheForTests();
+
+      const hostRoot = new THREE.Group();
+      const controller = attachBlenderVisualReplacement({ hostRoot, instanceId });
+      await Promise.resolve();
+      await Promise.resolve();
+      const ore = controller.scene.getObjectByName(nodeName);
+      expect(ore).toBeTruthy();
+      expect(ore.visible).toBe(false);
+      controller.setMaterialLoadVisible(true);
+      expect(ore.visible).toBe(true);
+      controller.dispose();
+    });
+  }
+
   for (const [filename, nodeName] of [
     ['MILL-01.glb', 'MILL-01_ROTATING_GROUP'],
     ['SLURRY-PUMP-01.glb', 'SLURRY-PUMP-01_ROTATING_GROUP'],

@@ -126,6 +126,7 @@ describe('static Blender module optimization', () => {
       expect(first.loaded).toBe(true);
       expect(second.loaded).toBe(true);
     });
+    expect(parent.userData.lodContentRevision).toBeGreaterThanOrEqual(2);
 
     const firstMesh = firstImported.children.find((object) => object.isMesh);
     const secondMesh = secondImported.children.find((object) => object.isMesh);

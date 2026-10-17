@@ -1,9 +1,33 @@
-import { describe, expect, it } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createConveyorAsset } from '../../src/equipment/conveying/conveyor.js';
 import { createEquipmentSystem } from '../../src/scene/equipment/equipmentSystem.js';
 import { createPipingEngine } from '../../src/scene/piping/pipingEngine.js';
-import { BLENDER_MODULE_URLS } from '../../src/scene/integration/blenderModuleLibrary.js';
+import {
+  BLENDER_MODULE_URLS,
+  resetBlenderModuleCacheForTests,
+} from '../../src/scene/integration/blenderModuleLibrary.js';
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+const moduleRoot = path.resolve(here, '../../public/models/pulpa-blender/v15-modules');
+
+function loadModuleGlb(filename) {
+  const buffer = fs.readFileSync(path.join(moduleRoot, filename));
+  const bytes = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+  return new Promise((resolve, reject) => {
+    new GLTFLoader().parse(bytes, '', resolve, reject);
+  });
+}
+
+afterEach(() => {
+  resetBlenderModuleCacheForTests();
+  vi.restoreAllMocks();
+  delete globalThis.window;
+});
 
 describe('V15 Blender hybrid infrastructure', () => {
   it('registers the reusable conveyor and piping module kit', () => {
@@ -37,6 +61,44 @@ describe('V15 Blender hybrid infrastructure', () => {
     expect(asset.root.getObjectByName('blender-conveyor-discharge-hood')).toBeTruthy();
     expect(asset.root.userData.blenderHybridIdlerCount).toBeGreaterThan(0);
     expect(asset.root.userData.inclineCleatCount).toBeGreaterThan(0);
+  });
+
+  it('preserves a visible rotating pulley cue after real Blender head/tail modules load', async () => {
+    const sourceByUrl = new Map();
+    for (const url of [
+      BLENDER_MODULE_URLS.conveyorHead,
+      BLENDER_MODULE_URLS.conveyorTail,
+      BLENDER_MODULE_URLS.conveyorIdler,
+      BLENDER_MODULE_URLS.conveyorTransferHood,
+    ]) {
+      sourceByUrl.set(url, await loadModuleGlb(path.basename(url)));
+    }
+
+    globalThis.window = {};
+    vi.spyOn(GLTFLoader.prototype, 'load').mockImplementation(function mockLoad(url, onLoad) {
+      onLoad(sourceByUrl.get(url));
+      return this;
+    });
+    resetBlenderModuleCacheForTests();
+
+    const asset = createConveyorAsset({ length: 24, width: 1.5, incline: THREE.MathUtils.degToRad(12) });
+    await vi.waitFor(() => {
+      expect(asset.root.getObjectByName('blender-conveyor-head-station')?.userData.blenderModuleStatus).toBe('loaded');
+      expect(asset.root.getObjectByName('blender-conveyor-tail-station')?.userData.blenderModuleStatus).toBe('loaded');
+    });
+
+    for (const end of ['head', 'tail']) {
+      const pivot = asset.root.getObjectByName(`conveyor-${end}-pulley-pivot`);
+      const pulley = pivot.getObjectByName(`conveyor-${end}-pulley`);
+      const marker = pivot.getObjectByName(`conveyor-${end}-pulley-marker`);
+      expect(pulley.visible).toBe(false);
+      expect(marker.visible).toBe(true);
+      expect(marker.userData.hybridRotationCue).toBe(true);
+      const before = pivot.rotation.z;
+      asset.update(0.1);
+      expect(Math.abs(pivot.rotation.z - before)).toBeGreaterThan(0.01);
+    }
+    expect(asset.root.getObjectByName('conveyor-drive-assembly').visible).toBe(false);
   });
 
   it('adds V23 conveyor detail without changing authoritative feed/discharge ports', () => {

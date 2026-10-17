@@ -248,6 +248,24 @@ describe('Blender visual replacements', () => {
   it('maps shovel and loader ore loads onto their Blender nodes', () => {
     expect(BLENDER_REPLACEMENT_SPECS['EXCAVATOR-01'].materialLoadNode).toBe('MINING-SHOVEL_BUCKET_ORE');
     expect(BLENDER_REPLACEMENT_SPECS['LOADER-01'].materialLoadNode).toBe('WHEEL-LOADER_BUCKET_ORE');
+    expect(BLENDER_REPLACEMENT_SPECS['EXCAVATOR-01'].initialMaterialLoadVisible).toBe(false);
+    expect(BLENDER_REPLACEMENT_SPECS['LOADER-01'].initialMaterialLoadVisible).toBe(false);
+  });
+
+  it('paces the imported smelting tilt on the validated 16-second operating cycle', () => {
+    expect(BLENDER_REPLACEMENT_SPECS['SMELTING-FURNACE'].animationPacing).toEqual({
+      cycleSeconds: 16,
+      activeStartSeconds: 8.8,
+      activeEndSeconds: 13.12,
+    });
+  });
+
+  it('assigns deterministic staggered animation phases to the four leach reactors', () => {
+    const plant = createIntegratedPlant();
+    ['R-01', 'R-02', 'R-03', 'R-04'].forEach((id, index) => {
+      expect(plant.getEquipment(id).group3D.userData.animationPhaseOffset)
+        .toBeCloseTo([0.63, 1.26, 1.89, 2.52][index], 10);
+    });
   });
 
   it('keeps instance transforms independent while sharing immutable GLB resources', () => {

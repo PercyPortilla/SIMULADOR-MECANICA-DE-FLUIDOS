@@ -198,6 +198,24 @@ describe('equipment internal inspection modes', () => {
     expect(restored ?? []).toHaveLength(0);
   });
 
+  it('keeps Inspection interior shell visibility intact across LOD refreshes', () => {
+    const scene = createBaseScene();
+    const pump = scene.equipmentSystem.getEquipment('PUMP-01').group3D;
+    const casing = pump.getObjectByName('pump-volute');
+    expect(casing).toBeTruthy();
+
+    scene.equipmentInspection.setTarget('PUMP-01');
+    scene.equipmentInspection.setMode('interior');
+    expect(casing.visible).toBe(false);
+    expect(pump.userData.inspectionMode).toBe('interior');
+
+    scene.equipmentSystem.updateLOD(scene.cameras.inspection);
+    expect(casing.visible).toBe(false);
+
+    scene.equipmentInspection.setMode('normal');
+    expect(pump.userData.inspectionMode).toBe('normal');
+  });
+
   it('reveals internal pipe slurry without changing physical diameter metadata', () => {
     const scene = createBaseScene();
     const pipe = scene.scene.getObjectByName('P-PUMP-01-TO-CIP');

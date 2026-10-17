@@ -1,12 +1,17 @@
 import * as THREE from 'three';
 
 const LOD_UPDATE_INTERVAL_SECONDS = 0.125;
+const LOD_STATIONARY_REFRESH_SECONDS = 2;
+const LOD_CAMERA_POSITION_EPSILON_METERS = 0.01;
 
 export function createIntegratedAnimations({ equipmentSystem, mobileEquipment, pipingSystem } = {}) {
   if (!equipmentSystem || !mobileEquipment) throw new TypeError('Integrated animations requiere equipmentSystem y mobileEquipment.');
   let enabled = true;
   let elapsed = 0;
   let lodElapsed = LOD_UPDATE_INTERVAL_SECONDS;
+  let lodStationaryElapsed = LOD_STATIONARY_REFRESH_SECONDS;
+  let lastLodCamera = null;
+  const lastLodCameraPosition = new THREE.Vector3();
   let processFlowScale = 1;
   const flowMaterials = new Set();
   const flowParticles = new Set();
@@ -25,17 +30,35 @@ export function createIntegratedAnimations({ equipmentSystem, mobileEquipment, p
   }
   collectRoutes();
 
+  function refreshLOD(camera) {
+    if (!camera) return;
+    equipmentSystem.updateLOD(camera);
+    lastLodCamera = camera;
+    lastLodCameraPosition.copy(camera.position);
+    lodElapsed = 0;
+    lodStationaryElapsed = 0;
+  }
+
+  function updateViewLOD(dt, camera) {
+    if (!camera || !Number.isFinite(dt) || dt < 0) return;
+    const safeDt = Math.min(dt, 0.1);
+    lodElapsed += safeDt;
+    lodStationaryElapsed += safeDt;
+    if (lodElapsed < LOD_UPDATE_INTERVAL_SECONDS) return;
+    const cameraChanged = camera !== lastLodCamera
+      || camera.position.distanceToSquared(lastLodCameraPosition) > LOD_CAMERA_POSITION_EPSILON_METERS ** 2;
+    const stationaryRefreshDue = lodStationaryElapsed >= LOD_STATIONARY_REFRESH_SECONDS;
+    if (cameraChanged || stationaryRefreshDue) refreshLOD(camera);
+    else lodElapsed = 0;
+  }
+
   function update(dt, camera) {
     if (!enabled || !Number.isFinite(dt) || dt <= 0) return;
     const safeDt = Math.min(dt, 0.1);
     elapsed += safeDt;
     equipmentSystem.updateAssets(safeDt);
     mobileEquipment.update(safeDt);
-    lodElapsed += safeDt;
-    if (camera && lodElapsed >= LOD_UPDATE_INTERVAL_SECONDS) {
-      equipmentSystem.updateLOD(camera);
-      lodElapsed = 0;
-    }
+    updateViewLOD(safeDt, camera);
     if (processFlowScale > 0) {
       flowMaterials.forEach((material) => {
         if (material.map) material.map.offset.y = (material.map.offset.y - safeDt * 0.62 * processFlowScale) % 1;
@@ -99,6 +122,8 @@ export function createIntegratedAnimations({ equipmentSystem, mobileEquipment, p
 
   return {
     update,
+    updateViewLOD,
+    refreshLOD,
     setEnabled,
     setProcessMetrics,
     refreshRoutes() { collectRoutes(); },
@@ -111,5 +136,6 @@ export function createIntegratedAnimations({ equipmentSystem, mobileEquipment, p
     get mineralSystemCount() { return equipmentSystem.conveyors?.length ?? 0; },
     get visualFlowScale() { return processFlowScale; },
     get lodUpdateIntervalSeconds() { return LOD_UPDATE_INTERVAL_SECONDS; },
+    get lodStationaryRefreshSeconds() { return LOD_STATIONARY_REFRESH_SECONDS; },
   };
 }

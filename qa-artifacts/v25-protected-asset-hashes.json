@@ -1,0 +1,12 @@
+{
+  "blenderMaster": {
+    "path": "blender/PULPA_LAB_BLENDER_MASTER_V17.blend",
+    "size": 688141,
+    "sha256": "E78577DAE8E533429B84FC13FC054036684F6D36AB5F1A3D76AB4CCA787CACA6"
+  },
+  "receptionTerrain": {
+    "path": "public/models/pulpa-blender/RECEPTION-EARTHWORK-V21.glb",
+    "size": 463792,
+    "sha256": "59CB2AE7471EE5DE85A7E1186243C5C4D0D68E826897C4A8DF4DC6BE928FBA6A"
+  }
+}
