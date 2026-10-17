@@ -145,5 +145,8 @@ export function createConveyorInstance({ instanceId, source, target, width = 1.4
   handle.root.updateMatrixWorld(true);
   const equipment = registry.add(instanceId, handle, { kind: 'conveyor' });
   equipment.group3D.userData.conveyorId = instanceId;
+  // World-space route metadata supports close Inspection framing without
+  // changing the authoritative parametric conveyor geometry.
+  equipment.group3D.userData.routePoints = [source.toArray(), target.toArray()];
   return { handle, equipment };
 }

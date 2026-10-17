@@ -15,6 +15,7 @@ export const BLENDER_REPLACEMENT_SPECS = Object.freeze({
   'PRIMARY-CRUSHER': Object.freeze({
     url: 'models/pulpa-blender/PRIMARY-CRUSHER.glb',
     playAllAnimations: true,
+    preserveProceduralOverlays: Object.freeze(['PRIMARY-CRUSHER-v23-safety-overlay']),
   }),
   'STOCKPILE-RECLAIM': Object.freeze({
     url: 'models/pulpa-blender/STOCKPILE-RECLAIM.glb',
@@ -38,6 +39,8 @@ export const BLENDER_REPLACEMENT_SPECS = Object.freeze({
     url: 'models/pulpa-blender/MILL-01.glb',
     expectedAnimation: 'MILL-01_Rotation',
     rotationPivotRepair: Object.freeze({ nodeName: 'MILL-01_ROTATING_GROUP', axis: 'x' }),
+    preserveProceduralOverlays: Object.freeze(['mill-charge']),
+    proceduralOverlayAnchors: Object.freeze({ 'mill-charge': 'MILL-01_ROTATING_GROUP' }),
   }),
   'SUMP-01': Object.freeze({
     url: 'models/pulpa-blender/SUMP-01.glb',
@@ -47,6 +50,8 @@ export const BLENDER_REPLACEMENT_SPECS = Object.freeze({
     url: 'models/pulpa-blender/SLURRY-PUMP-01.glb',
     expectedAnimation: 'SLURRY-PUMP-01_ShaftRotation',
     rotationPivotRepair: Object.freeze({ nodeName: 'SLURRY-PUMP-01_ROTATING_GROUP', axis: 'x' }),
+    preserveProceduralOverlays: Object.freeze(['pump-impeller', 'pump-slurry-path']),
+    proceduralOverlayAnchors: Object.freeze({ 'pump-impeller': 'SLURRY-PUMP-01_ROTATING_GROUP' }),
   }),
   'CLASS-01': Object.freeze({
     url: 'models/pulpa-blender/CLASS-01.glb',
@@ -81,6 +86,8 @@ export const BLENDER_REPLACEMENT_SPECS = Object.freeze({
     url: 'models/pulpa-blender/SLURRY-PUMP-01.glb',
     expectedAnimation: 'SLURRY-PUMP-01_ShaftRotation',
     rotationPivotRepair: Object.freeze({ nodeName: 'SLURRY-PUMP-01_ROTATING_GROUP', axis: 'x' }),
+    preserveProceduralOverlays: Object.freeze(['pump-impeller', 'pump-slurry-path']),
+    proceduralOverlayAnchors: Object.freeze({ 'pump-impeller': 'SLURRY-PUMP-01_ROTATING_GROUP' }),
   }),
   'CIP-ADSORPTION': Object.freeze({
     url: 'models/pulpa-blender/CIP-ADSORPTION.glb',
@@ -88,6 +95,19 @@ export const BLENDER_REPLACEMENT_SPECS = Object.freeze({
   }),
   'ELUTION-SKID': Object.freeze({
     url: 'models/pulpa-blender/ELUTION-SKID.glb',
+    preserveProceduralOverlays: Object.freeze([
+      'elution-column-solution',
+      'elution-tank-liquid',
+      'elution-hx-tube--4',
+      'elution-hx-tube--3',
+      'elution-hx-tube--2',
+      'elution-hx-tube--1',
+      'elution-hx-tube-0',
+      'elution-hx-tube-1',
+      'elution-hx-tube-2',
+      'elution-hx-tube-3',
+      'elution-hx-tube-4',
+    ]),
   }),
   'EW-CELLS': Object.freeze({
     url: 'models/pulpa-blender/EW-CELLS.glb',
@@ -245,12 +265,18 @@ function makeFallbackGroup(hostRoot, instanceId) {
   return fallback;
 }
 
-function preserveProceduralOverlays(hostRoot, fallback, names = []) {
+function preserveProceduralOverlays(hostRoot, fallback, imported, names = [], anchors = {}) {
   const preserved = [];
   names.forEach((name) => {
     const object = fallback.getObjectByName(name);
     if (!object) return;
     hostRoot.attach(object);
+    const anchorName = anchors?.[name];
+    const anchor = anchorName ? imported?.getObjectByName(anchorName) : null;
+    if (anchor) {
+      anchor.attach(object);
+      object.userData.blenderProceduralOverlayAnchor = anchorName;
+    }
     object.userData.blenderProceduralOverlay = true;
     preserved.push(object);
   });
@@ -320,7 +346,13 @@ export function attachBlenderVisualReplacement({
       if (spec.rotationPivotRepair) stabilizeImportedRotationPivot(imported, spec.rotationPivotRepair);
       hostRoot.add(imported);
       if (spec.preserveProceduralOverlays?.length) {
-        const overlays = preserveProceduralOverlays(hostRoot, fallback, spec.preserveProceduralOverlays);
+        const overlays = preserveProceduralOverlays(
+          hostRoot,
+          fallback,
+          imported,
+          spec.preserveProceduralOverlays,
+          spec.proceduralOverlayAnchors,
+        );
         hostRoot.userData.blenderProceduralOverlayCount = overlays.length;
       }
       if (spec.materialLoadNode) {

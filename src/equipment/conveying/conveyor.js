@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { boxMesh, createAssetHandle, cylinderMesh } from '../common/assetUtils.js';
+import { boxMesh, createAssetHandle, cylinderMesh, tubeBetween } from '../common/assetUtils.js';
 import { createEquipmentMaterial } from '../common/materialLibrary.js';
 import { createElectricMotor, createGearbox, createHandrail } from '../common/components.js';
 import { attachBlenderModule, BLENDER_MODULE_URLS } from '../../scene/integration/blenderModuleLibrary.js';
@@ -206,6 +206,70 @@ export function createConveyorAsset({ length = 16, width = 1.4, incline = 0, sup
     rail.position.set(0, -0.03, walkwayZ - 0.37);
     conveyor.add(rail);
   }
+
+  // V23 close-view mechanical/safety detail. These parts remain on the same
+  // parametric local frame as the belt, so ports, routing and support grounding
+  // stay authoritative and unchanged.
+  const mechanicalDetail = new THREE.Group();
+  mechanicalDetail.name = 'conveyor-v23-mechanical-detail';
+  mechanicalDetail.userData.v23MechanicalDetail = true;
+  const warningMat = createEquipmentMaterial('warningRed');
+  const safetyMat = createEquipmentMaterial('safetyYellow');
+  const skirtLength = Math.min(4.2, Math.max(1.6, slopeLength * 0.22));
+  const skirtCenterX = -slopeLength / 2 + 0.72 + skirtLength / 2;
+  for (const side of [-1, 1]) {
+    mechanicalDetail.add(boxMesh(
+      `conveyor-feed-skirt-${side < 0 ? 'left' : 'right'}`,
+      [skirtLength, 0.34, 0.055],
+      frameMat.clone(),
+      [skirtCenterX, 0.63, side * width * 0.47],
+      { role: 'shell', lodTier: 1 },
+    ));
+  }
+  mechanicalDetail.add(boxMesh(
+    'conveyor-head-belt-scraper',
+    [0.075, 0.18, width * 0.96],
+    steel.clone(),
+    [slopeLength / 2 - 0.72, 0.13, 0],
+    { role: 'structure', lodTier: 1 },
+  ));
+  mechanicalDetail.add(boxMesh(
+    'conveyor-head-scraper-bracket',
+    [0.22, 0.10, width * 1.10],
+    frameMat.clone(),
+    [slopeLength / 2 - 0.80, 0.02, 0],
+    { role: 'structure', lodTier: 1 },
+  ));
+  if (walkway) {
+    const pullCordZ = -width * 1.03 - 0.30;
+    mechanicalDetail.add(tubeBetween(
+      'conveyor-emergency-pull-cord',
+      [-slopeLength / 2 + 0.85, 0.46, pullCordZ],
+      [slopeLength / 2 - 0.95, 0.46, pullCordZ],
+      0.012,
+      warningMat.clone(),
+      8,
+      { role: 'structure', lodTier: 1 },
+    ));
+    const stationX = slopeLength / 2 - 1.15;
+    mechanicalDetail.add(boxMesh(
+      'conveyor-emergency-stop-station',
+      [0.22, 0.34, 0.18],
+      safetyMat,
+      [stationX, 0.43, pullCordZ],
+      { role: 'structure', lodTier: 1 },
+    ));
+    mechanicalDetail.add(boxMesh(
+      'conveyor-emergency-stop-button',
+      [0.07, 0.11, 0.05],
+      warningMat,
+      [stationX + 0.115, 0.47, pullCordZ],
+      { role: 'structure', lodTier: 1 },
+    ));
+  }
+  conveyor.add(mechanicalDetail);
+  root.userData.v23MechanicalDetail = true;
+  root.userData.v23MechanicalDetailParts = mechanicalDetail.children.length;
 
   // Drive assembly is attached to the same sloped local frame, so it cannot
   // lag behind after the conveyor is reoriented or inclined.

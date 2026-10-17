@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { boxMesh, createAssetHandle, cylinderMesh, tubeBetween } from '../common/assetUtils.js';
 import { createEquipmentMaterial } from '../common/materialLibrary.js';
-import { createElectricMotor, createHandrail } from '../common/components.js';
+import { createElectricMotor, createHandrail, createLadder, createWorkLight } from '../common/components.js';
 
 const DIMENSIONS = Object.freeze({ length: 5.4, width: 4.2, height: 4.7 });
 
@@ -95,6 +95,50 @@ export function createJawCrusherAsset() {
   const rail = createHandrail({ length: 4.3, name: 'crusher-service-rail' });
   rail.position.set(0, 2.7, -2.42);
   root.add(rail);
+
+  // V23 keeps access/safety hardware as a procedural overlay so it stays
+  // visible when the Blender crusher replaces the base geometry. It does not
+  // touch ports, foundations or the jaw/flywheel animation pivots.
+  const safetyOverlay = new THREE.Group();
+  safetyOverlay.name = 'PRIMARY-CRUSHER-v23-safety-overlay';
+  safetyOverlay.userData.v23MechanicalDetail = true;
+  const ladder = createLadder({
+    width: 0.62,
+    height: 2.62,
+    rungSpacing: 0.29,
+    name: 'crusher-service-ladder',
+  });
+  ladder.position.set(-1.75, 0.08, -2.48);
+  safetyOverlay.add(ladder);
+
+  const flywheelGuard = new THREE.Group();
+  flywheelGuard.name = 'crusher-service-flywheel-guard';
+  const guardMat = createEquipmentMaterial('safetyYellow');
+  const guardCenterX = 0.55;
+  const guardCenterY = 3.62;
+  const guardZ = -2.20;
+  const guardHalf = 0.92;
+  flywheelGuard.add(
+    boxMesh('crusher-flywheel-guard-top', [1.90, 0.07, 0.07], guardMat.clone(), [guardCenterX, guardCenterY + guardHalf, guardZ], { role: 'structure', lodTier: 1 }),
+    boxMesh('crusher-flywheel-guard-bottom', [1.90, 0.07, 0.07], guardMat.clone(), [guardCenterX, guardCenterY - guardHalf, guardZ], { role: 'structure', lodTier: 1 }),
+    boxMesh('crusher-flywheel-guard-left', [0.07, 1.90, 0.07], guardMat.clone(), [guardCenterX - guardHalf, guardCenterY, guardZ], { role: 'structure', lodTier: 1 }),
+    boxMesh('crusher-flywheel-guard-right', [0.07, 1.90, 0.07], guardMat.clone(), [guardCenterX + guardHalf, guardCenterY, guardZ], { role: 'structure', lodTier: 1 }),
+  );
+  safetyOverlay.add(flywheelGuard);
+  safetyOverlay.add(boxMesh(
+    'crusher-emergency-stop-box',
+    [0.22, 0.34, 0.18],
+    createEquipmentMaterial('warningRed'),
+    [1.70, 2.96, -2.34],
+    { role: 'structure', lodTier: 1 },
+  ));
+  const serviceLight = createWorkLight({ name: 'crusher-service-work-light' });
+  serviceLight.position.set(-1.62, 3.30, -2.28);
+  serviceLight.rotation.z = -0.35;
+  safetyOverlay.add(serviceLight);
+  root.add(safetyOverlay);
+  root.userData.v23MechanicalDetail = true;
+  root.userData.v23SafetyOverlayParts = safetyOverlay.children.length;
 
   const ore = [];
   for (let i = 0; i < 12; i += 1) {

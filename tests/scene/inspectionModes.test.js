@@ -3,8 +3,10 @@ import * as THREE from 'three';
 import { computeInspectionCameraDistance, createBaseScene } from '../../src/scene/baseEnvironment.js';
 import {
   createEquipmentInspectionSystem,
+  computeInspectionFraming,
   getInspectionCircuitContext,
   inferImportedInspectionRole,
+  INSPECTION_FOCUS_PROFILES,
   INSPECTION_CIRCUIT_ORDER,
 } from '../../src/scene/inspection/equipmentInspection.js';
 
@@ -74,6 +76,8 @@ describe('equipment internal inspection modes', () => {
     expect(roleFor('EW-CELLS_CELL_1')).toBe('shell');
     expect(roleFor('EW-CELLS_ELECTROLYTE_1')).toBe('interior');
     expect(roleFor('SMELTING-FURNACE_MELT')).toBe('interior');
+    expect(roleFor('ELUTION-SKID_COLUMN')).toBe('shell');
+    expect(roleFor('ELUTION-SKID_HEAT_EXCHANGER')).toBe('shell');
   });
 
   it('overrides broad GLB role metadata when inspecting pump shell, structure and internals', () => {
@@ -121,6 +125,49 @@ describe('equipment internal inspection modes', () => {
     const large = computeInspectionCameraDistance([20, 8, 12], 42, 16 / 9);
     expect(compact).toBeGreaterThan(2);
     expect(large).toBeGreaterThan(compact);
+  });
+
+  it('defines close-view focus profiles only for reproduced long targets', () => {
+    expect(Object.keys(INSPECTION_FOCUS_PROFILES)).toEqual([
+      'CV-02-CRUSHER-TO-STOCKPILE',
+      'STOCKPILE-RECLAIM',
+      'CV-03-STOCKPILE-TO-GRINDING',
+      'P-CYCLONE-UNDERFLOW-RETURN',
+      'P-CLASSIFICATION-TO-LEACH',
+      'P-LEACHING-TO-PUMP-01',
+      'P-PUMP-01-TO-CIP',
+    ]);
+  });
+
+  it('frames long conveyor and piping targets around a close route segment without moving the route', () => {
+    const scene = createBaseScene();
+    for (const id of [
+      'CV-02-CRUSHER-TO-STOCKPILE',
+      'CV-03-STOCKPILE-TO-GRINDING',
+      'P-CYCLONE-UNDERFLOW-RETURN',
+      'P-LEACHING-TO-PUMP-01',
+      'P-PUMP-01-TO-CIP',
+    ]) {
+      const target = scene.scene.getObjectByName(id);
+      const routeBefore = structuredClone(target.userData.routePoints);
+      const framing = computeInspectionFraming(target, id);
+      expect(framing.focused).toBe(true);
+      expect(framing.source).toBe('route-metadata');
+      expect(Math.max(framing.size.x, framing.size.z)).toBeLessThanOrEqual(
+        INSPECTION_FOCUS_PROFILES[id].maxSpanM + 1e-9,
+      );
+      expect(target.userData.routePoints).toEqual(routeBefore);
+    }
+  });
+
+  it('focuses stockpile Inspection on reclaim hardware instead of the full ore-pile envelope', () => {
+    const scene = createBaseScene();
+    const stockpile = scene.scene.getObjectByName('STOCKPILE-RECLAIM');
+    const framing = scene.equipmentInspection.getFraming('STOCKPILE-RECLAIM');
+    expect(framing.focused).toBe(true);
+    expect(framing.source).toBe('object:STOCKPILE-RECLAIM-motion');
+    expect(framing.size.length()).toBeLessThan(framing.fullSize.length() * 0.5);
+    expect(stockpile.getObjectByName('STOCKPILE-RECLAIM-motion')).toBeTruthy();
   });
 
   it('refreshes context boxes when an inspected mobile target moves', () => {

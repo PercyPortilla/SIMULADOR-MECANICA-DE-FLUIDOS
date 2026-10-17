@@ -1,0 +1,94 @@
+{
+  "baseline": "git HEAD fe8dc54 (V22)",
+  "changes": [
+    {
+      "status": "M",
+      "path": "CHECKPOINT.txt"
+    },
+    {
+      "status": "M",
+      "path": "README.md"
+    },
+    {
+      "status": "M",
+      "path": "src/equipment/conveying/conveyor.js"
+    },
+    {
+      "status": "M",
+      "path": "src/equipment/crushing/jawCrusher.js"
+    },
+    {
+      "status": "M",
+      "path": "src/releaseInfo.js"
+    },
+    {
+      "status": "M",
+      "path": "src/scene/baseEnvironment.js"
+    },
+    {
+      "status": "M",
+      "path": "src/scene/infrastructure/pipeRacks.js"
+    },
+    {
+      "status": "M",
+      "path": "src/scene/inspection/equipmentInspection.js"
+    },
+    {
+      "status": "M",
+      "path": "src/scene/integration/assetIntegrationLayer.js"
+    },
+    {
+      "status": "M",
+      "path": "src/scene/integration/blenderVisualReplacement.js"
+    },
+    {
+      "status": "M",
+      "path": "src/scene/integration/integratedPiping.js"
+    },
+    {
+      "status": "M",
+      "path": "src/scene/piping/pipingEngine.js"
+    },
+    {
+      "status": "M",
+      "path": "tests/scene/blenderHybridInfrastructure.test.js"
+    },
+    {
+      "status": "M",
+      "path": "tests/scene/blenderVisualReplacement.test.js"
+    },
+    {
+      "status": "M",
+      "path": "tests/scene/infrastructure.test.js"
+    },
+    {
+      "status": "M",
+      "path": "tests/scene/inspectionModes.test.js"
+    },
+    {
+      "status": "M",
+      "path": "tests/scene/pipingEngine.test.js"
+    },
+    {
+      "status": "M",
+      "path": "tests/ui/releaseInfo.test.js"
+    },
+    {
+      "status": "M",
+      "path": "tools/integrationClearanceAudit.mjs"
+    },
+    {
+      "status": "A",
+      "path": "V23_INDUSTRIAL_DETAIL_INSPECTION_CHECKPOINT.md"
+    },
+    {
+      "status": "A",
+      "path": "tools/make_v23_checkpoint.py"
+    },
+    {
+      "status": "A",
+      "path": "tools/v23IndustrialDetailAudit.mjs"
+    }
+  ],
+  "count": 22
+}

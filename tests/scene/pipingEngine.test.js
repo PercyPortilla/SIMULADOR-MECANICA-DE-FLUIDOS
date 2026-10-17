@@ -94,4 +94,31 @@ describe('universal piping engine', () => {
     expect(reducer.userData.startDiameterM).toBe(0.05);
     expect(reducer.userData.endDiameterM).toBe(0.025);
   });
+
+  it('supports an explicit visual valve count without changing route elbows', () => {
+    const equipment = createEquipmentSystem();
+    const source = equipment.getPortWorldPosition('R-01', 'outlet');
+    const target = equipment.getPortWorldPosition('R-04', 'inlet');
+    const engine = createPipingEngine({ equipmentSystem: equipment });
+    const connection = {
+      id: 'VALVE-COUNT',
+      source: { equipmentId: 'R-01', portId: 'outlet' },
+      target: { equipmentId: 'R-04', portId: 'inlet' },
+      nominalDiameterM: 0.25,
+      waypoints: [[source.x + 8, source.y, source.z], [source.x + 8, source.y, target.z]],
+    };
+    const noValves = engine.renderConnection(connection, { visualValveCount: 0 });
+    const zeroElbows = noValves.children.filter((child) => child.userData?.fittingType === 'elbow').length;
+    expect(noValves.userData.visualValveCount).toBe(0);
+    expect(noValves.children.filter((child) => child.userData?.fittingType === 'isolation-valve')).toHaveLength(0);
+
+    const threeValves = engine.renderConnection(connection, { visualValveCount: 3 });
+    expect(threeValves.userData.visualValveCount).toBe(3);
+    expect(threeValves.userData.visualValveSource).toBe('state-accessories');
+    expect(threeValves.children.filter((child) => child.userData?.fittingType === 'isolation-valve')).toHaveLength(3);
+    expect(threeValves.children.filter((child) => child.userData?.fittingType === 'elbow')).toHaveLength(zeroElbows);
+    expect(threeValves.getObjectByName('VALVE-COUNT-isolation-valve')).toBeTruthy();
+    expect(threeValves.getObjectByName('VALVE-COUNT-isolation-valve-2')).toBeTruthy();
+    expect(threeValves.getObjectByName('VALVE-COUNT-isolation-valve-3')).toBeTruthy();
+  });
 });

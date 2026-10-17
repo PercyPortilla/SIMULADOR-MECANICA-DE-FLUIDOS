@@ -590,11 +590,10 @@ export function createBaseEnvironment({ canvas }) {
       setInspectionTargetLabel(base.plantLabels, target, targetMeta?.label ?? id ?? '');
       setPlantLabelsView(base.plantLabels, activeCamera);
       if (target) {
-        target.updateWorldMatrix?.(true, true);
-        const bounds = new THREE.Box3().setFromObject(target);
-        if (!bounds.isEmpty()) {
-          const center = bounds.getCenter(new THREE.Vector3());
-          const size = bounds.getSize(new THREE.Vector3());
+        const framing = base.equipmentInspection.getFraming?.(id);
+        if (framing) {
+          const center = framing.center;
+          const size = framing.size;
           const radius = Math.max(1, size.length() * 0.5);
           const previousDirection = inspectionCamera.position.clone().sub(inspectionControls.target);
           if (previousDirection.lengthSq() < 1e-6) previousDirection.set(1, 0.65, 1);

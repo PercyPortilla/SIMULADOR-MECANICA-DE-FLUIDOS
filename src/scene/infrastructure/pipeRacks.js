@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { getTerrainHeight } from '../environment/terrainHeight.js';
+import { createRoadAlignment } from '../environment/haulRoads.js';
+import { ROAD_DEFINITIONS } from '../config/siteDesign.js';
 import { createIndustrialMaterial } from '../materials/industrialMaterials.js';
 import { attachBlenderModule, BLENDER_MODULE_URLS, quaternionFromLocalX } from '../integration/blenderModuleLibrary.js';
 
@@ -15,6 +17,53 @@ const POLICY_PRESETS = Object.freeze({
 // columns inside the service road. A portal span keeps both columns beyond the
 // road + shoulders while the pipe crosses the clear airspace above it.
 export const RECOVERY_ROAD_SPAN_WIDTH_M = 18.0;
+export const RECOVERY_ROAD_FOOTING_CLEARANCE_M = (
+  ROAD_DEFINITIONS['ROAD-02'].widthM / 2
+  + ROAD_DEFINITIONS['ROAD-02'].shoulderM
+  + 0.45
+);
+
+let recoveryRoadSamples = null;
+
+function getRecoveryRoadSamples() {
+  if (recoveryRoadSamples) return recoveryRoadSamples;
+  const curve = createRoadAlignment('ROAD-02');
+  recoveryRoadSamples = Array.from({ length: 481 }, (_, index) => curve.getPoint(index / 480));
+  return recoveryRoadSamples;
+}
+
+function nearestRecoveryRoadReference(point) {
+  let minimum = Infinity;
+  let nearestSide = null;
+  let nearestPoint = null;
+  const samples = getRecoveryRoadSamples();
+  for (let index = 0; index < samples.length - 1; index += 1) {
+    const a = samples[index];
+    const b = samples[index + 1];
+    const dx = b.x - a.x;
+    const dz = b.z - a.z;
+    const lengthSq = dx * dx + dz * dz;
+    const t = lengthSq <= 1e-12
+      ? 0
+      : THREE.MathUtils.clamp(((point.x - a.x) * dx + (point.z - a.z) * dz) / lengthSq, 0, 1);
+    const x = a.x + dx * t;
+    const z = a.z + dz * t;
+    const distance = Math.hypot(point.x - x, point.z - z);
+    if (distance < minimum) {
+      minimum = distance;
+      nearestPoint = new THREE.Vector3(x, point.y, z);
+      const roadTangent = new THREE.Vector3(dx, 0, dz);
+      nearestSide = roadTangent.lengthSq() <= 1e-12
+        ? null
+        : new THREE.Vector3(-roadTangent.z, 0, roadTangent.x).normalize();
+    }
+  }
+  return { distance: minimum, side: nearestSide, point: nearestPoint };
+}
+
+function planarDistanceToRecoveryRoad(point) {
+  return nearestRecoveryRoadReference(point).distance;
+}
 
 function asVector3(value) {
   if (value instanceof THREE.Vector3) return value.clone();
@@ -57,8 +106,6 @@ function createRackFrame({
   stationM,
   policy,
 }) {
-  const spansRecoveryServiceRoad = connectionId === 'P-PUMP-01-TO-CIP' && segmentIndex === 2;
-  const effectiveWidthM = spansRecoveryServiceRoad ? Math.max(widthM, RECOVERY_ROAD_SPAN_WIDTH_M) : widthM;
   const terrainY = getTerrainHeight(point.x, point.z);
   const pipeRadius = Math.max(0.05, renderedDiameterM / 2);
   const beamThickness = policy === 'rack' ? 0.20 : 0.16;
@@ -67,6 +114,74 @@ function createRackFrame({
   if (horizontal.lengthSq() < 1e-8) return null;
   horizontal.normalize();
   const side = new THREE.Vector3(-horizontal.z, 0, horizontal.x);
+  const supportCenter = point.clone();
+  let effectiveWidthM = widthM;
+  let spansRecoveryServiceRoad = false;
+  let roadSupportMode = null;
+  let roadFootingClearanceM = null;
+  let roadCenterDistanceM = null;
+
+  if (connectionId === 'P-PUMP-01-TO-CIP') {
+    const roadReference = nearestRecoveryRoadReference(point);
+    roadCenterDistanceM = roadReference.distance;
+    const interactsWithRoad = roadReference.distance < (
+      RECOVERY_ROAD_FOOTING_CLEARANCE_M + Math.max(widthM / 2, 4)
+    );
+    const distancesAtWidth = (candidateWidthM, center = supportCenter) => {
+      const halfWidth = candidateWidthM / 2;
+      const left = center.clone().addScaledVector(side, -halfWidth);
+      const right = center.clone().addScaledVector(side, halfWidth);
+      return [planarDistanceToRecoveryRoad(left), planarDistanceToRecoveryRoad(right)];
+    };
+    if (interactsWithRoad && roadReference.side && roadReference.point) {
+      side.copy(roadReference.side);
+      const portalHalfSpanM = RECOVERY_ROAD_SPAN_WIDTH_M / 2;
+      if (roadReference.distance <= portalHalfSpanM - 0.5) {
+        // When the pipe is genuinely over the road corridor, center the steel
+        // portal on the road rather than on an offset pipe. The saddle remains
+        // exactly at the pipe point, so the authoritative centerline does not
+        // move, while the columns stay just beyond both shoulders.
+        spansRecoveryServiceRoad = true;
+        roadSupportMode = 'road-centered-portal';
+        effectiveWidthM = Math.max(widthM, RECOVERY_ROAD_SPAN_WIDTH_M);
+        supportCenter.x = roadReference.point.x;
+        supportCenter.z = roadReference.point.z;
+        roadFootingClearanceM = distancesAtWidth(effectiveWidthM, supportCenter);
+        while (
+          roadFootingClearanceM.some((distance) => distance < RECOVERY_ROAD_FOOTING_CLEARANCE_M)
+          && effectiveWidthM < 22
+        ) {
+          effectiveWidthM += 0.5;
+          roadFootingClearanceM = distancesAtWidth(effectiveWidthM, supportCenter);
+        }
+      } else {
+        // If the pipe is already outside the traffic corridor, a giant portal
+        // is unnecessary. Keep the normal frame width and shift only its
+        // footings outward enough to clear the shoulder; the pipe saddle stays
+        // at the original station as a short, realistic cantilevered offset.
+        const delta = point.clone().sub(roadReference.point);
+        const outwardSign = delta.dot(side) >= 0 ? 1 : -1;
+        let nominalDistances = distancesAtWidth(widthM, supportCenter);
+        if (nominalDistances.some((distance) => distance < RECOVERY_ROAD_FOOTING_CLEARANCE_M)) {
+          roadSupportMode = 'road-offset-frame';
+          const inwardNominal = Math.min(...nominalDistances);
+          const shiftM = Math.max(0, RECOVERY_ROAD_FOOTING_CLEARANCE_M + 0.18 - inwardNominal);
+          supportCenter.addScaledVector(side, outwardSign * shiftM);
+          nominalDistances = distancesAtWidth(widthM, supportCenter);
+          let guard = 0;
+          while (
+            nominalDistances.some((distance) => distance < RECOVERY_ROAD_FOOTING_CLEARANCE_M)
+            && guard < 16
+          ) {
+            supportCenter.addScaledVector(side, outwardSign * 0.20);
+            nominalDistances = distancesAtWidth(widthM, supportCenter);
+            guard += 1;
+          }
+          roadFootingClearanceM = nominalDistances;
+        }
+      }
+    }
+  }
   const frame = new THREE.Group();
   frame.name = id;
   frame.userData = {
@@ -79,13 +194,18 @@ function createRackFrame({
     supportedPipeY: pipeY,
     renderedDiameterM,
     roadSpanPortal: spansRecoveryServiceRoad,
-    clearRoadId: spansRecoveryServiceRoad ? 'ROAD-02' : null,
+    clearRoadId: roadSupportMode ? 'ROAD-02' : null,
+    roadSupportMode,
+    roadCenterDistanceM,
     frameWidthM: effectiveWidthM,
+    roadFootingClearanceM,
+    requiredRoadFootingClearanceM: roadSupportMode ? RECOVERY_ROAD_FOOTING_CLEARANCE_M : null,
+    supportCenterOffsetM: supportCenter.distanceTo(point),
   };
 
   const halfWidth = effectiveWidthM / 2;
-  const leftBase = point.clone().addScaledVector(side, -halfWidth);
-  const rightBase = point.clone().addScaledVector(side, halfWidth);
+  const leftBase = supportCenter.clone().addScaledVector(side, -halfWidth);
+  const rightBase = supportCenter.clone().addScaledVector(side, halfWidth);
   const leftTerrainY = getTerrainHeight(leftBase.x, leftBase.z);
   const rightTerrainY = getTerrainHeight(rightBase.x, rightBase.z);
   leftBase.y = leftTerrainY;
@@ -122,11 +242,15 @@ function createRackFrame({
   const beam = createMember(`${id}-crossbeam`, leftTop, rightTop, beamThickness, material);
   frame.add(beam);
 
-  if (policy === 'rack' && columnHeight > 1.7) {
+  const braceThresholdM = policy === 'rack' ? 1.7 : 3.2;
+  if (columnHeight > braceThresholdM) {
     const leftBraceTopY = Math.min(beamY - 0.18, leftTerrainY + Math.min(leftColumnHeight * 0.58, 2.2));
     const rightBraceTopY = Math.min(beamY - 0.18, rightTerrainY + Math.min(rightColumnHeight * 0.58, 2.2));
-    frame.add(createMember(`${id}-brace-1`, leftBase.clone().setY(leftTerrainY + 0.14), rightBase.clone().setY(rightBraceTopY), 0.09, material));
-    frame.add(createMember(`${id}-brace-2`, rightBase.clone().setY(rightTerrainY + 0.14), leftBase.clone().setY(leftBraceTopY), 0.09, material));
+    const braceThickness = policy === 'rack' ? 0.09 : 0.065;
+    frame.add(createMember(`${id}-brace-1`, leftBase.clone().setY(leftTerrainY + 0.14), rightBase.clone().setY(rightBraceTopY), braceThickness, material));
+    frame.add(createMember(`${id}-brace-2`, rightBase.clone().setY(rightTerrainY + 0.14), leftBase.clone().setY(leftBraceTopY), braceThickness, material));
+    frame.userData.bracedFrame = true;
+    frame.userData.braceThresholdM = braceThresholdM;
   }
 
   const moduleScale = THREE.MathUtils.clamp(renderedDiameterM / 0.40, 0.82, 1.85);

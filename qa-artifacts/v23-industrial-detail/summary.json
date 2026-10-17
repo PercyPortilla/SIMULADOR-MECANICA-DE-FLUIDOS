@@ -1,0 +1,30 @@
+{
+  "boot": {
+    "title": "PULPA LAB V2",
+    "releaseTag": "V23 · Detalle industrial e Inspección",
+    "academicBadge": "V23",
+    "sceneError": "",
+    "earthworkRequested": true,
+    "earthworkBytes": 300,
+    "targets": 38
+  },
+  "desktop": {
+    "documentWidth": 1425,
+    "viewportWidth": 1440,
+    "activeCamera": "inspection",
+    "activeTarget": "ELUTION-SKID",
+    "activeMode": "interior",
+    "guide": "GUÍA DE PROCESO\nElución\n\nQué hace: Desorbe el oro del carbón cargado para producir una solución rica.\n\nETAPA\nRecuperación · CIP · elución · EW · fundición\nRESULTADO RELACIONADO\nRecuperación global · oro final\nENTRADA\nCarbón cargado desde CIP.\nSALIDA\nSolución rica hacia EW + carbón barren de retorno.\nVARIABLE CLAVE\nEficiencia de elución ingresada\nQUÉ CAMBIA EN EL CÁLCULO\nLa masa recuperada se calcula con la eficiencia explícita de elución; no se predice eficiencia intrínseca del skid.\nAnterior\nSeleccionado\nSiguiente\nAnterior: Línea · MT-CIP-TO-ELUTION-CARBON\nSiguiente: Línea · MT-ELUTION-TO-CIP-BARREN-CARBON",
+    "sceneError": "",
+    "glbResources": 24
+  },
+  "mobile": {
+    "documentWidth": 390,
+    "viewportWidth": 390,
+    "bodyWidth": 390,
+    "releaseTag": "V23 · Detalle industrial e Inspección",
+    "sceneCardWidth": 354
+  },
+  "runtimeErrors": [],
+  "networkFailures": []
+}

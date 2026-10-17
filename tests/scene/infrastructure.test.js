@@ -1,12 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import { createBaseScene } from '../../src/scene/baseEnvironment.js';
-import { getRoadDesignMetrics, getRoadNetworkJunctions, getRoadPath } from '../../src/scene/environment/haulRoads.js';
+import { createRoadAlignment, getRoadDesignMetrics, getRoadNetworkJunctions, getRoadPath } from '../../src/scene/environment/haulRoads.js';
 import { getTerrainHeight } from '../../src/scene/environment/terrainHeight.js';
 import { ROAD_DEFINITIONS } from '../../src/scene/config/siteDesign.js';
-import { RECOVERY_ROAD_SPAN_WIDTH_M } from '../../src/scene/infrastructure/pipeRacks.js';
+import { RECOVERY_ROAD_FOOTING_CLEARANCE_M, RECOVERY_ROAD_SPAN_WIDTH_M } from '../../src/scene/infrastructure/pipeRacks.js';
 
 describe('infraestructura de conexión', () => {
+  let readonlyBase = null;
+  const getReadonlyBase = () => {
+    readonlyBase ??= createBaseScene();
+    return readonlyBase;
+  };
+
   it('mantiene cuatro caminos y ROAD-04 sigue la topografía', () => {
     const path = getRoadPath('ROAD-04');
     expect(path.length).toBeGreaterThan(2);
@@ -28,7 +34,7 @@ describe('infraestructura de conexión', () => {
   });
 
   it('integra drenaje lateral en los caminos de servicio sin duplicarlo sobre el haul road principal', () => {
-    const base = createBaseScene();
+    const base = getReadonlyBase();
     const drains = [];
     base.haulRoads.traverse((object) => {
       if (object.userData?.roadDrainage) drains.push(object.name);
@@ -52,7 +58,7 @@ describe('infraestructura de conexión', () => {
   });
 
   it('añade señalización minera selectiva sin convertir la planta en una red urbana', () => {
-    const base = createBaseScene();
+    const base = getReadonlyBase();
     const signage = base.civilInfrastructure.getObjectByName('mine-road-safety-signage');
     expect(signage).toBeTruthy();
     expect(signage.children.length).toBeGreaterThanOrEqual(4);
@@ -63,7 +69,7 @@ describe('infraestructura de conexión', () => {
   });
 
   it('crea racks para los pipes de proceso existentes', () => {
-    const base = createBaseScene();
+    const base = getReadonlyBase();
     expect(base.processPipeRacks.name).toBe('process-pipe-racks');
     expect(base.processPipeRacks.userData.totalFrames).toBeGreaterThan(0);
     base.processPipeRacks.traverse((object) => {
@@ -74,7 +80,7 @@ describe('infraestructura de conexión', () => {
   });
 
   it('apoya cada footing de pipe-rack sobre su cota topográfica lateral real', () => {
-    const base = createBaseScene();
+    const base = getReadonlyBase();
     const errors = [];
     base.processPipeRacks.traverse((object) => {
       if (!object.name?.includes('-footing-') || !Number.isFinite(object.userData?.terrainY)) return;
@@ -86,7 +92,7 @@ describe('infraestructura de conexión', () => {
   });
 
   it('valida que cada conexión de proceso termine exactamente en sus puertos 3D', () => {
-    const base = createBaseScene();
+    const base = getReadonlyBase();
     const audit = base.integratedPiping.auditConnectionEndpoints(0.03);
     expect(audit.length).toBe(base.integratedPiping.groups.length);
     expect(audit.every((item) => item.valid)).toBe(true);
@@ -95,7 +101,7 @@ describe('infraestructura de conexión', () => {
   });
 
   it('cubre los tres runs elevados PUMP-01 → CIP con frames derivados de la ruta', () => {
-    const base = createBaseScene();
+    const base = getReadonlyBase();
     const segmentIndexes = new Set();
     base.processPipeRacks.traverse((object) => {
       if (object.userData?.connectionId === 'P-PUMP-01-TO-CIP' && object.userData?.pipeRackFrame) {
@@ -106,7 +112,7 @@ describe('infraestructura de conexión', () => {
   });
 
   it('usa pórticos anchos en el tramo PUMP-01 → CIP que comparte corredor aéreo con ROAD-02', () => {
-    const base = createBaseScene();
+    const base = getReadonlyBase();
     const portals = [];
     base.processPipeRacks.traverse((object) => {
       if (object.userData?.connectionId === 'P-PUMP-01-TO-CIP'
@@ -116,16 +122,93 @@ describe('infraestructura de conexión', () => {
     expect(portals.length).toBeGreaterThanOrEqual(4);
     portals.forEach((portal) => {
       expect(portal.userData.clearRoadId).toBe('ROAD-02');
-      expect(portal.userData.segmentIndex).toBe(2);
-      expect(portal.userData.frameWidthM).toBe(RECOVERY_ROAD_SPAN_WIDTH_M);
+      expect(portal.userData.frameWidthM).toBeGreaterThanOrEqual(RECOVERY_ROAD_SPAN_WIDTH_M);
+      expect(Math.min(...portal.userData.roadFootingClearanceM)).toBeGreaterThanOrEqual(
+        RECOVERY_ROAD_FOOTING_CLEARANCE_M,
+      );
       const footings = portal.children.filter((child) => child.name.includes('-footing-'));
       expect(footings).toHaveLength(2);
-      expect(Math.abs(footings[0].position.z - footings[1].position.z)).toBeGreaterThanOrEqual(RECOVERY_ROAD_SPAN_WIDTH_M - 1e-9);
+      expect(Math.hypot(
+        footings[0].position.x - footings[1].position.x,
+        footings[0].position.z - footings[1].position.z,
+      )).toBeGreaterThanOrEqual(RECOVERY_ROAD_SPAN_WIDTH_M - 1e-9);
+    });
+  });
+
+  it('mantiene todos los footings PUMP-01 → CIP fuera del corredor real curvo de ROAD-02', () => {
+    const base = getReadonlyBase();
+    const road = createRoadAlignment('ROAD-02');
+    const roadSamples = Array.from({ length: 901 }, (_, index) => road.getPoint(index / 900));
+    const distanceToRoad = (point) => {
+      let minimum = Infinity;
+      for (let index = 0; index < roadSamples.length - 1; index += 1) {
+        const a = roadSamples[index];
+        const b = roadSamples[index + 1];
+        const dx = b.x - a.x;
+        const dz = b.z - a.z;
+        const lengthSq = dx * dx + dz * dz;
+        const t = lengthSq <= 1e-12
+          ? 0
+          : THREE.MathUtils.clamp(((point.x - a.x) * dx + (point.z - a.z) * dz) / lengthSq, 0, 1);
+        minimum = Math.min(
+          minimum,
+          Math.hypot(point.x - (a.x + dx * t), point.z - (a.z + dz * t)),
+        );
+      }
+      return minimum;
+    };
+    const clearances = [];
+    base.processPipeRacks.traverse((frame) => {
+      if (!frame.userData?.pipeRackFrame || frame.userData.connectionId !== 'P-PUMP-01-TO-CIP') return;
+      frame.children
+        .filter((child) => child.name.includes('-footing-'))
+        .forEach((footing) => clearances.push(distanceToRoad(footing.position)));
+    });
+    expect(clearances.length).toBeGreaterThan(0);
+    expect(Math.min(...clearances)).toBeGreaterThanOrEqual(RECOVERY_ROAD_FOOTING_CLEARANCE_M - 0.02);
+  });
+
+  it('evita pórticos sobredimensionados al centrar cruces y desplazar frames ya externos a ROAD-02', () => {
+    const base = getReadonlyBase();
+    const recoveryFrames = [];
+    base.processPipeRacks.traverse((frame) => {
+      if (frame.userData?.pipeRackFrame && frame.userData.connectionId === 'P-PUMP-01-TO-CIP') {
+        recoveryFrames.push(frame);
+      }
+    });
+    const roadAware = recoveryFrames.filter((frame) => frame.userData.roadSupportMode);
+    expect(roadAware.length).toBeGreaterThan(0);
+    expect(Math.max(...roadAware.map((frame) => frame.userData.frameWidthM))).toBeLessThanOrEqual(22);
+    expect(roadAware.some((frame) => frame.userData.roadSupportMode === 'road-centered-portal')).toBe(true);
+    expect(roadAware.some((frame) => frame.userData.roadSupportMode === 'road-offset-frame')).toBe(true);
+    roadAware.forEach((frame) => {
+      expect(Math.min(...frame.userData.roadFootingClearanceM)).toBeGreaterThanOrEqual(
+        RECOVERY_ROAD_FOOTING_CLEARANCE_M,
+      );
+    });
+  });
+
+  it('arriostra soportes locales/trestle altos sin mover sus footings', () => {
+    const base = getReadonlyBase();
+    const tallNonRack = [];
+    base.processPipeRacks.traverse((frame) => {
+      if (!frame.userData?.pipeRackFrame || !['local', 'trestle'].includes(frame.userData.policy)) return;
+      const columns = frame.children.filter((child) => child.name.includes('-column-'));
+      const maxHeight = Math.max(0, ...columns.map((column) => column.geometry?.parameters?.height ?? 0));
+      if (maxHeight > 3.2) tallNonRack.push(frame);
+    });
+    expect(tallNonRack.length).toBeGreaterThan(0);
+    tallNonRack.forEach((frame) => {
+      expect(frame.userData.bracedFrame).toBe(true);
+      expect(frame.children.filter((child) => child.name.includes('-brace-'))).toHaveLength(2);
+      frame.children
+        .filter((child) => child.name.includes('-footing-'))
+        .forEach((footing) => expect(footing.position.y).toBeCloseTo(footing.userData.terrainY + 0.07, 8));
     });
   });
 
   it('no genera ground racks para las conexiones interstage entre reactores', () => {
-    const base = createBaseScene();
+    const base = getReadonlyBase();
     const forbidden = new Set(['P-LEACH-R01-R02', 'P-LEACH-R02-R03', 'P-LEACH-R03-R04']);
     const frames = [];
     base.processPipeRacks.traverse((object) => {
@@ -135,14 +218,14 @@ describe('infraestructura de conexión', () => {
   });
 
   it('conserva los tres conveyors funcionales', () => {
-    const base = createBaseScene();
+    const base = getReadonlyBase();
     expect(base.frontEndConveyors.conveyor01).toBeTruthy();
     expect(base.frontEndConveyors.conveyor02).toBeTruthy();
     expect(base.grindingFeedConveyor.conveyor).toBeTruthy();
   });
 
   it('sostiene el head de CV-02 con una torre de transferencia anclada al terreno', () => {
-    const base = createBaseScene();
+    const base = getReadonlyBase();
     const tower = base.equipmentSystem.stockpileFeedTower;
     expect(tower?.userData.transferTower).toBe(true);
     const target = base.equipmentSystem.getPortWorldPosition('STOCKPILE-RECLAIM', 'feedIn');
@@ -158,7 +241,7 @@ describe('infraestructura de conexión', () => {
   });
 
   it('apoya individualmente los footings de los conveyors integrados sobre la topografía', () => {
-    const base = createBaseScene();
+    const base = getReadonlyBase();
     ['CV-01-FEEDER-TO-CRUSHER', 'CV-02-CRUSHER-TO-STOCKPILE', 'CV-03-STOCKPILE-TO-GRINDING'].forEach((id) => {
       const conveyor = base.equipmentSystem.getEquipment(id).group3D;
       conveyor.updateMatrixWorld(true);
@@ -194,5 +277,29 @@ describe('infraestructura de conexión', () => {
     const current = base.integratedPiping.engine.getConnectionGroup('P-LEACH-R01-R02');
     expect(base.integratedPiping.groups.find((group) => group.userData.connectionId === 'P-LEACH-R01-R02')).toBe(current);
     expect(base.processPipeRacks.children.length).toBeGreaterThan(0);
+  });
+
+  it('refleja valvesCount de Pipe 1 sólo en las válvulas visuales, no en sus codos de ruta', () => {
+    const base = createBaseScene();
+    const renderPipe1 = (valvesCount) => base.integratedPiping.refreshPipe1({
+      innerDiameterM: 0.25,
+      lengthM: 20,
+      material: 'Acero',
+      accessories: { valvesCount },
+    });
+    const zero = renderPipe1(0);
+    const elbowCount = zero.children.filter((child) => child.userData?.fittingType === 'elbow').length;
+    expect(zero.userData.visualValveCount).toBe(0);
+    expect(zero.children.filter((child) => child.userData?.fittingType === 'isolation-valve')).toHaveLength(0);
+    const one = renderPipe1(1);
+    expect(one.userData.visualValveCount).toBe(1);
+    expect(one.children.filter((child) => child.userData?.fittingType === 'isolation-valve')).toHaveLength(1);
+    expect(one.children.filter((child) => child.userData?.fittingType === 'elbow')).toHaveLength(elbowCount);
+    const three = renderPipe1(3);
+    expect(three.userData.visualValveCount).toBe(3);
+    expect(three.children.filter((child) => child.userData?.fittingType === 'isolation-valve')).toHaveLength(3);
+    expect(three.children.filter((child) => child.userData?.fittingType === 'elbow')).toHaveLength(elbowCount);
+    expect(three.userData.physicalDiameterM).toBe(0.25);
+    expect(three.userData.requestedHydraulicLengthM).toBe(20);
   });
 });

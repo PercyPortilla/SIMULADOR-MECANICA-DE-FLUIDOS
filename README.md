@@ -4,7 +4,7 @@ Simulador académico de transporte, bombeo, reología y recuperación de pulpas 
 
 ## Estado actual
 
-**V22 · Realismo industrial y topografía**
+**V23 · Detalle industrial e Inspección**
 
 La versión actual integra:
 
@@ -31,6 +31,11 @@ La versión actual integra:
 - materiales multiescala independientes para terreno, camino y concreto, con cielo altoandino más limpio;
 - pórticos de 18 m en el tramo elevado PUMP-01 → CIP que comparte corredor aéreo con ROAD-02, sin mover la tubería;
 - clasificación shell/interior/structure más precisa para activos Blender durante Inspección.
+- detalle mecánico y safety en los tres conveyors paramétricos y en la chancadora primaria sin reemplazar su geometría autoritativa;
+- encuadre focal de Inspección para siete objetivos extensos, preservando transforms, rutas y metadatos físicos;
+- soportes PUMP-01 → CIP comprobados contra la curva real de ROAD-02, con footings fuera del corredor y arriostramiento en soportes altos;
+- Pipe 1 refleja visualmente su `valvesCount` sin modificar codos geométricos ni lógica hidráulica;
+- interiores educativos mínimos preservados sobre GLB en MILL-01, bombas y ELUTION-SKID sin duplicar shells ni reactivar animación procedural.
 
 ## Arquitectura
 
@@ -41,7 +46,7 @@ La versión actual integra:
 
 Three.js continúa siendo el runtime autoritativo. Las geometrías paramétricas de conveyors, piping, endpoints, diámetros y topografía no se sustituyen por modelos rígidos cuando dependen del estado del simulador.
 
-El terreno Blender es una capa visual opcional. En V22 se regeneró el overlay de recepción desde el contrato muestreado de la topografía vigente. La elevación que gobierna equipos, caminos y cimentaciones sigue proviniendo de `getTerrainHeight()`; si el GLB no carga, el terreno procedural conserva toda la geometría funcional.
+El terreno Blender es una capa visual opcional. El overlay de recepción regenerado en V22 se conserva sin cambios en V23. La elevación que gobierna equipos, caminos y cimentaciones sigue proviniendo de `getTerrainHeight()`; si el GLB no carga, el terreno procedural conserva toda la geometría funcional.
 
 ## Circuito principal
 

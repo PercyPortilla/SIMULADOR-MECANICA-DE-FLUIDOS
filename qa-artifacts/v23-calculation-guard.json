@@ -1,0 +1,14 @@
+﻿{
+    "baseline":  "V22 staging clone",
+    "protectedDirs":  [
+                          "src\\controller",
+                          "src\\core",
+                          "src\\state",
+                          "src\\process",
+                          "src\\reporting"
+                      ],
+    "differences":  [
+
+                    ],
+    "pass":  true
+}

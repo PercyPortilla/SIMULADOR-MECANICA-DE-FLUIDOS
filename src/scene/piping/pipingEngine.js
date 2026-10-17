@@ -547,29 +547,49 @@ export function createPipingEngine({ equipmentSystem }) {
       onReady: () => { endFlange.visible = false; },
     });
 
-    // Una válvula visual en el tramo más largo cuando hay espacio suficiente.
+    // Visual valves are layout semantics only. Generic process lines keep the
+    // historical single-valve cue, while callers such as Pipe 1 can explicitly
+    // mirror the already-existing hydraulic accessories.valvesCount without
+    // changing K values, route geometry or solver state.
     let longest = null;
     points.slice(0, -1).forEach((point, index) => {
       const next = points[index + 1];
       const length = point.distanceTo(next);
       if (!longest || length > longest.length) longest = { start: point, end: next, length };
     });
-    if (longest?.length > 6) {
-      const valvePoint = longest.start.clone().lerp(longest.end, 0.5);
+    const hasExplicitVisualValveCount = Number.isFinite(options.visualValveCount);
+    const requestedVisualValveCount = hasExplicitVisualValveCount
+      ? THREE.MathUtils.clamp(Math.floor(options.visualValveCount), 0, 8)
+      : (longest?.length > 6 ? 1 : 0);
+    const visualValveCount = longest?.length > 2 ? requestedVisualValveCount : 0;
+    group.userData.visualValveCount = visualValveCount;
+    group.userData.visualValveSource = hasExplicitVisualValveCount ? 'state-accessories' : 'layout-default';
+    if (visualValveCount > 0) {
       const valveTangent = longest.end.clone().sub(longest.start).normalize();
-      const valve = createValveAssembly(valvePoint, renderedDiameterM);
-      valve.name = `${connection.id}-isolation-valve`;
-      group.add(valve);
-      attachBlenderModule({
-        parent: group,
-        url: BLENDER_MODULE_URLS.pipeValve,
-        name: `${connection.id}-isolation-valve-blender`,
-        position: valvePoint,
-        scale: [fittingScale, fittingScale, fittingScale],
-        quaternion: quaternionFromLocalX(valveTangent),
-        userData: { pipingHybridRole: 'isolation-valve', connectionId: connection.id, renderedDiameterM },
-        onReady: () => { valve.visible = false; },
-      });
+      for (let index = 0; index < visualValveCount; index += 1) {
+        const fraction = (index + 1) / (visualValveCount + 1);
+        const valvePoint = longest.start.clone().lerp(longest.end, fraction);
+        const suffix = index === 0 ? '' : `-${index + 1}`;
+        const valve = createValveAssembly(valvePoint, renderedDiameterM);
+        valve.name = `${connection.id}-isolation-valve${suffix}`;
+        valve.userData.visualAccessoryIndex = index + 1;
+        group.add(valve);
+        attachBlenderModule({
+          parent: group,
+          url: BLENDER_MODULE_URLS.pipeValve,
+          name: `${connection.id}-isolation-valve${suffix}-blender`,
+          position: valvePoint,
+          scale: [fittingScale, fittingScale, fittingScale],
+          quaternion: quaternionFromLocalX(valveTangent),
+          userData: {
+            pipingHybridRole: 'isolation-valve',
+            connectionId: connection.id,
+            renderedDiameterM,
+            visualAccessoryIndex: index + 1,
+          },
+          onReady: () => { valve.visible = false; },
+        });
+      }
     }
     group.userData.blenderHybridPiping = true;
 

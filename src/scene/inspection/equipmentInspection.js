@@ -1,6 +1,20 @@
 import * as THREE from 'three';
 const MODES = Object.freeze(['normal', 'transparent', 'cutaway', 'interior']);
 
+// V23: close-view framing profiles for targets whose full plant envelope is
+// intentionally much longer than the mechanical detail a student needs to
+// inspect. These profiles affect camera framing only; they never alter route
+// points, equipment transforms or physical dimensions.
+export const INSPECTION_FOCUS_PROFILES = Object.freeze({
+  'CV-02-CRUSHER-TO-STOCKPILE': Object.freeze({ routeFraction: 0.50, maxSpanM: 28 }),
+  'STOCKPILE-RECLAIM': Object.freeze({ focusObjectName: 'STOCKPILE-RECLAIM-motion' }),
+  'CV-03-STOCKPILE-TO-GRINDING': Object.freeze({ routeFraction: 0.58, maxSpanM: 26 }),
+  'P-CYCLONE-UNDERFLOW-RETURN': Object.freeze({ routeFraction: 0.52, maxSpanM: 22 }),
+  'P-CLASSIFICATION-TO-LEACH': Object.freeze({ routeFraction: 0.48, maxSpanM: 22 }),
+  'P-LEACHING-TO-PUMP-01': Object.freeze({ routeFraction: 0.55, maxSpanM: 24 }),
+  'P-PUMP-01-TO-CIP': Object.freeze({ routeFraction: 0.46, maxSpanM: 24 }),
+});
+
 export const INSPECTION_CIRCUIT_ORDER = Object.freeze([
   'EXCAVATOR-01',
   'TRUCK-01',
@@ -90,7 +104,7 @@ export function inferImportedInspectionRole(object) {
   if (/_(?:SLURRY|FLUID|CHARGE|ORE|LINER|IMPELLER|SHAFT|VORTEX|BAFFLE|BLADE|SCREEN|ELECTROLYTE|CATHODE|MELT|REFRACTORY|JAW)(?:_|$)/.test(name)) {
     return 'interior';
   }
-  if (/_(?:SHELL|WALL|CASING|BARREL|CONE|HOPPER|TANK|COVER|VOLUTE|FLOOR|CELL|CRUCIBLE)(?:_|$)/.test(name)) {
+  if (/_(?:SHELL|WALL|CASING|BARREL|CONE|HOPPER|TANK|COVER|VOLUTE|FLOOR|CELL|CRUCIBLE|COLUMN|EXCHANGER)(?:_|$)/.test(name)) {
     return 'shell';
   }
   return 'structure';
@@ -155,6 +169,80 @@ function circuitOrderFor(id) {
   if (id?.startsWith('P-')) return 800;
   if (id?.startsWith('CV-')) return 850;
   return 1000;
+}
+
+function pointAlongPolyline(points, fraction) {
+  if (!Array.isArray(points) || points.length < 2) return null;
+  const route = points
+    .map((point) => (point?.isVector3 ? point.clone() : new THREE.Vector3(...point)))
+    .filter((point) => Number.isFinite(point.x) && Number.isFinite(point.y) && Number.isFinite(point.z));
+  if (route.length < 2) return null;
+  const lengths = route.slice(0, -1).map((point, index) => point.distanceTo(route[index + 1]));
+  const total = lengths.reduce((sum, length) => sum + length, 0);
+  if (total <= 1e-8) return route[0].clone();
+  let remaining = THREE.MathUtils.clamp(Number(fraction) || 0.5, 0, 1) * total;
+  for (let index = 0; index < lengths.length; index += 1) {
+    const length = lengths[index];
+    if (remaining <= length || index === lengths.length - 1) {
+      const t = length <= 1e-8 ? 0 : THREE.MathUtils.clamp(remaining / length, 0, 1);
+      return route[index].clone().lerp(route[index + 1], t);
+    }
+    remaining -= length;
+  }
+  return route.at(-1).clone();
+}
+
+export function computeInspectionFraming(target, id = target?.name) {
+  if (!target) return null;
+  target.updateWorldMatrix?.(true, true);
+  const fullBounds = new THREE.Box3().setFromObject(target);
+  if (fullBounds.isEmpty()) return null;
+  const fullCenter = fullBounds.getCenter(new THREE.Vector3());
+  const fullSize = fullBounds.getSize(new THREE.Vector3());
+  const profile = INSPECTION_FOCUS_PROFILES[id];
+  if (!profile) {
+    return {
+      id,
+      center: fullCenter,
+      size: fullSize,
+      fullSize: fullSize.clone(),
+      focused: false,
+      source: 'full-bounds',
+    };
+  }
+
+  if (profile.focusObjectName) {
+    const focusObject = target.getObjectByName?.(profile.focusObjectName);
+    if (focusObject) {
+      focusObject.updateWorldMatrix?.(true, true);
+      const focusBounds = new THREE.Box3().setFromObject(focusObject);
+      if (!focusBounds.isEmpty()) {
+        return {
+          id,
+          center: focusBounds.getCenter(new THREE.Vector3()),
+          size: focusBounds.getSize(new THREE.Vector3()),
+          fullSize,
+          focused: true,
+          source: `object:${profile.focusObjectName}`,
+        };
+      }
+    }
+  }
+
+  const routeCenter = pointAlongPolyline(target.userData?.routePoints, profile.routeFraction);
+  const size = fullSize.clone();
+  if (Number.isFinite(profile.maxSpanM) && profile.maxSpanM > 0) {
+    size.x = Math.min(size.x, profile.maxSpanM);
+    size.z = Math.min(size.z, profile.maxSpanM);
+  }
+  return {
+    id,
+    center: routeCenter ?? fullCenter,
+    size,
+    fullSize,
+    focused: true,
+    source: routeCenter ? 'route-metadata' : 'capped-bounds',
+  };
 }
 
 export function createEquipmentInspectionSystem({ environmentRoot } = {}) {
@@ -380,6 +468,11 @@ export function createEquipmentInspectionSystem({ environmentRoot } = {}) {
       });
   }
 
+  function getFraming(id = currentTargetId) {
+    if (!id || !targets.has(id)) return null;
+    return computeInspectionFraming(targets.get(id), id);
+  }
+
   function dispose() {
     restore();
     clearContextOverlay();
@@ -393,6 +486,7 @@ export function createEquipmentInspectionSystem({ environmentRoot } = {}) {
     refreshTargets,
     setTarget,
     setMode,
+    getFraming,
     getContext: (id = currentTargetId) => getInspectionCircuitContext(id),
     contextOverlay,
     refreshContextOverlay,

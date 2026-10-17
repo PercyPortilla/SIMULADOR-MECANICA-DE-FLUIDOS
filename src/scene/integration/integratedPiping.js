@@ -133,7 +133,7 @@ export function createIntegratedPiping({ equipmentSystem, pipe1State }) {
 
   const groups = [];
   const definitionMap = new Map(definitions.map((def) => [def.id, def]));
-  function renderDefinition(definition, diameterOverride = null, materialOverride = null) {
+  function renderDefinition(definition, diameterOverride = null, materialOverride = null, visualOptions = {}) {
     const source = { equipmentId: definition.source[0], portId: definition.source[1] };
     const target = { equipmentId: definition.target[0], portId: definition.target[1] };
     const waypoints = connectionWaypoints(equipmentSystem, source, target, definition.corridor);
@@ -145,7 +145,7 @@ export function createIntegratedPiping({ equipmentSystem, pipe1State }) {
       target,
       nominalDiameterM,
       waypoints,
-    }, { material: pipeMaterial, supports: false });
+    }, { material: pipeMaterial, supports: false, ...visualOptions });
     group.userData.integrationValidated = true;
     group.userData.processKind = definition.kind ?? 'slurry';
     const sourceDiameterM = equipmentSystem.getPort(source.equipmentId, source.portId).nominalDiameterM;
@@ -176,7 +176,10 @@ export function createIntegratedPiping({ equipmentSystem, pipe1State }) {
     const material = def.id === 'P-LEACH-R01-R02' && pipe1State?.material
       ? createPipeMaterial(pipe1State.material)
       : null;
-    groups.push(renderDefinition(def, null, material));
+    const visualOptions = def.id === 'P-LEACH-R01-R02'
+      ? { visualValveCount: Number(pipe1State?.accessories?.valvesCount ?? 0) }
+      : {};
+    groups.push(renderDefinition(def, null, material, visualOptions));
   });
 
   const supportPolicyByConnection = Object.fromEntries(definitions.map((definition) => [definition.id, definition.supportPolicy ?? 'local']));
@@ -234,6 +237,7 @@ export function createIntegratedPiping({ equipmentSystem, pipe1State }) {
         def,
         Number.isFinite(diameter) && diameter > 0 ? diameter : def.diameter,
         material,
+        { visualValveCount: Number(nextPipe1State?.accessories?.valvesCount ?? 0) },
       );
       next.userData.requestedHydraulicLengthM = nextPipe1State?.lengthM ?? null;
       next.userData.physicalDiameterM = Number.isFinite(diameter) && diameter > 0 ? diameter : def.diameter;

@@ -24,12 +24,29 @@ describe('V15 Blender hybrid infrastructure', () => {
   it('keeps conveyor geometry parametric while adding Blender visual stations', () => {
     const asset = createConveyorAsset({ length: 24, width: 1.5, incline: THREE.MathUtils.degToRad(12) });
     expect(asset.root.userData.blenderHybridConveyor).toBe(true);
+    expect(asset.root.userData.v23MechanicalDetail).toBe(true);
     expect(asset.root.getObjectByName('conveyor-belt')).toBeTruthy();
+    expect(asset.root.getObjectByName('conveyor-v23-mechanical-detail')).toBeTruthy();
+    expect(asset.root.getObjectByName('conveyor-feed-skirt-left')).toBeTruthy();
+    expect(asset.root.getObjectByName('conveyor-feed-skirt-right')).toBeTruthy();
+    expect(asset.root.getObjectByName('conveyor-head-belt-scraper')).toBeTruthy();
+    expect(asset.root.getObjectByName('conveyor-emergency-pull-cord')).toBeTruthy();
+    expect(asset.root.getObjectByName('conveyor-emergency-stop-station')).toBeTruthy();
     expect(asset.root.getObjectByName('blender-conveyor-head-station')?.userData.blenderModuleStatus).toBe('ssr-skip');
     expect(asset.root.getObjectByName('blender-conveyor-tail-station')?.userData.blenderModuleStatus).toBe('ssr-skip');
     expect(asset.root.getObjectByName('blender-conveyor-discharge-hood')).toBeTruthy();
     expect(asset.root.userData.blenderHybridIdlerCount).toBeGreaterThan(0);
     expect(asset.root.userData.inclineCleatCount).toBeGreaterThan(0);
+  });
+
+  it('adds V23 conveyor detail without changing authoritative feed/discharge ports', () => {
+    const angle = THREE.MathUtils.degToRad(8);
+    const asset = createConveyorAsset({ length: 18, width: 1.4, incline: angle });
+    const [feed, discharge] = asset.metadata.ports;
+    const halfRise = Math.tan(angle) * 9;
+    expect(feed.position).toEqual([-9, 2.03 - halfRise, 0]);
+    expect(discharge.position).toEqual([9, 2.03 + halfRise, 0]);
+    expect(asset.root.userData.v23MechanicalDetailParts).toBeGreaterThanOrEqual(6);
   });
 
   it('keeps route metadata authoritative while adding hybrid fittings', () => {

@@ -1,6 +1,8 @@
 import { FINAL_EQUIPMENT_LAYOUT, MOBILE_ROUTE_LAYOUT, PIPE_CORRIDORS, SUPPORT_LAYOUT } from '../src/scene/integration/finalLayout.js';
 import { ROAD_DEFINITIONS } from '../src/scene/config/siteDesign.js';
-import { RECOVERY_ROAD_SPAN_WIDTH_M } from '../src/scene/infrastructure/pipeRacks.js';
+import { createRoadAlignment } from '../src/scene/environment/haulRoads.js';
+import { createBaseScene } from '../src/scene/baseEnvironment.js';
+import { RECOVERY_ROAD_FOOTING_CLEARANCE_M, RECOVERY_ROAD_SPAN_WIDTH_M } from '../src/scene/infrastructure/pipeRacks.js';
 
 const dimensions = Object.freeze({
   'ROM-HOPPER': [11.5, 9.2], 'APRON-FEEDER': [8.4, 2.8], 'PRIMARY-CRUSHER': [5.4, 4.2],
@@ -44,6 +46,35 @@ checks.push({
   id: 'recovery-rack-vs-service-road',
   ok: rackDistance <= service.widthM / 2 + service.shoulderM + 4 && RECOVERY_ROAD_SPAN_WIDTH_M >= requiredPortalWidth,
   details: `elevated corridor distance=${rackDistance.toFixed(2)} m; portal=${RECOVERY_ROAD_SPAN_WIDTH_M.toFixed(2)} m; required=${requiredPortalWidth.toFixed(2)} m`,
+});
+
+// V23: validate the actual runtime footing positions against the same curved
+// Catmull-Rom ROAD-02 alignment rendered by the scene. The earlier width-only
+// portal check could pass while a column still landed inside a curved shoulder.
+const runtimeBase = createBaseScene();
+runtimeBase.processPipeRacks.updateMatrixWorld(true);
+const road02Curve = createRoadAlignment('ROAD-02');
+const road02Samples = Array.from({ length: 901 }, (_, index) => {
+  const point = road02Curve.getPoint(index / 900);
+  return [point.x, point.z];
+});
+const recoveryFootingClearances = [];
+runtimeBase.processPipeRacks.traverse((frame) => {
+  if (!frame.userData?.pipeRackFrame || frame.userData.connectionId !== 'P-PUMP-01-TO-CIP') return;
+  frame.children
+    .filter((child) => child.name.includes('-footing-'))
+    .forEach((footing) => {
+      const world = road02Curve.getPoint(0);
+      footing.getWorldPosition(world);
+      recoveryFootingClearances.push(lineDistance(world.x, world.z, road02Samples));
+    });
+});
+const minimumRecoveryFootingClearance = Math.min(...recoveryFootingClearances);
+checks.push({
+  id: 'recovery-rack-footings-vs-ROAD-02-curved-alignment',
+  ok: recoveryFootingClearances.length > 0
+    && minimumRecoveryFootingClearance >= RECOVERY_ROAD_FOOTING_CLEARANCE_M - 0.02,
+  details: `min footing clearance=${minimumRecoveryFootingClearance.toFixed(2)} m; required=${RECOVERY_ROAD_FOOTING_CLEARANCE_M.toFixed(2)} m; footings=${recoveryFootingClearances.length}`,
 });
 
 const loaderLeg = Math.hypot(SUPPORT_LAYOUT.loaderDump.x - SUPPORT_LAYOUT.loaderPickup.x, SUPPORT_LAYOUT.loaderDump.z - SUPPORT_LAYOUT.loaderPickup.z);

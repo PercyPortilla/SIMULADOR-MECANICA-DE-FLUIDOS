@@ -1,0 +1,129 @@
+﻿{
+  "revision": "V23",
+  "generatedAt": "2026-10-17T11:18:22.193Z",
+  "checks": 24,
+  "passed": 24,
+  "failed": [],
+  "checksDetail": [
+    {
+      "id": "scene-no-fog",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "inspection-target-count",
+      "ok": true,
+      "details": "38"
+    },
+    {
+      "id": "inspection-focus-profile-count",
+      "ok": true,
+      "details": "7"
+    },
+    {
+      "id": "inspection-focus:CV-02-CRUSHER-TO-STOCKPILE",
+      "ok": true,
+      "details": "route-metadata; span=28.00 m"
+    },
+    {
+      "id": "inspection-focus:STOCKPILE-RECLAIM",
+      "ok": true,
+      "details": "object:STOCKPILE-RECLAIM-motion; span=7.62 m"
+    },
+    {
+      "id": "inspection-focus:CV-03-STOCKPILE-TO-GRINDING",
+      "ok": true,
+      "details": "route-metadata; span=26.00 m"
+    },
+    {
+      "id": "inspection-focus:P-CYCLONE-UNDERFLOW-RETURN",
+      "ok": true,
+      "details": "route-metadata; span=22.00 m"
+    },
+    {
+      "id": "inspection-focus:P-CLASSIFICATION-TO-LEACH",
+      "ok": true,
+      "details": "route-metadata; span=22.00 m"
+    },
+    {
+      "id": "inspection-focus:P-LEACHING-TO-PUMP-01",
+      "ok": true,
+      "details": "route-metadata; span=24.00 m"
+    },
+    {
+      "id": "inspection-focus:P-PUMP-01-TO-CIP",
+      "ok": true,
+      "details": "route-metadata; span=24.00 m"
+    },
+    {
+      "id": "conveyor-v23-detail:CV-01-FEEDER-TO-CRUSHER",
+      "ok": true,
+      "details": "7 parts"
+    },
+    {
+      "id": "conveyor-v23-detail:CV-02-CRUSHER-TO-STOCKPILE",
+      "ok": true,
+      "details": "7 parts"
+    },
+    {
+      "id": "conveyor-v23-detail:CV-03-STOCKPILE-TO-GRINDING",
+      "ok": true,
+      "details": "7 parts"
+    },
+    {
+      "id": "primary-crusher-v23-safety-overlay",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "mill-minimal-educational-interior",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "pump-minimal-educational-interior:SLURRY-PUMP-01",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "pump-minimal-educational-interior:PUMP-01",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "elution-minimal-educational-interior",
+      "ok": true,
+      "details": ""
+    },
+    {
+      "id": "recovery-rack-footings-clear-road02",
+      "ok": true,
+      "details": "min=8.13 m; required=7.95 m; footings=22"
+    },
+    {
+      "id": "recovery-road-supports-not-oversized",
+      "ok": true,
+      "details": "max width=18.00 m; road-aware frames=7"
+    },
+    {
+      "id": "tall-local-trestle-bracing",
+      "ok": true,
+      "details": "22 tall frames"
+    },
+    {
+      "id": "piping-endpoints-preserved",
+      "ok": true,
+      "details": "11/11"
+    },
+    {
+      "id": "pipe1-three-visual-valves",
+      "ok": true,
+      "details": "3"
+    },
+    {
+      "id": "pipe1-zero-visual-valves",
+      "ok": true,
+      "details": "0"
+    }
+  ]
+}
