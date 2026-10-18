@@ -71,7 +71,7 @@ describe('site metric master contract', () => {
   it('uses mine-scale reception earthwork geometry without moving its authoritative crest', () => {
     expect(RECEPTION_EARTHWORK.center).toEqual([-110, -30]);
     expect(RECEPTION_EARTHWORK.crestSizeM).toEqual([58, 48]);
-    expect(RECEPTION_EARTHWORK.crestElevationM).toBe(8.5);
+    expect(RECEPTION_EARTHWORK.crestElevationM).toBe(10.0);
     expect(RECEPTION_EARTHWORK.upperSlopeRunM).toBeGreaterThanOrEqual(5);
     expect(RECEPTION_EARTHWORK.bermWidthM).toBeGreaterThanOrEqual(4);
     expect(RECEPTION_EARTHWORK.toeSlopeRunM).toBeGreaterThanOrEqual(10);

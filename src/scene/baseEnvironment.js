@@ -16,7 +16,7 @@ import { getState, subscribe as subscribeState } from '../state/simulationState.
 import { getProcessRoute } from '../process/processRoute.js';
 import { createIntegratedMobile } from './integration/integratedMobile.js';
 import { createPresetCameras } from './cameras/cameraPresets.js';
-import { createPlantLabels, setInspectionTargetLabel, setPlantLabelsView, setPlantLabelsVisible, updatePlantLabels, updatePlantLabelsForCamera } from './labels/plantLabels.js';
+import { createPlantLabels, refreshInspectionComponentLabels, setInspectionTargetLabel, setPlantLabelsPresentationMode, setPlantLabelsView, setPlantLabelsVisible, updatePlantLabels, updatePlantLabelsForCamera } from './labels/plantLabels.js';
 import { applyIndustrialPaletteToScene, createIndustrialMaterial } from './materials/industrialMaterials.js';
 import { createIntegratedAnimations } from './integration/integratedAnimations.js';
 import { createEquipmentInspectionSystem } from './inspection/equipmentInspection.js';
@@ -212,7 +212,9 @@ export function collectSceneResourceStats(root) {
   return Object.freeze(stats);
 }
 
-export function computeInspectionCameraDistance(size, fovDeg, aspect = 1, padding = 1.32) {
+export const VIEW_DECORATION_REFRESH_INTERVAL_MS = 125;
+
+export function computeInspectionCameraDistance(size, fovDeg, aspect = 1, padding = 1.70) {
   const safeSize = size?.isVector3 ? size : new THREE.Vector3(...(size ?? [1, 1, 1]));
   const verticalFov = THREE.MathUtils.degToRad(Math.max(10, fovDeg));
   const horizontalFov = 2 * Math.atan(Math.tan(verticalFov / 2) * Math.max(0.25, aspect));
@@ -220,6 +222,40 @@ export function computeInspectionCameraDistance(size, fovDeg, aspect = 1, paddin
   const widthDistance = (Math.max(safeSize.x, safeSize.z) * 0.5) / Math.tan(horizontalFov / 2);
   const depthAllowance = Math.max(safeSize.x, safeSize.z) * 0.28;
   return Math.max(2.5, Math.max(heightDistance, widthDistance) * padding + depthAllowance);
+}
+
+export function applyInspectionCameraFraming(camera, controls, framing, {
+  minimumOnly = false,
+  recenter = true,
+} = {}) {
+  if (!camera || !controls || !framing?.center || !framing?.size) return null;
+  const center = framing.center;
+  const size = framing.size;
+  const radius = Math.max(1, size.length() * 0.5);
+  const currentTarget = controls.target?.clone?.() ?? center.clone();
+  const frameTarget = recenter ? center : currentTarget;
+  const direction = camera.position.clone().sub(currentTarget);
+  if (direction.lengthSq() < 1e-6) direction.set(1, 0.65, 1);
+  direction.normalize();
+  direction.y = Math.max(direction.y, 0.26);
+  direction.normalize();
+
+  const requiredDistance = THREE.MathUtils.clamp(
+    computeInspectionCameraDistance(size, camera.fov, camera.aspect),
+    Math.max(3.5, radius * 1.15),
+    120,
+  );
+  const currentDistance = camera.position.distanceTo(currentTarget);
+  const distance = minimumOnly ? Math.max(currentDistance, requiredDistance) : requiredDistance;
+
+  controls.target.copy(frameTarget);
+  camera.position.copy(frameTarget).add(direction.multiplyScalar(distance));
+  camera.near = Math.max(0.04, distance / 320);
+  controls.minDistance = Math.max(0.8, radius * 0.28);
+  controls.maxDistance = Math.min(INSPECTION_CONTROL_LIMITS.maxDistance, Math.max(65, radius * 18));
+  camera.updateProjectionMatrix();
+  controls.update?.();
+  return Object.freeze({ distance, requiredDistance, radius });
 }
 
 export function createBaseScene() {
@@ -477,6 +513,8 @@ export function createBaseEnvironment({ canvas }) {
   let animationsEnabled = true;
   let animationFrame = null;
   let previousFrameTime = null;
+  let viewDecorationsDirty = true;
+  let lastViewDecorationRefreshMs = -Infinity;
 
   // V24B: Inspection is the only interactive/orbitable camera. Other presets remain fixed.
   const inspectionCamera = base.cameras.inspection;
@@ -506,12 +544,56 @@ export function createBaseEnvironment({ canvas }) {
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
     });
+    if (activeCamera === 'inspection' && base.equipmentInspection.targetId) {
+      const framing = base.equipmentInspection.getFraming?.(base.equipmentInspection.targetId);
+      if (framing) {
+        // Orientation/fullscreen changes must never make the selected object clip.
+        // Preserve the user's current orbit/pan target and only push the camera
+        // outward when the new aspect ratio requires more room.
+        applyInspectionCameraFraming(inspectionCamera, inspectionControls, framing, {
+          minimumOnly: true,
+          recenter: false,
+        });
+        base.industrialAnimations.refreshLOD(inspectionCamera);
+      }
+    }
+    markViewDecorationsDirty();
+    render();
+  }
+
+  function markViewDecorationsDirty() {
+    viewDecorationsDirty = true;
+  }
+
+  function refreshViewDecorations(timeMs, force = false) {
+    const now = Number.isFinite(timeMs)
+      ? timeMs
+      : (typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : 0);
+    const dynamicInspection = animationsEnabled
+      && activeCamera === 'inspection'
+      && Boolean(base.equipmentInspection.targetId);
+    if (!force && !viewDecorationsDirty && !dynamicInspection) return false;
+    if (!force && now - lastViewDecorationRefreshMs < VIEW_DECORATION_REFRESH_INTERVAL_MS) return false;
+
+    if (base.equipmentInspection.contextOverlay.visible) {
+      base.equipmentInspection.refreshContextOverlay?.();
+    }
+    if (base.plantLabels.visible) {
+      updatePlantLabelsForCamera(base.plantLabels, base.cameras[activeCamera]);
+    }
+    if (base.geotechnicalSystem.visible) {
+      base.geotechnicalSystem.updateForCamera(base.cameras[activeCamera]);
+    }
+    lastViewDecorationRefreshMs = now;
+    viewDecorationsDirty = false;
+    return true;
   }
 
   function applyLabelVisibility() {
     setPlantLabelsView(base.plantLabels, activeCamera);
     setPlantLabelsVisible(base.plantLabels, labelsEnabled);
     base.geotechnicalSystem.setLabelsVisible(labelsEnabled);
+    markViewDecorationsDirty();
   }
 
   function setCamera(mode) {
@@ -531,16 +613,15 @@ export function createBaseEnvironment({ canvas }) {
     render();
   }
 
-  function render() {
-    base.equipmentInspection.refreshContextOverlay?.();
-    updatePlantLabelsForCamera(base.plantLabels, base.cameras[activeCamera]);
-    base.geotechnicalSystem.updateForCamera(base.cameras[activeCamera]);
+  function render(forceDecorations = true, timeMs = undefined) {
+    refreshViewDecorations(timeMs, forceDecorations);
     renderer.render(base.scene, base.cameras[activeCamera]);
   }
 
   function setAnimationsEnabled(visible) {
     animationsEnabled = Boolean(visible);
     base.industrialAnimations.setEnabled(animationsEnabled);
+    markViewDecorationsDirty();
     render();
   }
 
@@ -552,10 +633,16 @@ export function createBaseEnvironment({ canvas }) {
     // interactive camera are inactive. State/camera changes still call render()
     // explicitly, so a static preset no longer burns GPU frames unnecessarily.
     if (animationsEnabled || inspectionControls.enabled) {
-      if (animationsEnabled) base.industrialAnimations.update(delta, base.cameras[activeCamera]);
-      else base.industrialAnimations.updateViewLOD(delta, base.cameras[activeCamera]);
-      if (inspectionControls.enabled) inspectionControls.update();
-      render();
+      if (animationsEnabled) {
+        base.industrialAnimations.update(delta, base.cameras[activeCamera]);
+        if (inspectionControls.enabled && inspectionControls.update()) markViewDecorationsDirty();
+        render(false, now);
+      } else {
+        const controlsChanged = inspectionControls.enabled ? inspectionControls.update() : false;
+        const lodRefreshed = base.industrialAnimations.updateViewLOD(delta, base.cameras[activeCamera]);
+        if (controlsChanged) markViewDecorationsDirty();
+        if (controlsChanged || lodRefreshed) render(false, now);
+      }
     }
     animationFrame = requestAnimationFrame(animate);
   }
@@ -578,12 +665,12 @@ export function createBaseEnvironment({ canvas }) {
       base.industrialAnimations.refreshRoutes?.();
     }
     updatePlantLabels(base.plantLabels, base.equipmentSystem);
+    markViewDecorationsDirty();
     render();
   });
 
-  resize();
   applyLabelVisibility();
-  render();
+  resize();
   if (typeof requestAnimationFrame === 'function') animationFrame = requestAnimationFrame(animate);
   const resizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(resize) : null;
   resizeObserver?.observe(canvas.parentElement || canvas);
@@ -595,9 +682,16 @@ export function createBaseEnvironment({ canvas }) {
     setCamera,
     setLabelsVisible,
     get labelsVisible() { return labelsEnabled; },
+    setPresentationMode(active) {
+      setPlantLabelsPresentationMode(base.plantLabels, active);
+      setPlantLabelsView(base.plantLabels, activeCamera);
+      markViewDecorationsDirty();
+      render();
+    },
     setAnimationsEnabled,
     setGeotechnicsVisible(visible) {
       base.geotechnicalSystem.setVisible(visible);
+      markViewDecorationsDirty();
       render();
     },
     get geotechnicsVisible() { return base.geotechnicalSystem.visible; },
@@ -615,40 +709,24 @@ export function createBaseEnvironment({ canvas }) {
       const target = base.equipmentInspection.setTarget(id);
       base.equipmentInspection.contextOverlay.visible = activeCamera === 'inspection' && Boolean(target);
       const targetMeta = id ? base.equipmentInspection.getTargets().find((item) => item.id === id) : null;
-      setInspectionTargetLabel(base.plantLabels, target, targetMeta?.label ?? id ?? '');
+      const framing = target ? base.equipmentInspection.getFraming?.(id) : null;
+      setInspectionTargetLabel(base.plantLabels, target, targetMeta?.label ?? id ?? '', framing);
       setPlantLabelsView(base.plantLabels, activeCamera);
+      markViewDecorationsDirty();
       if (target) {
-        const framing = base.equipmentInspection.getFraming?.(id);
         if (framing) {
-          const center = framing.center;
-          const size = framing.size;
-          const radius = Math.max(1, size.length() * 0.5);
-          const previousDirection = inspectionCamera.position.clone().sub(inspectionControls.target);
-          if (previousDirection.lengthSq() < 1e-6) previousDirection.set(1, 0.65, 1);
-          previousDirection.normalize();
-          // Keep a modest downward component so the selected object is readable
-          // without forcing a manual per-equipment camera offset.
-          previousDirection.y = Math.max(previousDirection.y, 0.26);
-          previousDirection.normalize();
-          const distance = THREE.MathUtils.clamp(
-            computeInspectionCameraDistance(size, inspectionCamera.fov, inspectionCamera.aspect),
-            Math.max(3.5, radius * 1.15),
-            120,
-          );
-          inspectionControls.target.copy(center);
-          inspectionCamera.position.copy(center).add(previousDirection.multiplyScalar(distance));
-          inspectionCamera.near = Math.max(0.04, distance / 320);
-          inspectionControls.minDistance = Math.max(0.8, radius * 0.28);
-          inspectionControls.maxDistance = Math.min(INSPECTION_CONTROL_LIMITS.maxDistance, Math.max(65, radius * 18));
-          inspectionCamera.updateProjectionMatrix();
-          inspectionControls.update();
+          applyInspectionCameraFraming(inspectionCamera, inspectionControls, framing);
         }
       }
+      if (activeCamera === 'inspection') base.industrialAnimations.refreshLOD(inspectionCamera);
       render();
       return target;
     },
     setInspectionMode(mode) {
       base.equipmentInspection.setMode(mode);
+      refreshInspectionComponentLabels(base.plantLabels);
+      if (activeCamera === 'inspection') base.industrialAnimations.refreshLOD(inspectionCamera);
+      markViewDecorationsDirty();
       render();
     },
     get inspectionTargetId() { return base.equipmentInspection.targetId; },

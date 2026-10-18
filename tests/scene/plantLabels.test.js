@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   createPlantLabels,
   getLabelPresentationForCamera,
+  setPlantLabelsPresentationMode,
   setPlantLabelsVisible,
 } from '../../src/scene/labels/plantLabels.js';
 
@@ -31,7 +32,7 @@ describe('plant labels', () => {
     expect(active.scale).toBeGreaterThan(distant.scale);
   });
 
-  it('keeps overview labels readable while inspection hides zones but preserves equipment context', () => {
+  it('keeps overview labels readable while inspection preserves only selected/component labels', () => {
     const overview = getLabelPresentationForCamera('Z1', 'general');
     const top = getLabelPresentationForCamera('Z8', 'top');
     const inspectionZone = getLabelPresentationForCamera('Z4', 'inspection', 'zone');
@@ -41,10 +42,22 @@ describe('plant labels', () => {
     expect(overview.opacity).toBeGreaterThan(0.85);
     expect(top.opacity).toBeLessThan(overview.opacity);
     expect(inspectionZone.visible).toBe(false);
-    expect(inspectionEquipment.visible).toBe(true);
+    expect(inspectionEquipment.visible).toBe(false);
     expect(selected.visible).toBe(true);
     expect(selected.opacity).toBe(1);
     expect(component.visible).toBe(true);
-    expect(component.opacity).toBeGreaterThan(inspectionEquipment.opacity);
+    expect(component.opacity).toBeGreaterThan(0.8);
+  });
+
+  it('keeps the label layer alive in Presentation while preserving the prior user visibility', () => {
+    const labels = createPlantLabels();
+    setPlantLabelsVisible(labels, false);
+    expect(labels.visible).toBe(false);
+    setPlantLabelsPresentationMode(labels, true);
+    expect(labels.visible).toBe(true);
+    expect(labels.userData.labelsVisible).toBe(false);
+    expect(labels.userData.presentationMode).toBe(true);
+    setPlantLabelsPresentationMode(labels, false);
+    expect(labels.visible).toBe(false);
   });
 });

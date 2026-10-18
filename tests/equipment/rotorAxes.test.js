@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createJawCrusherAsset } from '../../src/equipment/crushing/jawCrusher.js';
 import { createApronFeederAsset } from '../../src/equipment/crushing/apronFeeder.js';
 import { createConveyorAsset } from '../../src/equipment/conveying/conveyor.js';
+import { createSlurryPumpAsset } from '../../src/equipment/classification/slurryPump.js';
 
 function expectRotorToSpinOnlyOnZ(asset, pivotName, meshName) {
   const pivot = asset.root.getObjectByName(pivotName);
@@ -33,5 +34,21 @@ describe('mechanical rotor axes', () => {
     const asset = createConveyorAsset({ length: 18, width: 1.5, incline: 0.08 });
     expectRotorToSpinOnlyOnZ(asset, 'conveyor-tail-pulley-pivot', 'conveyor-tail-pulley');
     expectRotorToSpinOnlyOnZ(asset, 'conveyor-head-pulley-pivot', 'conveyor-head-pulley');
+  });
+
+  it('keeps the slurry-pump impeller on the shaft x-axis pivot', () => {
+    const asset = createSlurryPumpAsset();
+    const pivot = asset.root.getObjectByName('pump-impeller');
+    const visual = asset.root.getObjectByName('pump-impeller-visual');
+    expect(pivot).toBeTruthy();
+    expect(visual).toBeTruthy();
+    expect(pivot.userData.rotationAxis).toBe('x');
+    const fixedVisualY = visual.rotation.y;
+    const beforeX = pivot.rotation.x;
+    asset.update(0.1, 0.1);
+    expect(pivot.rotation.x).not.toBe(beforeX);
+    expect(pivot.rotation.y).toBeCloseTo(0, 8);
+    expect(pivot.rotation.z).toBeCloseTo(0, 8);
+    expect(visual.rotation.y).toBeCloseTo(fixedVisualY, 8);
   });
 });

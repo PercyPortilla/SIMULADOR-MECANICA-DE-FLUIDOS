@@ -5,12 +5,14 @@ import {
   attachBlenderVisualReplacement,
   BLENDER_REPLACEMENT_SPECS,
   cloneBlenderReplacementSource,
+  decorateHandleWithBlenderReplacement,
   resetBlenderReplacementCacheForTests,
   shouldCastImportedShadow,
   stabilizeImportedRotationPivot,
 } from '../../src/scene/integration/blenderVisualReplacement.js';
 import { createIntegratedPlant } from '../../src/scene/integration/integratedPlant.js';
 import { createJawCrusherAsset } from '../../src/equipment/crushing/jawCrusher.js';
+import { createRomHopperAsset } from '../../src/equipment/crushing/romHopper.js';
 import { createBallMillAsset } from '../../src/equipment/grinding/ballMill.js';
 import { createSlurryPumpAsset } from '../../src/equipment/classification/slurryPump.js';
 import { createCycloneClusterAsset } from '../../src/equipment/classification/cycloneCluster.js';
@@ -130,14 +132,24 @@ describe('Blender visual replacements', () => {
     const spec = BLENDER_REPLACEMENT_SPECS['ROM-HOPPER'];
     expect(spec.keepProceduralUpdate).toBe(true);
     expect(spec.preserveProceduralOverlays).toContain('rom-grizzly');
+    expect(spec.preserveProceduralOverlays).toContain('rom-truck-dump-throat');
+    expect(spec.hideImportedNamePrefixes).toEqual(['ROM-HOPPER_GRIZZLY_']);
   });
 
-  it('preserves the V23 primary-crusher access/safety overlay over the Blender machine', () => {
+  it('preserves primary-crusher safety and procedural ore flow over the Blender machine', () => {
     const spec = BLENDER_REPLACEMENT_SPECS['PRIMARY-CRUSHER'];
-    expect(spec.preserveProceduralOverlays).toEqual(['PRIMARY-CRUSHER-v23-safety-overlay']);
+    expect(spec.keepProceduralUpdate).toBe(true);
+    expect(spec.preserveProceduralOverlays).toEqual([
+      'PRIMARY-CRUSHER-v23-safety-overlay',
+      'PRIMARY-CRUSHER-v29-ore-flow',
+    ]);
     const asset = createJawCrusherAsset();
     const overlay = asset.root.getObjectByName('PRIMARY-CRUSHER-v23-safety-overlay');
+    const oreFlow = asset.root.getObjectByName('PRIMARY-CRUSHER-v29-ore-flow');
     expect(overlay?.userData.v23MechanicalDetail).toBe(true);
+    expect(oreFlow?.userData.proceduralMaterialFlow).toBe(true);
+    expect(oreFlow?.getObjectByName('crusher-ore-0')).toBeTruthy();
+    expect(spec.hideImportedNamePrefixes).toEqual(['PRIMARY-CRUSHER_ORE_']);
     expect(asset.root.getObjectByName('crusher-service-ladder')).toBeTruthy();
     expect(asset.root.getObjectByName('crusher-service-flywheel-guard')).toBeTruthy();
     expect(asset.root.getObjectByName('crusher-emergency-stop-box')).toBeTruthy();
@@ -152,21 +164,30 @@ describe('Blender visual replacements', () => {
   it('preserves only the stockpile reclaim motion overlay over its static GLB shell', () => {
     const spec = BLENDER_REPLACEMENT_SPECS['STOCKPILE-RECLAIM'];
     expect(spec.preserveProceduralOverlays).toEqual(['STOCKPILE-RECLAIM-motion', 'STOCKPILE-RECLAIM-v24-feed-flow']);
+    expect(spec.importedScale).toEqual([1, 1, -1]);
+    expect(spec.hideImportedNamePrefixes).toEqual([
+      'STOCKPILE-RECLAIM_FEEDER',
+      'STOCKPILE-RECLAIM_GRIZZLY_',
+      'STOCKPILE-RECLAIM_PAN_',
+    ]);
   });
 
   it('preserves only educational interiors for mill, pumps and elution without procedural shell updates', () => {
     const mill = BLENDER_REPLACEMENT_SPECS['MILL-01'];
     expect(mill.preserveProceduralOverlays).toEqual(['mill-charge']);
-    expect(mill.proceduralOverlayAnchors).toEqual({ 'mill-charge': 'MILL-01_ROTATING_GROUP' });
+    expect(mill.proceduralOverlayAnchors).toBeUndefined();
     expect(mill.keepProceduralUpdate).not.toBe(true);
-    expect(createBallMillAsset().root.getObjectByName('mill-charge')).toBeTruthy();
+    const millAsset = createBallMillAsset();
+    expect(millAsset.root.getObjectByName('mill-charge')?.parent).toBe(millAsset.root);
+    expect(millAsset.root.getObjectByName('mill-charge')?.position.y).toBeCloseTo(millAsset.axisY, 8);
     expect(mill.preserveProceduralOverlays).not.toContain('mill-shell');
 
     for (const id of ['SLURRY-PUMP-01', 'PUMP-01']) {
       const pump = BLENDER_REPLACEMENT_SPECS[id];
       expect(pump.preserveProceduralOverlays).toEqual(['pump-impeller', 'pump-slurry-path']);
-      expect(pump.proceduralOverlayAnchors).toEqual({ 'pump-impeller': 'SLURRY-PUMP-01_ROTATING_GROUP' });
-      expect(pump.keepProceduralUpdate).not.toBe(true);
+      expect(pump.proceduralOverlayAnchors).toBeUndefined();
+      expect(pump.proceduralOverlayPositions).toEqual({ 'pump-impeller': [-1.15, 1.18, 0] });
+      expect(pump.keepProceduralUpdate).toBe(true);
     }
     const pumpAsset = createSlurryPumpAsset();
     expect(pumpAsset.root.getObjectByName('pump-impeller')).toBeTruthy();
@@ -190,7 +211,7 @@ describe('Blender visual replacements', () => {
     expect(elution.preserveProceduralOverlays).not.toContain('elution-heat-exchanger-shell');
   });
 
-  it('can anchor a preserved interior group to the imported Blender rotation pivot without keeping the fallback shell', async () => {
+  it('keeps mill charge gravity-referenced instead of anchoring it to the imported rotating shell', async () => {
     const source = new THREE.Group();
     const pivot = new THREE.Group();
     pivot.name = 'MILL-01_ROTATING_GROUP';
@@ -214,12 +235,83 @@ describe('Blender visual replacements', () => {
     await Promise.resolve();
 
     expect(controller.loaded).toBe(true);
-    expect(charge.parent?.name).toBe('MILL-01_ROTATING_GROUP');
+    expect(charge.parent).toBe(hostRoot);
     expect(charge.userData.blenderProceduralOverlay).toBe(true);
-    expect(charge.userData.blenderProceduralOverlayAnchor).toBe('MILL-01_ROTATING_GROUP');
+    expect(charge.userData.blenderProceduralOverlayAnchor).toBeUndefined();
     expect(hostRoot.getObjectByName('MILL-01-PROCEDURAL-FALLBACK')?.visible).toBe(false);
     expect(hostRoot.getObjectByName('mill-shell')?.parent?.name).toBe('MILL-01-PROCEDURAL-FALLBACK');
     controller.dispose();
+  });
+
+  it('hides duplicate imported flow hardware and mirrors reclaim Blender visuals to the authoritative +Z side', async () => {
+    vi.stubGlobal('window', {});
+    const sources = {
+      'ROM-HOPPER': ['ROM-HOPPER_GRIZZLY_01', 'ROM-HOPPER_SHELL'],
+      'PRIMARY-CRUSHER': ['PRIMARY-CRUSHER_ORE_01', 'PRIMARY-CRUSHER_FRAME'],
+      'STOCKPILE-RECLAIM': ['STOCKPILE-RECLAIM_HOPPER', 'STOCKPILE-RECLAIM_FEEDER', 'STOCKPILE-RECLAIM_GRIZZLY_01'],
+    };
+    vi.spyOn(GLTFLoader.prototype, 'load').mockImplementation(function mockLoad(url, onLoad) {
+      const instanceId = Object.entries(BLENDER_REPLACEMENT_SPECS).find(([, spec]) => spec.url === url)?.[0];
+      const scene = new THREE.Group();
+      for (const name of sources[instanceId]) {
+        const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial());
+        mesh.name = name;
+        if (instanceId === 'STOCKPILE-RECLAIM') mesh.position.z = -12;
+        scene.add(mesh);
+      }
+      onLoad({ scene, animations: [] });
+      return this;
+    });
+
+    const rom = createRomHopperAsset();
+    const romController = attachBlenderVisualReplacement({ hostRoot: rom.root, instanceId: 'ROM-HOPPER' });
+    const crusher = createJawCrusherAsset();
+    const crusherController = attachBlenderVisualReplacement({ hostRoot: crusher.root, instanceId: 'PRIMARY-CRUSHER' });
+    const stockRoot = new THREE.Group();
+    const reclaimController = attachBlenderVisualReplacement({ hostRoot: stockRoot, instanceId: 'STOCKPILE-RECLAIM' });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(romController.scene.getObjectByName('ROM-HOPPER_GRIZZLY_01').visible).toBe(false);
+    expect(rom.root.getObjectByName('rom-grizzly')?.visible).toBe(true);
+    expect(crusherController.scene.getObjectByName('PRIMARY-CRUSHER_ORE_01').visible).toBe(false);
+    expect(crusher.root.getObjectByName('PRIMARY-CRUSHER-v29-ore-flow')?.visible).toBe(true);
+    const hopper = reclaimController.scene.getObjectByName('STOCKPILE-RECLAIM_HOPPER');
+    hopper.getWorldPosition(new THREE.Vector3());
+    reclaimController.scene.updateMatrixWorld(true);
+    expect(hopper.getWorldPosition(new THREE.Vector3()).z).toBeCloseTo(12, 6);
+    expect(reclaimController.scene.getObjectByName('STOCKPILE-RECLAIM_FEEDER').visible).toBe(false);
+    expect(reclaimController.scene.getObjectByName('STOCKPILE-RECLAIM_GRIZZLY_01').visible).toBe(false);
+  });
+
+  it('keeps the preserved pump impeller centered on the shaft and animated after the Blender shell loads', async () => {
+    const source = new THREE.Group();
+    const rotating = new THREE.Group();
+    rotating.name = 'SLURRY-PUMP-01_ROTATING_GROUP';
+    rotating.position.set(0.2, 1.18, 0);
+    rotating.add(new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.3, 0.3), new THREE.MeshBasicMaterial()));
+    source.add(rotating);
+    vi.stubGlobal('window', {});
+    vi.spyOn(GLTFLoader.prototype, 'load').mockImplementation(function mockLoad(_url, onLoad) {
+      onLoad({ scene: source, animations: [] });
+      return this;
+    });
+
+    const pump = createSlurryPumpAsset();
+    const controller = decorateHandleWithBlenderReplacement(pump, 'SLURRY-PUMP-01');
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(controller.loaded).toBe(true);
+    const impeller = pump.root.getObjectByName('pump-impeller');
+    expect(impeller.parent).toBe(pump.root);
+    expect(impeller.position.toArray()).toEqual([-1.15, 1.18, 0]);
+    const before = impeller.rotation.x;
+    pump.update(0.1);
+    expect(impeller.rotation.x).not.toBeCloseTo(before, 8);
+    const frozen = impeller.rotation.x;
+    pump.setAnimationEnabled(false);
+    pump.update(0.1);
+    expect(impeller.rotation.x).toBeCloseTo(frozen, 12);
   });
 
   it('recenters only the transverse coordinates of a bad rotating GLB pivot', () => {

@@ -1,11 +1,11 @@
 import * as THREE from 'three';
-import { getTerrainZone, getZoneElevation } from './terrainHeight.js';
+import { getTerrainHeight, getTerrainZone, getZoneElevation } from './terrainHeight.js';
 
 export const INDUSTRIAL_PAD_THICKNESS = 0.18;
 
 const PAD_DEFINITIONS = Object.freeze([
   { zoneId: 'reception', name: 'rom-hopper-local-pad', center: [-110, -30], width: 12.5, depth: 14, curbs: false },
-  { zoneId: 'crushing', name: 'crusher-local-pad', center: [-88, -30], width: 8.5, depth: 9.5, curbs: false },
+  { zoneId: 'crushing', name: 'crusher-local-pad', center: [-88, -30], width: 8.5, depth: 9.5, curbs: false, followTerrain: true },
 ]);
 
 export function getIndustrialPad(zoneId) {
@@ -17,7 +17,9 @@ export function getIndustrialPad(zoneId) {
     center: definition.center ? [...definition.center] : [...zone.center],
     width: definition.width ?? zone.size[0],
     depth: definition.depth ?? zone.size[1],
-    elevation: getZoneElevation(zoneId),
+    elevation: definition.followTerrain
+      ? getTerrainHeight(definition.center[0], definition.center[1])
+      : getZoneElevation(zoneId),
   };
 }
 

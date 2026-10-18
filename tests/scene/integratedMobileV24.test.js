@@ -38,6 +38,21 @@ describe('V24 Bloque 1 - vida operativa básica', () => {
     });
   });
 
+  it('lets all three trucks reach the ROM dump phase without losing road grounding', () => {
+    const mobile = createMobile();
+    const dumped = new Set();
+    for (let step = 0; step < 1100; step += 1) {
+      mobile.update(0.1);
+      mobile.trucks.forEach((truck) => {
+        if (truck.root.userData.operationalState === 'dumping-at-rom') dumped.add(truck.root.name);
+        const terrainY = getTerrainHeight(truck.root.position.x, truck.root.position.z);
+        expect(truck.root.position.y).toBeGreaterThanOrEqual(terrainY - 0.02);
+        expect(truck.root.position.y - terrainY).toBeLessThan(0.35);
+      });
+    }
+    expect([...dumped].sort()).toEqual(['TRUCK-01', 'TRUCK-02', 'TRUCK-03']);
+  });
+
   it('ties truck and loader wheel rotation to actual travel and freezes the fleet with Animaciones OFF', () => {
     const mobile = createMobile();
     const truckWheelName = 'truck-wheel-spin-pivot-1';

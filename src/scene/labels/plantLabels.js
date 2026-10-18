@@ -88,7 +88,15 @@ function createSmallTexture(text, accent = '#ffc568', { inspection = false } = {
   context.lineWidth = inspection ? 4 : 3;
   context.stroke();
   context.fillStyle = accent;
-  context.font = inspection ? '800 35px sans-serif' : '800 34px sans-serif';
+  const maxFontSize = inspection ? 35 : 34;
+  const minFontSize = inspection ? 24 : 25;
+  const maxTextWidth = canvas.width - 46;
+  let fontSize = maxFontSize;
+  context.font = `800 ${fontSize}px sans-serif`;
+  while (fontSize > minFontSize && context.measureText(String(text)).width > maxTextWidth) {
+    fontSize -= 1;
+    context.font = `800 ${fontSize}px sans-serif`;
+  }
   context.textAlign = 'center';
   context.textBaseline = 'middle';
   context.fillText(text, canvas.width / 2, canvas.height / 2 + 1);
@@ -107,7 +115,10 @@ export function getLabelPresentationForCamera(zoneId, cameraId, kind = 'zone') {
     return Object.freeze({ visible: cameraId === 'inspection', opacity: cameraId === 'inspection' ? 0.90 : 0, scale: 0.82 });
   }
   if (cameraId === 'inspection') {
-    if (kind === 'equipment') return Object.freeze({ visible: true, opacity: 0.42, scale: 0.9 });
+    // V30 keeps Inspection intentionally uncluttered: the selected equipment
+    // label and at most three semantic component labels are the only labels
+    // allowed to survive this camera mode.
+    if (kind === 'equipment') return Object.freeze({ visible: false, opacity: 0, scale: 0.72 });
     return Object.freeze({ visible: false, opacity: 0, scale: 0.72 });
   }
   const focusZones = CAMERA_FOCUS_ZONES[cameraId] ?? [];
@@ -218,13 +229,22 @@ function removeInspectionComponentLabels(group) {
 function componentLabelText(object) {
   const name = String(object?.name ?? '').trim();
   if (!name) return null;
-  return name
-    .replace(/^.*?-/, '')
-    .replace(/[_-]+/g, ' ')
-    .replace(/(geometry|mesh|group)/gi, '')
-    .trim()
-    .slice(0, 26)
-    .toUpperCase();
+  const semanticLabels = [
+    [/impeller/i, 'IMPULSOR'],
+    [/motor/i, 'MOTOR'],
+    [/inlet|feed/i, 'ENTRADA'],
+    [/outlet|discharge/i, 'SALIDA'],
+    [/volute/i, 'VOLUTA'],
+    [/casing|shell/i, 'CARCASA'],
+    [/belt/i, 'FAJA'],
+    [/drum/i, 'TAMBOR'],
+    [/rotor/i, 'ROTOR'],
+    [/chute/i, 'CHUTE'],
+    [/tank/i, 'TANQUE'],
+    [/cell/i, 'CELDA'],
+  ];
+  const semantic = semanticLabels.find(([pattern]) => pattern.test(name));
+  return semantic?.[1] ?? null;
 }
 
 function createInspectionComponentLabels(group, target) {
@@ -248,13 +268,13 @@ function createInspectionComponentLabels(group, target) {
   const used = new Set();
   const labels = [];
   for (const candidate of candidates) {
-    if (labels.length >= 4) break;
+    if (labels.length >= 3) break;
     const text = componentLabelText(candidate.object);
     if (!text || text.length < 3 || used.has(text)) continue;
     used.add(text);
     const texture = createSmallTexture(text, '#d9edf0', { inspection: true });
     if (!texture) continue;
-    const width = Math.max(2.8, Math.min(5.6, text.length * 0.34 + 1.8));
+    const width = Math.max(2.5, Math.min(4.7, text.length * 0.28 + 1.55));
     const label = createSprite(texture, {
       width,
       aspect: SMALL_LABEL_ASPECT,
@@ -279,6 +299,17 @@ function getInspectionSelectionLabel(group) {
 function updateInspectionLabelPosition(label) {
   const target = label?.userData?.targetObject;
   if (!target) return;
+  const focused = label.userData?.inspectionFraming;
+  if (focused?.focused && focused.center && focused.size) {
+    const center = new THREE.Vector3(...focused.center);
+    const size = new THREE.Vector3(...focused.size);
+    label.position.set(
+      center.x,
+      center.y + size.y / 2 + Math.max(0.90, size.y * 0.16),
+      center.z,
+    );
+    return;
+  }
   target.updateWorldMatrix?.(true, true);
   const bounds = new THREE.Box3().setFromObject(target);
   if (bounds.isEmpty()) return;
@@ -287,7 +318,7 @@ function updateInspectionLabelPosition(label) {
   label.position.set(center.x, bounds.max.y + Math.max(0.65, size.y * 0.12), center.z);
 }
 
-export function setInspectionTargetLabel(group, target, text = '') {
+export function setInspectionTargetLabel(group, target, text = '', framing = null) {
   if (!group) return null;
   const existing = getInspectionSelectionLabel(group);
   if (existing) {
@@ -300,14 +331,30 @@ export function setInspectionTargetLabel(group, target, text = '') {
   if (!target || !text) return null;
   const texture = createSmallTexture(text, '#7de3ed', { inspection: true });
   if (!texture) return null;
-  const width = Math.max(4.6, Math.min(9.8, String(text).length * 0.58 + 2.8));
+  const width = Math.max(3.8, Math.min(6.4, String(text).length * 0.34 + 2.0));
   const label = createSprite(texture, {
     width,
     aspect: SMALL_LABEL_ASPECT,
     name: 'inspection-selection-label',
-    userData: { zoneId: null, labelKind: 'inspection', targetObject: target, text },
+    userData: {
+      zoneId: null,
+      labelKind: 'inspection',
+      targetObject: target,
+      text,
+      inspectionFraming: framing
+        ? {
+          focused: framing.focused === true,
+          center: framing.center?.toArray?.() ?? null,
+          size: framing.size?.toArray?.() ?? null,
+        }
+        : null,
+    },
     opacity: 1,
   });
+  // Inspection framing already reserves space above the target. Use a less
+  // bottom-heavy sprite anchor so long equipment names stay inside the viewport
+  // instead of growing almost entirely upward and clipping at the top edge.
+  label.center.set(0.5, 0.30);
   label.renderOrder = 200;
   group.add(label);
   updateInspectionLabelPosition(label);
@@ -315,11 +362,18 @@ export function setInspectionTargetLabel(group, target, text = '') {
   return label;
 }
 
+export function refreshInspectionComponentLabels(group) {
+  if (!group) return [];
+  const selection = getInspectionSelectionLabel(group);
+  return createInspectionComponentLabels(group, selection?.userData?.targetObject ?? null);
+}
+
 export function createPlantLabels({ equipmentSystem } = {}) {
   const group = new THREE.Group();
   group.name = 'plant-labels';
   group.userData.labelsVisible = true;
   group.userData.cameraMode = 'general';
+  group.userData.presentationMode = false;
 
   PLANT_ZONE_ORDER.forEach((zoneId) => {
     const label = createZoneLabel(getPlantZone(zoneId));
@@ -362,21 +416,28 @@ export function setPlantLabelsView(group, cameraId) {
   group.children.forEach((label) => {
     const profile = getLabelPresentationForCamera(label.userData.zoneId, cameraId, label.userData.labelKind);
     label.userData.presentationVisible = profile.visible;
-    label.visible = profile.visible;
+    const priorityLabel = label.userData.labelKind === 'inspection' || label.userData.labelKind === 'component';
+    const allowedByUser = group.userData.labelsVisible !== false || (group.userData.presentationMode === true && priorityLabel);
+    label.visible = profile.visible && allowedByUser;
     label.material.opacity = profile.opacity;
     label.userData.presentationScale = profile.scale;
-    if (cameraId === 'inspection' && label.userData.labelKind === 'equipment') label.userData.maxDistance = 55;
+    if (cameraId === 'inspection' && label.userData.labelKind === 'equipment') label.userData.maxDistance = 36;
     else if (label.userData.labelKind === 'equipment') label.userData.maxDistance = 720;
   });
 }
 
 export function updatePlantLabelsForCamera(group, camera) {
-  if (!group || !camera) return;
+  if (!group || !camera || !group.visible) return false;
+  let changed = false;
   group.children.forEach((label) => {
     if (label.userData.labelKind === 'inspection' || label.userData.labelKind === 'component') updateInspectionLabelPosition(label);
     const distance = camera.position.distanceTo(label.position);
     const maxDistance = label.userData.maxDistance ?? Infinity;
-    label.visible = (label.userData.presentationVisible ?? true) && distance <= maxDistance;
+    const priorityLabel = label.userData.labelKind === 'inspection' || label.userData.labelKind === 'component';
+    const allowedByUser = group.userData.labelsVisible !== false || (group.userData.presentationMode === true && priorityLabel);
+    const nextVisible = allowedByUser && (label.userData.presentationVisible ?? true) && distance <= maxDistance;
+    if (label.visible !== nextVisible) changed = true;
+    label.visible = nextVisible;
     if (!label.visible) return;
     const baseWidth = label.userData.baseWidth ?? label.scale.x;
     const aspect = label.userData.aspect ?? LABEL_ASPECT;
@@ -385,18 +446,30 @@ export function updatePlantLabelsForCamera(group, camera) {
     if (label.userData.labelKind === 'zone') {
       distanceScale = THREE.MathUtils.clamp(distance / 150, 0.82, 4.8);
     } else if (label.userData.labelKind === 'inspection') {
-      distanceScale = THREE.MathUtils.clamp(distance / 14, 0.72, 1.8);
+      distanceScale = THREE.MathUtils.clamp(distance / 16, 0.66, 1.40);
     } else if (label.userData.labelKind === 'component') {
-      distanceScale = THREE.MathUtils.clamp(distance / 10, 0.58, 1.35);
+      distanceScale = THREE.MathUtils.clamp(distance / 12, 0.50, 1.05);
     } else {
       distanceScale = THREE.MathUtils.clamp(distance / 75, 0.82, 3.2);
     }
     const width = baseWidth * presentationScale * distanceScale;
+    if (Math.abs(label.scale.x - width) > 1e-4) changed = true;
     label.scale.set(width, width * aspect, 1);
   });
+  return changed;
 }
 
 export function setPlantLabelsVisible(group, visible) {
-  group.visible = Boolean(visible);
-  group.userData.labelsVisible = group.visible;
+  const nextVisible = Boolean(visible);
+  group.userData.labelsVisible = nextVisible;
+  // Presentation is a focused teaching view. It may suppress ordinary labels
+  // while still rendering the selected Inspection label/components even when
+  // the user's general label toggle was off before entering the tour.
+  group.visible = nextVisible || group.userData.presentationMode === true;
+}
+
+export function setPlantLabelsPresentationMode(group, active) {
+  if (!group) return;
+  group.userData.presentationMode = Boolean(active);
+  group.visible = group.userData.labelsVisible !== false || group.userData.presentationMode;
 }

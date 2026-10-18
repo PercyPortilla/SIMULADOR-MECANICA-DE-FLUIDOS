@@ -31,25 +31,27 @@ export function createIntegratedAnimations({ equipmentSystem, mobileEquipment, p
   collectRoutes();
 
   function refreshLOD(camera) {
-    if (!camera) return;
+    if (!camera) return false;
     equipmentSystem.updateLOD(camera);
     lastLodCamera = camera;
     lastLodCameraPosition.copy(camera.position);
     lodElapsed = 0;
     lodStationaryElapsed = 0;
+    return true;
   }
 
   function updateViewLOD(dt, camera) {
-    if (!camera || !Number.isFinite(dt) || dt < 0) return;
+    if (!camera || !Number.isFinite(dt) || dt < 0) return false;
     const safeDt = Math.min(dt, 0.1);
     lodElapsed += safeDt;
     lodStationaryElapsed += safeDt;
-    if (lodElapsed < LOD_UPDATE_INTERVAL_SECONDS) return;
+    if (lodElapsed < LOD_UPDATE_INTERVAL_SECONDS) return false;
     const cameraChanged = camera !== lastLodCamera
       || camera.position.distanceToSquared(lastLodCameraPosition) > LOD_CAMERA_POSITION_EPSILON_METERS ** 2;
     const stationaryRefreshDue = lodStationaryElapsed >= LOD_STATIONARY_REFRESH_SECONDS;
-    if (cameraChanged || stationaryRefreshDue) refreshLOD(camera);
-    else lodElapsed = 0;
+    if (cameraChanged || stationaryRefreshDue) return refreshLOD(camera);
+    lodElapsed = 0;
+    return false;
   }
 
   function update(dt, camera) {

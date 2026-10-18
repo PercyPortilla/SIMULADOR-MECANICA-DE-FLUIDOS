@@ -140,6 +140,10 @@ export function createJawCrusherAsset() {
   root.userData.v23MechanicalDetail = true;
   root.userData.v23SafetyOverlayParts = safetyOverlay.children.length;
 
+  const oreFlow = new THREE.Group();
+  oreFlow.name = 'PRIMARY-CRUSHER-v29-ore-flow';
+  oreFlow.userData.proceduralMaterialFlow = true;
+  root.add(oreFlow);
   const ore = [];
   for (let i = 0; i < 12; i += 1) {
     const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.2 + (i % 4) * 0.05, 0), createEquipmentMaterial(i < 6 ? 'ore' : 'crushedOre'));
@@ -147,7 +151,7 @@ export function createJawCrusherAsset() {
     rock.position.set(-0.15 + ((i % 3) - 1) * 0.32, 3.65 - (i % 6) * 0.48, ((i % 4) - 1.5) * 0.33);
     rock.castShadow = true;
     rock.userData.inspectionRole = 'interior';
-    root.add(rock);
+    oreFlow.add(rock);
     ore.push(rock);
   }
 

@@ -114,13 +114,54 @@ function createPitOreFace() {
     root.add(rock);
   }
 
-  const face = new THREE.Mesh(new THREE.BoxGeometry(22, 4.8, 3.0), ore);
+  const segments = 12;
+  const vertices = [];
+  const indices = [];
+  for (let index = 0; index <= segments; index += 1) {
+    const t = index / segments;
+    const lx = THREE.MathUtils.lerp(-11, 11, t);
+    const topY = 2.15
+      + (seeded(index, 129) - 0.5) * 0.65
+      + Math.sin(t * Math.PI * 2.4) * 0.22;
+    const bottomY = -2.25 + (seeded(index, 130) - 0.5) * 0.25;
+    const frontZ = 1.45 + (seeded(index, 131) - 0.5) * 0.38;
+    const backZ = -1.45 + (seeded(index, 132) - 0.5) * 0.32;
+    vertices.push(
+      lx, bottomY, frontZ,
+      lx, topY, frontZ,
+      lx, bottomY, backZ,
+      lx, topY * 0.92, backZ,
+    );
+  }
+  for (let index = 0; index < segments; index += 1) {
+    const a = index * 4;
+    const b = (index + 1) * 4;
+    indices.push(
+      a, b, a + 1, a + 1, b, b + 1,
+      a + 2, a + 3, b + 2, a + 3, b + 3, b + 2,
+      a + 1, b + 1, a + 3, a + 3, b + 1, b + 3,
+      a, a + 2, b, a + 2, b + 2, b,
+    );
+  }
+  indices.push(
+    0, 1, 2, 1, 3, 2,
+    segments * 4, segments * 4 + 2, segments * 4 + 1,
+    segments * 4 + 1, segments * 4 + 2, segments * 4 + 3,
+  );
+  const faceGeometry = new THREE.BufferGeometry();
+  faceGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+  faceGeometry.setIndex(indices);
+  faceGeometry.computeVertexNormals();
+  faceGeometry.computeBoundingBox();
+  faceGeometry.userData.irregularOreFace = true;
+  const face = new THREE.Mesh(faceGeometry, ore);
   face.name = 'pit-exposed-ore-band';
   face.position.set(centerX + 4, baseY + 2.1, centerZ - 5.0);
   face.rotation.y = -0.20;
   face.rotation.x = -0.08;
   face.castShadow = true;
   face.receiveShadow = true;
+  face.userData.irregularOreFace = true;
   root.add(face);
   return root;
 }

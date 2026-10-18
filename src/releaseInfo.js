@@ -1,5 +1,5 @@
 export const RELEASE_INFO = Object.freeze({
-  version: 'V25',
-  name: 'Rendimiento y Fidelidad Operacional',
+  version: 'V30',
+  name: 'Pulido Final, Inspección y Presentación',
   date: '2026-10-17',
 });

@@ -28,7 +28,7 @@ function createControlledSpill(name, x, z, count = 12, radius = 0.13) {
   root.name = name;
   root.userData.visualOnly = true;
   root.userData.controlledMaterialSpill = true;
-  const material = createIndustrialMaterial('terrain', { color: 0x72583f, roughness: 1, metalness: 0 });
+  const material = createIndustrialMaterial('terrain', { color: 0x72583f, roughness: 1, metalness: 0, preserveColor: true });
   const sharedGeometry = new THREE.DodecahedronGeometry(1, 0);
   for (let index = 0; index < count; index += 1) {
     const angle = index * 2.399963229728653;
@@ -45,6 +45,41 @@ function createControlledSpill(name, x, z, count = 12, radius = 0.13) {
     rock.receiveShadow = true;
     root.add(rock);
   }
+  return root;
+}
+
+function createRomStagingPile() {
+  const root = new THREE.Group();
+  root.name = 'ROM-STAGING-PILE';
+  root.userData.visualOnly = true;
+  root.userData.processCoupled = false;
+  root.userData.romStagingPile = true;
+  root.userData.nominalDiameterM = 8.8;
+  root.userData.nominalHeightM = 2.7;
+
+  const ore = createIndustrialMaterial('terrain', { color: 0x765f49, roughness: 1, metalness: 0, preserveColor: true });
+  const lobes = [
+    { x: -135.0, z: -13.0, radius: 4.35, height: 2.70, yaw: 0.18 },
+    { x: -132.4, z: -12.2, radius: 2.65, height: 1.65, yaw: -0.28 },
+    { x: -137.2, z: -14.0, radius: 2.35, height: 1.45, yaw: 0.42 },
+  ];
+  lobes.forEach((lobe, index) => {
+    const mesh = new THREE.Mesh(
+      new THREE.ConeGeometry(lobe.radius, lobe.height, 28, 4),
+      index === 0 ? ore : ore.clone(),
+    );
+    mesh.name = `ROM-STAGING-PILE-lobe-${index + 1}`;
+    mesh.position.set(lobe.x, getTerrainHeight(lobe.x, lobe.z) + lobe.height / 2, lobe.z);
+    mesh.rotation.y = lobe.yaw;
+    mesh.scale.z = index === 0 ? 0.92 : 0.84;
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    root.add(mesh);
+  });
+
+  const fragments = createControlledSpill('ROM-STAGING-PILE-toe-rock', -131.0, -14.7, 18, 0.17);
+  fragments.userData.romPileToeFragments = true;
+  root.add(fragments);
   return root;
 }
 
@@ -80,6 +115,7 @@ export function createOperationalSurfaceDetails() {
   root.userData.noFogRequired = true;
 
   const patches = [
+    createSurfacePatch('rom-loader-working-wear', -125.0, -12.5, 8.0, 3.0, 0x655749, 0.32, -0.04),
     createSurfacePatch('crusher-fines-stain', -84, -30, 5.2, 2.2, 0x69584a, 0.60, 0.12),
     createSurfacePatch('stockpile-traffic-wear', 16, -21, 10.5, 5.0, 0x62574b, 0.38, -0.18),
     createSurfacePatch('mill-feed-fines-stain', 73, -7, 4.0, 1.9, 0x68574a, 0.48, 0.08),
@@ -90,9 +126,11 @@ export function createOperationalSurfaceDetails() {
   root.add(createControlledSpill('crusher-controlled-spill', -82.2, -31.8, 11, 0.15));
   root.add(createControlledSpill('stockpile-controlled-spill', 27.0, -25.2, 14, 0.16));
   root.add(createControlledSpill('mill-feed-controlled-spill', 73.8, -8.0, 9, 0.12));
+  root.add(createRomStagingPile());
   root.add(createLoaderScuffs());
 
   root.userData.surfacePatchCount = patches.length;
   root.userData.controlledSpillCount = 3;
+  root.userData.romStagingPileCount = 1;
   return root;
 }

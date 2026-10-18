@@ -3,6 +3,7 @@ import { createCatalogInstance } from './assetIntegrationLayer.js';
 import { getTerrainHeight } from '../environment/terrainHeight.js';
 import { createRoadLaneCurve, getRoadSurfaceOffset } from '../environment/haulRoads.js';
 import { MOBILE_ROUTE_LAYOUT, SUPPORT_LAYOUT } from './finalLayout.js';
+import { createWheelLoaderAsset } from '../../equipment/mining/wheelLoader.js';
 
 function headingFromTangent(tangent) {
   return Math.atan2(-tangent.z, tangent.x);
@@ -27,6 +28,20 @@ function curveFromXZ(points, elevationOffset = 0.04) {
 
 function orientAlong(root, tangent) {
   root.rotation.set(0, headingFromTangent(tangent), 0);
+}
+
+function orientTruckAlongGrade(root, tangent) {
+  const forward = tangent.clone().normalize();
+  if (forward.lengthSq() < 1e-10) return;
+  const worldUp = new THREE.Vector3(0, 1, 0);
+  const lateral = new THREE.Vector3().crossVectors(forward, worldUp).normalize();
+  if (lateral.lengthSq() < 1e-10) {
+    orientAlong(root, tangent);
+    return;
+  }
+  const up = new THREE.Vector3().crossVectors(lateral, forward).normalize();
+  const basis = new THREE.Matrix4().makeBasis(forward, up, lateral);
+  root.quaternion.setFromRotationMatrix(basis);
 }
 
 function signedHeadingDelta(a, b) {
@@ -70,6 +85,8 @@ function createLocalOreCascade({ name, start, end, count = 10, radius = 0.13 } =
   mesh.userData.visualOnly = true;
   mesh.userData.educationalMaterialFlow = true;
   const phases = Array.from({ length: count }, (_, index) => index / count);
+  const startPoint = start.clone();
+  const endPoint = end.clone();
   const position = new THREE.Vector3();
   const matrix = new THREE.Matrix4();
   const quaternion = new THREE.Quaternion();
@@ -80,7 +97,7 @@ function createLocalOreCascade({ name, start, end, count = 10, radius = 0.13 } =
     if (!mesh.visible) return;
     phases.forEach((offset, index) => {
       const phase = (timeSeconds * 0.72 + offset) % 1;
-      position.copy(start).lerp(end, phase);
+      position.copy(startPoint).lerp(endPoint, phase);
       position.z += Math.sin(index * 2.2 + phase * Math.PI * 2) * radius * 1.1;
       quaternion.setFromEuler(new THREE.Euler(phase * 2.6, index * 0.37, phase * 1.7));
       const s = 0.76 + (index % 4) * 0.08;
@@ -90,7 +107,20 @@ function createLocalOreCascade({ name, start, end, count = 10, radius = 0.13 } =
     });
     mesh.instanceMatrix.needsUpdate = true;
   }
-  return { mesh, update };
+  function setEnd(nextEnd) {
+    if (nextEnd?.isVector3) endPoint.copy(nextEnd);
+  }
+  function setStart(nextStart) {
+    if (nextStart?.isVector3) startPoint.copy(nextStart);
+  }
+  return {
+    mesh,
+    update,
+    setStart,
+    setEnd,
+    getStartLocal() { return startPoint.clone(); },
+    getEndLocal() { return endPoint.clone(); },
+  };
 }
 
 export function createIntegratedMobile({ plantRoot, registry }) {
@@ -120,6 +150,21 @@ export function createIntegratedMobile({ plantRoot, registry }) {
     rotationY: 0,
     registry,
   });
+  // A second loader trims the small ROM staging pile. It is deliberately
+  // visual-only and is not registered in the process/Inspection equipment
+  // registry, so LOADER-01 keeps exclusive ownership of the stockpile/reclaim
+  // cycle and no new process semantics or ports are introduced.
+  const romLoader = createWheelLoaderAsset();
+  romLoader.root.name = 'ROM-LOADER-01';
+  romLoader.root.position.set(-121.5, getTerrainHeight(-121.5, -12.0) + 0.04, -12.0);
+  romLoader.root.rotation.y = Math.PI;
+  romLoader.root.userData.mobileEquipment = true;
+  romLoader.root.userData.visualOnly = true;
+  romLoader.root.userData.processCoupled = false;
+  romLoader.root.userData.integrationManagedAnimation = true;
+  romLoader.root.userData.inspectionExcluded = true;
+  romLoader.root.userData.operationalState = 'rom-stockpile-trimming';
+  root.add(romLoader.root);
   [shovelCreated, ...truckCreated, loaderCreated].forEach(({ handle }) => {
     handle.root.userData.mobileEquipment = true;
     handle.root.userData.integrationManagedAnimation = true;
@@ -147,6 +192,14 @@ export function createIntegratedMobile({ plantRoot, registry }) {
   const truck = trucks[0];
   const shovel = shovelCreated.handle;
   const loader = loaderCreated.handle;
+  const shovelTruckCascade = createLocalOreCascade({
+    name: 'EXCAVATOR-01-v29-truck-loading-ore',
+    start: new THREE.Vector3(),
+    end: new THREE.Vector3(0, -1, 0),
+    count: 12,
+    radius: 0.15,
+  });
+  root.add(shovelTruckCascade.mesh);
   const loaderDumpCascade = createLocalOreCascade({
     name: 'LOADER-01-v24-dump-ore',
     start: new THREE.Vector3(5.05, 3.05, 0),
@@ -157,6 +210,7 @@ export function createIntegratedMobile({ plantRoot, registry }) {
   loader.root.add(loaderDumpCascade.mesh);
   shovel.setAnimationEnabled(true);
   loader.setAnimationEnabled(true);
+  romLoader.setAnimationEnabled(true);
 
   // Truck wheel centres are referenced to the engineered road surface, which sits
   // slightly above the terrain mesh. Keep the vehicle root on that surface rather
@@ -166,10 +220,58 @@ export function createIntegratedMobile({ plantRoot, registry }) {
   const returnLane = createRoadLaneCurve('ROAD-01', -truckLaneOffset, { reverse: true });
   const loaderCurve = curveFromXZ(MOBILE_ROUTE_LAYOUT.loaderOutbound);
   const loaderReturn = curveFromXZ(MOBILE_ROUTE_LAYOUT.loaderReturn);
+  // ROM-LOADER-01 is visual-only, but its motion should still read as a real
+  // trimming cycle around the east/south-east face of the ROM staging pile.
+  // The root stays outside the pile while the bucket reaches the toe.
+  const romLoaderOutbound = curveFromXZ([
+    [-119.0, -6.5],
+    [-120.0, -5.3],
+    [-120.5, -6.7],
+  ]);
+  const romLoaderReturn = curveFromXZ([
+    [-120.5, -6.7],
+    [-118.5, -5.4],
+    [-119.0, -6.5],
+  ]);
+  const romLoaderDumpWorld = new THREE.Vector3(
+    -128.2,
+    getTerrainHeight(-128.2, -7.0) + 0.28,
+    -7.0,
+  );
+  const romLoaderDumpCascade = createLocalOreCascade({
+    name: 'ROM-LOADER-01-v29-trim-ore',
+    start: new THREE.Vector3(5.0, 3.0, 0),
+    end: new THREE.Vector3(6.0, 0.72, 0),
+    count: 10,
+    radius: 0.14,
+  });
+  romLoader.root.add(romLoaderDumpCascade.mesh);
   // Scratch vectors avoid transient allocations during the managed vehicle loop.
   const loaderPositionScratch = new THREE.Vector3();
   const loaderTangentScratch = new THREE.Vector3();
   const loaderHeadingScratch = new THREE.Vector3();
+  const romLoaderPositionScratch = new THREE.Vector3();
+  const romLoaderTangentScratch = new THREE.Vector3();
+  const romLoaderHeadingScratch = new THREE.Vector3();
+  const romReceiverWorldScratch = new THREE.Vector3();
+  const romReceiverLocalScratch = new THREE.Vector3();
+  const romReceiverPortWorldScratch = new THREE.Vector3();
+  const dumpSourceWorldScratch = new THREE.Vector3();
+  const dumpSourceLocalScratch = new THREE.Vector3();
+  const receiverSourceLocalScratch = new THREE.Vector3();
+  const receiverTargetLocalScratch = new THREE.Vector3();
+  const loaderReceiverWorldScratch = new THREE.Vector3();
+  const loaderReceiverLocalScratch = new THREE.Vector3();
+  const loaderDumpSourceWorldScratch = new THREE.Vector3();
+  const loaderDumpSourceLocalScratch = new THREE.Vector3();
+  const truckDumpLipLocal = new THREE.Vector3(-1.45, 1.45, 0);
+  const loaderBucketLipLocal = new THREE.Vector3(1.15, -0.05, 0);
+  const shovelBucketLipLocal = new THREE.Vector3(1.75, -0.42, 0);
+  const shovelTransferSourceWorldScratch = new THREE.Vector3();
+  const shovelTransferTargetWorldScratch = new THREE.Vector3();
+  const shovelTransferSourceLocalScratch = new THREE.Vector3();
+  const shovelTransferTargetLocalScratch = new THREE.Vector3();
+  const truckLoadBedLocal = new THREE.Vector3(1.55, 1.05, 0);
   const truckPositionScratch = new THREE.Vector3();
   const truckTangentScratch = new THREE.Vector3();
 
@@ -223,7 +325,7 @@ export function createIntegratedMobile({ plantRoot, registry }) {
       // Rear of the rigid truck points toward the ROM hopper during dumping.
       // Preserve this heading for the dump phase instead of immediately replacing
       // it with the terminal road tangent below.
-      truckHandle.root.rotation.y = Math.PI;
+      truckHandle.root.rotation.set(0, Math.PI, 0);
       preserveDumpHeading = true;
       state = 'dumping-at-rom';
       routeProgress = 1;
@@ -266,14 +368,58 @@ export function createIntegratedMobile({ plantRoot, registry }) {
     }
     const travelDistanceM = initialize ? 0 : truckHandle.root.position.distanceTo(position);
     truckHandle.root.position.copy(position);
-    if (!preserveDumpHeading) orientAlong(truckHandle.root, tangent);
+    if (!preserveDumpHeading) orientTruckAlongGrade(truckHandle.root, tangent);
     truckHandle.setSteering?.(preserveDumpHeading ? 0 : steeringAngle);
     if (travelDistanceM > 0) truckHandle.advanceWheelTravel?.(travelDistanceM);
     truckHandle.root.userData.operationalState = state;
     truckHandle.root.userData.routeProgress = routeProgress;
     truckHandle.root.userData.routeDirection = routeDirection;
     truckHandle.root.userData.roadSurfaceY = position.y;
-    truckDumpCascades.get(truckHandle)?.update(cycleSeconds, dumpVisualPhase >= 0.18 && dumpVisualPhase <= 0.82);
+    const dumpCascade = truckDumpCascades.get(truckHandle);
+    if (dumpCascade && registry.items?.has('ROM-HOPPER')) {
+      truckHandle.root.updateMatrixWorld(true);
+      const dumpPivot = truckHandle.root.getObjectByName('haul-truck-dump-pivot');
+      if (dumpPivot) {
+        dumpSourceWorldScratch.copy(truckDumpLipLocal);
+        dumpPivot.localToWorld(dumpSourceWorldScratch);
+        dumpSourceLocalScratch.copy(dumpSourceWorldScratch);
+        truckHandle.root.worldToLocal(dumpSourceLocalScratch);
+        dumpCascade.setStart(dumpSourceLocalScratch);
+      } else {
+        dumpSourceWorldScratch.copy(dumpCascade.getStartLocal());
+        truckHandle.root.localToWorld(dumpSourceWorldScratch);
+      }
+
+      const receiver = registry.getEquipment('ROM-HOPPER');
+      romReceiverPortWorldScratch.copy(registry.getPortWorldPosition('ROM-HOPPER', 'feedIn'));
+      receiver.group3D.updateMatrixWorld(true);
+      receiverSourceLocalScratch.copy(dumpSourceWorldScratch);
+      receiver.group3D.worldToLocal(receiverSourceLocalScratch);
+      const feedPort = registry.getPort('ROM-HOPPER', 'feedIn');
+      const halfMouthZ = Math.min(2.35, Number(receiver.dimensions?.width ?? 9.2) * 0.27);
+      receiverTargetLocalScratch.set(
+        feedPort.localPosition.x + 0.48,
+        feedPort.localPosition.y - 0.18,
+        THREE.MathUtils.clamp(
+          receiverSourceLocalScratch.z,
+          feedPort.localPosition.z - halfMouthZ,
+          feedPort.localPosition.z + halfMouthZ,
+        ),
+      );
+      romReceiverWorldScratch.copy(receiverTargetLocalScratch);
+      receiver.group3D.localToWorld(romReceiverWorldScratch);
+      // Do not fake a downhill stream by overwriting receiver Y. The receiver
+      // geometry itself must stay physically below the truck dump lip.
+      romReceiverLocalScratch.copy(romReceiverWorldScratch);
+      truckHandle.root.worldToLocal(romReceiverLocalScratch);
+      dumpCascade.setEnd(romReceiverLocalScratch);
+      dumpCascade.mesh.userData.receiverEquipmentId = 'ROM-HOPPER';
+      dumpCascade.mesh.userData.receiverPortId = 'feedIn';
+      dumpCascade.mesh.userData.sourceWorld = dumpSourceWorldScratch.toArray();
+      dumpCascade.mesh.userData.receiverPortWorld = romReceiverPortWorldScratch.toArray();
+      dumpCascade.mesh.userData.receiverWorld = romReceiverWorldScratch.toArray();
+    }
+    dumpCascade?.update(cycleSeconds, dumpVisualPhase >= 0.18 && dumpVisualPhase <= 0.82);
   }
 
   function updateLoader(dt) {
@@ -313,6 +459,29 @@ export function createIntegratedMobile({ plantRoot, registry }) {
     loader.setVisualAnimationTime?.(t);
     if (travelDistanceM > 0) loader.advanceWheelTravel?.(travelDistanceM);
     loader.setMaterialLoadVisible?.(t >= 5 && t < 19.3);
+    if (registry.items?.has('STOCKPILE-RECLAIM')) {
+      loader.root.updateMatrixWorld(true);
+      const bucketPivot = loader.root.getObjectByName('loader-bucket-pivot');
+      if (bucketPivot) {
+        loaderDumpSourceWorldScratch.copy(loaderBucketLipLocal);
+        bucketPivot.localToWorld(loaderDumpSourceWorldScratch);
+        loaderDumpSourceLocalScratch.copy(loaderDumpSourceWorldScratch);
+        loader.root.worldToLocal(loaderDumpSourceLocalScratch);
+        loaderDumpCascade.setStart(loaderDumpSourceLocalScratch);
+      }
+      loaderReceiverWorldScratch.copy(registry.getPortWorldPosition('STOCKPILE-RECLAIM', 'loaderDump'));
+      const loaderReceiverDirection = registry.getPortWorldDirection('STOCKPILE-RECLAIM', 'loaderDump');
+      loaderReceiverWorldScratch.addScaledVector(loaderReceiverDirection, 1.65);
+      loaderReceiverWorldScratch.y = Math.min(loaderReceiverWorldScratch.y, loaderDumpSourceWorldScratch.y - 0.18);
+      loaderReceiverLocalScratch.copy(loaderReceiverWorldScratch);
+      loader.root.worldToLocal(loaderReceiverLocalScratch);
+      loaderDumpCascade.setEnd(loaderReceiverLocalScratch);
+      loaderDumpCascade.mesh.userData.receiverEquipmentId = 'STOCKPILE-RECLAIM';
+      loaderDumpCascade.mesh.userData.receiverPortId = 'loaderDump';
+      loaderDumpCascade.mesh.userData.sourceWorld = loaderDumpSourceWorldScratch.toArray();
+      loaderDumpCascade.mesh.userData.receiverPortWorld = registry.getPortWorldPosition('STOCKPILE-RECLAIM', 'loaderDump').toArray();
+      loaderDumpCascade.mesh.userData.receiverWorld = loaderReceiverWorldScratch.toArray();
+    }
     loaderDumpCascade.update(t, t >= 17.0 && t <= 20.2);
     loader.root.userData.operationalState = t < 7
       ? 'loading-stockpile'
@@ -324,6 +493,126 @@ export function createIntegratedMobile({ plantRoot, registry }) {
     loader.root.userData.terrainY = getTerrainHeight(loader.root.position.x, loader.root.position.z);
   }
 
+  function updateRomLoader(dt) {
+    const cycle = 32;
+    const t = elapsed % cycle;
+    let curve = romLoaderOutbound;
+    let p = 0;
+    if (t < 7) {
+      p = 0;
+    } else if (t < 16) {
+      p = (t - 7) / 9;
+    } else if (t < 21) {
+      p = 1;
+    } else {
+      curve = romLoaderReturn;
+      p = (t - 21) / 11;
+    }
+    const normalizedP = THREE.MathUtils.clamp(p, 0, 1);
+    const tangentP = THREE.MathUtils.clamp(p, 0.001, 0.999);
+    curve.getPoint(normalizedP, romLoaderPositionScratch);
+    curve.getTangent(tangentP, romLoaderTangentScratch);
+    const travelDistanceM = romLoader.root.position.distanceTo(romLoaderPositionScratch);
+    romLoader.root.position.copy(romLoaderPositionScratch);
+    if (t < 7) {
+      romLoaderHeadingScratch
+        .set(-134.5, romLoaderPositionScratch.y, -13.0)
+        .sub(romLoaderPositionScratch)
+        .normalize();
+      orientAlong(romLoader.root, romLoaderHeadingScratch);
+    } else if (t >= 16 && t < 21) {
+      romLoaderHeadingScratch
+        .set(romLoaderDumpWorld.x, romLoaderPositionScratch.y, romLoaderDumpWorld.z)
+        .sub(romLoaderPositionScratch)
+        .normalize();
+      orientAlong(romLoader.root, romLoaderHeadingScratch);
+    } else {
+      orientAlong(romLoader.root, romLoaderTangentScratch);
+    }
+    romLoader.update(dt);
+    romLoader.setVisualAnimationTime?.(t);
+    if (travelDistanceM > 0) romLoader.advanceWheelTravel?.(travelDistanceM);
+    romLoader.setMaterialLoadVisible?.(t >= 5 && t < 19.3);
+    romLoader.root.updateMatrixWorld(true);
+    const romBucketPivot = romLoader.root.getObjectByName('loader-bucket-pivot');
+    if (romBucketPivot) {
+      loaderDumpSourceWorldScratch.copy(loaderBucketLipLocal);
+      romBucketPivot.localToWorld(loaderDumpSourceWorldScratch);
+      loaderDumpSourceLocalScratch.copy(loaderDumpSourceWorldScratch);
+      romLoader.root.worldToLocal(loaderDumpSourceLocalScratch);
+      romLoaderDumpCascade.setStart(loaderDumpSourceLocalScratch);
+      romLoaderDumpCascade.mesh.userData.sourceWorld = loaderDumpSourceWorldScratch.toArray();
+    }
+    romReceiverLocalScratch.copy(romLoaderDumpWorld);
+    romLoader.root.worldToLocal(romReceiverLocalScratch);
+    romLoaderDumpCascade.setEnd(romReceiverLocalScratch);
+    romLoaderDumpCascade.mesh.userData.receiverWorld = romLoaderDumpWorld.toArray();
+    romLoaderDumpCascade.update(t, t >= 17.0 && t <= 20.2);
+    romLoader.root.userData.operationalState = t < 7
+      ? 'loading-rom-staging-pile'
+      : t < 16
+        ? 'loaded-trimming-pass'
+        : t < 21
+          ? 'dumping-rom-trim'
+          : 'resetting-rom-loader';
+    romLoader.root.userData.terrainY = getTerrainHeight(romLoader.root.position.x, romLoader.root.position.z);
+  }
+
+  function updateShovelTruckTransfer(shovelTime) {
+    const activeTruck = trucks.find((truckHandle) => truckHandle.root.userData.operationalState === 'loading-at-pit');
+    const shovelCycle = shovelTime / 20;
+    const transferActive = Boolean(activeTruck) && shovelCycle >= 0.56 && shovelCycle <= 0.69;
+    if (!activeTruck) {
+      shovelTruckCascade.update(shovelTime, false);
+      return;
+    }
+
+    shovel.root.updateMatrixWorld(true);
+    activeTruck.root.updateMatrixWorld(true);
+    root.updateMatrixWorld(true);
+    const importedBucketOre = shovel.root.getObjectByName('MINING-SHOVEL_BUCKET_ORE');
+    if (importedBucketOre) {
+      importedBucketOre.getWorldPosition(shovelTransferSourceWorldScratch);
+    } else {
+      const bucketPivot = shovel.root.getObjectByName('bucket-pivot');
+      if (bucketPivot) {
+        shovelTransferSourceWorldScratch.copy(shovelBucketLipLocal);
+        bucketPivot.localToWorld(shovelTransferSourceWorldScratch);
+      } else {
+        shovel.getWorldPosition?.(shovelTransferSourceWorldScratch);
+      }
+    }
+
+    const importedTruckOre = activeTruck.root.getObjectByName('HAUL-TRUCK_ORE_LOAD');
+    if (importedTruckOre) {
+      importedTruckOre.getWorldPosition(shovelTransferTargetWorldScratch);
+    } else {
+      const dumpPivot = activeTruck.root.getObjectByName('haul-truck-dump-pivot');
+      if (dumpPivot) {
+        shovelTransferTargetWorldScratch.copy(truckLoadBedLocal);
+        dumpPivot.localToWorld(shovelTransferTargetWorldScratch);
+      } else {
+        activeTruck.root.getWorldPosition(shovelTransferTargetWorldScratch);
+        shovelTransferTargetWorldScratch.y += 3.2;
+      }
+    }
+    shovelTransferTargetWorldScratch.y = Math.min(
+      shovelTransferTargetWorldScratch.y,
+      shovelTransferSourceWorldScratch.y - 0.2,
+    );
+    shovelTransferSourceLocalScratch.copy(shovelTransferSourceWorldScratch);
+    shovelTransferTargetLocalScratch.copy(shovelTransferTargetWorldScratch);
+    root.worldToLocal(shovelTransferSourceLocalScratch);
+    root.worldToLocal(shovelTransferTargetLocalScratch);
+    shovelTruckCascade.setStart(shovelTransferSourceLocalScratch);
+    shovelTruckCascade.setEnd(shovelTransferTargetLocalScratch);
+    shovelTruckCascade.mesh.userData.sourceEquipmentId = 'EXCAVATOR-01';
+    shovelTruckCascade.mesh.userData.receiverEquipmentId = activeTruck.root.name;
+    shovelTruckCascade.mesh.userData.sourceWorld = shovelTransferSourceWorldScratch.toArray();
+    shovelTruckCascade.mesh.userData.receiverWorld = shovelTransferTargetWorldScratch.toArray();
+    shovelTruckCascade.update(shovelTime, transferActive);
+  }
+
   trucks.forEach((truckHandle, index) => {
     updateTruck(truckHandle, truckPhaseOffsets[index], { initialize: true });
   });
@@ -332,6 +621,11 @@ export function createIntegratedMobile({ plantRoot, registry }) {
   loaderHeadingScratch.set(6, loaderPositionScratch.y, -36).sub(loaderPositionScratch).normalize();
   orientAlong(loader.root, loaderHeadingScratch);
   loader.root.userData.terrainY = getTerrainHeight(loader.root.position.x, loader.root.position.z);
+  romLoaderOutbound.getPoint(0, romLoaderPositionScratch);
+  romLoader.root.position.copy(romLoaderPositionScratch);
+  romLoaderHeadingScratch.set(-134.5, romLoaderPositionScratch.y, -13.0).sub(romLoaderPositionScratch).normalize();
+  orientAlong(romLoader.root, romLoaderHeadingScratch);
+  romLoader.root.userData.terrainY = getTerrainHeight(romLoader.root.position.x, romLoader.root.position.z);
   root.userData.v24OperationalFleet = true;
   root.userData.animatedTruckCount = trucks.length;
 
@@ -345,13 +639,16 @@ export function createIntegratedMobile({ plantRoot, registry }) {
     const shovelCycle = shovelTime / 20;
     shovel.setMaterialLoadVisible?.(shovelCycle > 0.22 && shovelCycle < 0.7);
     trucks.forEach((truckHandle, index) => updateTruck(truckHandle, elapsed + truckPhaseOffsets[index]));
+    updateShovelTruckTransfer(shovelTime);
     updateLoader(safeDt);
+    updateRomLoader(safeDt);
   }
 
   function setEnabled(value) {
     enabled = Boolean(value);
     shovel.setAnimationEnabled(enabled);
     loader.setAnimationEnabled(enabled);
+    romLoader.setAnimationEnabled(enabled);
   }
 
   return {
@@ -362,6 +659,8 @@ export function createIntegratedMobile({ plantRoot, registry }) {
     truck03: trucks[2],
     shovel,
     loader,
+    romLoader,
+    shovelTruckCascade,
     update,
     setEnabled,
     get enabled() { return enabled; },

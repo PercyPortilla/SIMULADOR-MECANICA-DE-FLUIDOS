@@ -23,15 +23,39 @@ export function getPitVisualSector(x, z) {
   return 'bench';
 }
 
+function hashGrid2D(x, z, seed = 0) {
+  let value = Math.imul((x + 173 + seed * 17) | 0, 374761393)
+    ^ Math.imul((z + 311 - seed * 29) | 0, 668265263);
+  value = Math.imul(value ^ (value >>> 13), 1274126177);
+  return ((value ^ (value >>> 16)) >>> 0) / 4294967295;
+}
+
+function smoothValueNoise2D(x, z, cellM, seed) {
+  const gx = x / cellM;
+  const gz = z / cellM;
+  const ix = Math.floor(gx);
+  const iz = Math.floor(gz);
+  const tx = gx - ix;
+  const tz = gz - iz;
+  const sx = tx * tx * (3 - 2 * tx);
+  const sz = tz * tz * (3 - 2 * tz);
+  const n00 = hashGrid2D(ix, iz, seed);
+  const n10 = hashGrid2D(ix + 1, iz, seed);
+  const n01 = hashGrid2D(ix, iz + 1, seed);
+  const n11 = hashGrid2D(ix + 1, iz + 1, seed);
+  const nx0 = THREE.MathUtils.lerp(n00, n10, sx);
+  const nx1 = THREE.MathUtils.lerp(n01, n11, sx);
+  return THREE.MathUtils.lerp(nx0, nx1, sz) * 2 - 1;
+}
+
 function terrainToneVariation(x, z) {
-  const broad = Math.sin(x * 0.041 + z * 0.027) * 0.45;
-  const medium = Math.sin(x * 0.113 - z * 0.071 + 1.7) * 0.32;
-  const fine = Math.cos((x + z) * 0.233 - 0.8) * 0.23;
-  const patchX = Math.floor((x + 430) / 23);
-  const patchZ = Math.floor((z + 280) / 19);
-  const patchSeed = Math.sin(patchX * 12.9898 + patchZ * 78.233) * 43758.5453;
-  const patch = (patchSeed - Math.floor(patchSeed)) - 0.5;
-  return 0.985 + (broad + medium + fine) * 0.025 + patch * 0.018;
+  // Irregular value-noise fields replace the old diagonal sine bands. The
+  // function is deterministic and affects only vertex colour, never elevation.
+  const broad = smoothValueNoise2D(x + 113, z - 71, 54, 7);
+  const medium = smoothValueNoise2D(x - 37, z + 149, 22, 19);
+  const fine = smoothValueNoise2D(x + 251, z + 83, 9, 31);
+  const patch = smoothValueNoise2D(x - 91, z - 163, 17, 43);
+  return 0.985 + broad * 0.032 + medium * 0.020 + fine * 0.009 + patch * 0.012;
 }
 
 export function createMineTerrain(material) {

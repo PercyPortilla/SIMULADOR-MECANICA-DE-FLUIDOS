@@ -7,7 +7,8 @@ export const BLENDER_REPLACEMENT_SPECS = Object.freeze({
   'ROM-HOPPER': Object.freeze({
     url: 'models/pulpa-blender/ROM-HOPPER.glb',
     keepProceduralUpdate: true,
-    preserveProceduralOverlays: Object.freeze(['rom-grizzly']),
+    preserveProceduralOverlays: Object.freeze(['rom-grizzly', 'rom-truck-dump-throat']),
+    hideImportedNamePrefixes: Object.freeze(['ROM-HOPPER_GRIZZLY_']),
   }),
   'APRON-FEEDER': Object.freeze({
     url: 'models/pulpa-blender/APRON-FEEDER.glb',
@@ -16,11 +17,22 @@ export const BLENDER_REPLACEMENT_SPECS = Object.freeze({
   'PRIMARY-CRUSHER': Object.freeze({
     url: 'models/pulpa-blender/PRIMARY-CRUSHER.glb',
     playAllAnimations: true,
-    preserveProceduralOverlays: Object.freeze(['PRIMARY-CRUSHER-v23-safety-overlay']),
+    keepProceduralUpdate: true,
+    preserveProceduralOverlays: Object.freeze([
+      'PRIMARY-CRUSHER-v23-safety-overlay',
+      'PRIMARY-CRUSHER-v29-ore-flow',
+    ]),
+    hideImportedNamePrefixes: Object.freeze(['PRIMARY-CRUSHER_ORE_']),
   }),
   'STOCKPILE-RECLAIM': Object.freeze({
     url: 'models/pulpa-blender/STOCKPILE-RECLAIM.glb',
     preserveProceduralOverlays: Object.freeze(['STOCKPILE-RECLAIM-motion', 'STOCKPILE-RECLAIM-v24-feed-flow']),
+    importedScale: Object.freeze([1, 1, -1]),
+    hideImportedNamePrefixes: Object.freeze([
+      'STOCKPILE-RECLAIM_FEEDER',
+      'STOCKPILE-RECLAIM_GRIZZLY_',
+      'STOCKPILE-RECLAIM_PAN_',
+    ]),
   }),
   'EXCAVATOR-01': Object.freeze({
     url: 'models/pulpa-blender/MINING-SHOVEL.glb',
@@ -52,7 +64,6 @@ export const BLENDER_REPLACEMENT_SPECS = Object.freeze({
     expectedAnimation: 'MILL-01_Rotation',
     rotationPivotRepair: Object.freeze({ nodeName: 'MILL-01_ROTATING_GROUP', axis: 'x' }),
     preserveProceduralOverlays: Object.freeze(['mill-charge']),
-    proceduralOverlayAnchors: Object.freeze({ 'mill-charge': 'MILL-01_ROTATING_GROUP' }),
   }),
   'SUMP-01': Object.freeze({
     url: 'models/pulpa-blender/SUMP-01.glb',
@@ -63,8 +74,9 @@ export const BLENDER_REPLACEMENT_SPECS = Object.freeze({
     url: 'models/pulpa-blender/SLURRY-PUMP-01.glb',
     expectedAnimation: 'SLURRY-PUMP-01_ShaftRotation',
     rotationPivotRepair: Object.freeze({ nodeName: 'SLURRY-PUMP-01_ROTATING_GROUP', axis: 'x' }),
+    keepProceduralUpdate: true,
     preserveProceduralOverlays: Object.freeze(['pump-impeller', 'pump-slurry-path']),
-    proceduralOverlayAnchors: Object.freeze({ 'pump-impeller': 'SLURRY-PUMP-01_ROTATING_GROUP' }),
+    proceduralOverlayPositions: Object.freeze({ 'pump-impeller': Object.freeze([-1.15, 1.18, 0]) }),
   }),
   'CLASS-01': Object.freeze({
     url: 'models/pulpa-blender/CLASS-01.glb',
@@ -104,8 +116,9 @@ export const BLENDER_REPLACEMENT_SPECS = Object.freeze({
     url: 'models/pulpa-blender/SLURRY-PUMP-01.glb',
     expectedAnimation: 'SLURRY-PUMP-01_ShaftRotation',
     rotationPivotRepair: Object.freeze({ nodeName: 'SLURRY-PUMP-01_ROTATING_GROUP', axis: 'x' }),
+    keepProceduralUpdate: true,
     preserveProceduralOverlays: Object.freeze(['pump-impeller', 'pump-slurry-path']),
-    proceduralOverlayAnchors: Object.freeze({ 'pump-impeller': 'SLURRY-PUMP-01_ROTATING_GROUP' }),
+    proceduralOverlayPositions: Object.freeze({ 'pump-impeller': Object.freeze([-1.15, 1.18, 0]) }),
   }),
   'CIP-ADSORPTION': Object.freeze({
     url: 'models/pulpa-blender/CIP-ADSORPTION.glb',
@@ -377,7 +390,7 @@ function makeFallbackGroup(hostRoot, instanceId) {
   return fallback;
 }
 
-function preserveProceduralOverlays(hostRoot, fallback, imported, names = [], anchors = {}) {
+function preserveProceduralOverlays(hostRoot, fallback, imported, names = [], anchors = {}, positions = {}) {
   const preserved = [];
   names.forEach((name) => {
     const object = fallback.getObjectByName(name);
@@ -389,10 +402,36 @@ function preserveProceduralOverlays(hostRoot, fallback, imported, names = [], an
       anchor.attach(object);
       object.userData.blenderProceduralOverlayAnchor = anchorName;
     }
+    const position = positions?.[name];
+    if (!anchor && Array.isArray(position) && position.length === 3) {
+      object.position.set(Number(position[0]), Number(position[1]), Number(position[2]));
+      object.userData.blenderProceduralOverlayPosition = [...position];
+    }
     object.userData.blenderProceduralOverlay = true;
     preserved.push(object);
   });
   return preserved;
+}
+
+function applyImportedVisualRules(scene, spec) {
+  if (!scene || !spec) return 0;
+  const scale = spec.importedScale;
+  if (Array.isArray(scale) && scale.length === 3) {
+    scene.scale.set(Number(scale[0]), Number(scale[1]), Number(scale[2]));
+    scene.userData.blenderImportedScale = [...scale];
+  }
+  const prefixes = Array.isArray(spec.hideImportedNamePrefixes) ? spec.hideImportedNamePrefixes : [];
+  let hidden = 0;
+  if (prefixes.length) {
+    scene.traverse((object) => {
+      if (!prefixes.some((prefix) => String(object.name || '').startsWith(prefix))) return;
+      object.visible = false;
+      object.userData.blenderHiddenForProceduralOverlay = true;
+      hidden += 1;
+    });
+  }
+  scene.userData.blenderHiddenImportedCount = hidden;
+  return hidden;
 }
 
 function loadGltf(url) {
@@ -472,6 +511,7 @@ export function attachBlenderVisualReplacement({
       imported.position.set(0, 0, 0);
       imported.rotation.set(0, 0, 0);
       imported.scale.set(1, 1, 1);
+      applyImportedVisualRules(imported, spec);
       if (spec.rotationPivotRepair) stabilizeImportedRotationPivot(imported, spec.rotationPivotRepair);
       hostRoot.add(imported);
       if (spec.preserveProceduralOverlays?.length) {
@@ -481,6 +521,7 @@ export function attachBlenderVisualReplacement({
           imported,
           spec.preserveProceduralOverlays,
           spec.proceduralOverlayAnchors,
+          spec.proceduralOverlayPositions,
         );
         hostRoot.userData.blenderProceduralOverlayCount = overlays.length;
       }

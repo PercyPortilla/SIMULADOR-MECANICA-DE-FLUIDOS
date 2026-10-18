@@ -1,6 +1,11 @@
 import * as THREE from 'three';
 import { getTerrainHeight } from './terrainHeight.js';
-import { ROAD_CIVIL_DETAIL, ROAD_DEFINITIONS } from '../config/siteDesign.js';
+import {
+  ROAD_CIVIL_DETAIL,
+  ROAD_DEFINITIONS,
+  SERVICE_ROAD_VERTICAL_PROFILE,
+  TOPOGRAPHIC_ZONES,
+} from '../config/siteDesign.js';
 import { createIndustrialMaterial } from '../materials/industrialMaterials.js';
 import { createPrimaryRoadAlignment } from './roadEngineering.js';
 
@@ -14,7 +19,7 @@ const ROAD_ID_BY_DEFINITION = new Map(Object.entries(ROAD_DEFINITIONS).map(([roa
 export function getRoadCutFillTransitionWidth(roadId, progress = 0) {
   const definition = ROAD_DEFINITIONS[roadId];
   if (!definition) throw new RangeError(`Camino desconocido: ${roadId}.`);
-  if (definition.role !== 'primary-haul-road') return 3.2;
+  if (definition.role !== 'primary-haul-road') return SERVICE_ROAD_VERTICAL_PROFILE.minimumTransitionWidthM;
   const tieIn = THREE.MathUtils.smoothstep(
     THREE.MathUtils.clamp(progress, 0, 1),
     ROAD_CIVIL_DETAIL.primaryTieInStart,
@@ -44,6 +49,23 @@ export function getRoadWidth(roadId) {
 export function getRoadPath(roadId) {
   const definition = ROAD_DEFINITIONS[roadId];
   if (!definition) throw new RangeError(`Camino desconocido: ${roadId}.`);
+  if (definition.role !== 'primary-haul-road') {
+    const curve = createAlignment(definition);
+    const samples = Math.max(360, definition.points.length * 48);
+    const sampled = Array.from({ length: samples + 1 }, (_, index) => curve.getPoint(index / samples));
+    return definition.points.map(([x, z]) => {
+      let nearest = sampled[0];
+      let nearestDistance = Infinity;
+      sampled.forEach((point) => {
+        const distance = Math.hypot(point.x - x, point.z - z);
+        if (distance < nearestDistance) {
+          nearestDistance = distance;
+          nearest = point;
+        }
+      });
+      return { x, z, y: nearest.y };
+    });
+  }
   return definition.points.map(([x, z]) => ({ x, z, y: getTerrainHeight(x, z) + ROAD_SURFACE_OFFSET_M }));
 }
 
@@ -62,10 +84,106 @@ function isClosedRoad(points) {
   return points.length > 2 && points[0][0] === points.at(-1)[0] && points[0][1] === points.at(-1)[1];
 }
 
+function roadNodeKey(x, z) {
+  return `${x},${z}`;
+}
+
+const SHARED_ROAD_NODE_KEYS = (() => {
+  const counts = new Map();
+  Object.values(ROAD_DEFINITIONS).forEach((definition) => {
+    definition.points.forEach(([x, z]) => {
+      const key = roadNodeKey(x, z);
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    });
+  });
+  return new Set([...counts.entries()].filter(([, count]) => count > 1).map(([key]) => key));
+})();
+
+function horizontalDistance(a, b) {
+  return Math.hypot(b.x - a.x, b.z - a.z);
+}
+
+function createGradeConstrainedServicePoints(planar, sourcePoints, definition) {
+  const sampleCount = Math.max(180, sourcePoints.length * 30);
+  const points = Array.from({ length: sampleCount + 1 }, (_, index) => {
+    const point = planar.getPoint(index / sampleCount);
+    point.y = getTerrainHeight(point.x, point.z) + ROAD_SURFACE_OFFSET_M;
+    return point;
+  });
+
+  const anchors = sourcePoints
+    .map(([x, z], controlIndex) => ({ x, z, controlIndex }))
+    .filter(({ x, z, controlIndex }) => (
+      controlIndex === 0
+      || controlIndex === sourcePoints.length - 1
+      || SHARED_ROAD_NODE_KEYS.has(roadNodeKey(x, z))
+    ))
+    .map(({ x, z, controlIndex }) => {
+      let sampleIndex = 0;
+      let nearestDistance = Infinity;
+      points.forEach((point, index) => {
+        const distance = Math.hypot(point.x - x, point.z - z);
+        if (distance < nearestDistance) {
+          nearestDistance = distance;
+          sampleIndex = index;
+        }
+      });
+      return {
+        controlIndex,
+        sampleIndex,
+        elevation: getTerrainHeight(x, z) + ROAD_SURFACE_OFFSET_M,
+      };
+    })
+    .sort((a, b) => a.sampleIndex - b.sampleIndex)
+    .filter((anchor, index, list) => index === 0 || anchor.sampleIndex !== list[index - 1].sampleIndex);
+
+  const targetGrade = Math.min(
+    definition.maximumGrade ?? 0.12,
+    (definition.maximumGrade ?? 0.12) * SERVICE_ROAD_VERTICAL_PROFILE.targetGradeFactor,
+  );
+
+  for (let anchorIndex = 0; anchorIndex < anchors.length - 1; anchorIndex += 1) {
+    const start = anchors[anchorIndex];
+    const end = anchors[anchorIndex + 1];
+    const elevations = points.map((point) => point.y);
+    elevations[start.sampleIndex] = start.elevation;
+    elevations[end.sampleIndex] = end.elevation;
+
+    for (let iteration = 0; iteration < SERVICE_ROAD_VERTICAL_PROFILE.iterations; iteration += 1) {
+      elevations[start.sampleIndex] = start.elevation;
+      for (let index = start.sampleIndex + 1; index <= end.sampleIndex; index += 1) {
+        if (index === end.sampleIndex) continue;
+        const limit = targetGrade * horizontalDistance(points[index - 1], points[index]);
+        elevations[index] = THREE.MathUtils.clamp(
+          elevations[index],
+          elevations[index - 1] - limit,
+          elevations[index - 1] + limit,
+        );
+      }
+      elevations[end.sampleIndex] = end.elevation;
+      for (let index = end.sampleIndex - 1; index >= start.sampleIndex; index -= 1) {
+        if (index === start.sampleIndex) continue;
+        const limit = targetGrade * horizontalDistance(points[index], points[index + 1]);
+        elevations[index] = THREE.MathUtils.clamp(
+          elevations[index],
+          elevations[index + 1] - limit,
+          elevations[index + 1] + limit,
+        );
+      }
+    }
+
+    for (let index = start.sampleIndex; index <= end.sampleIndex; index += 1) {
+      points[index].y = elevations[index];
+    }
+  }
+  return points;
+}
+
 function createAlignment(definition) {
   if (definition === ROAD_DEFINITIONS['ROAD-01']) {
     return createPrimaryRoadAlignment({ surfaceOffsetM: ROAD_SURFACE_OFFSET_M });
   }
+  const roadId = ROAD_ID_BY_DEFINITION.get(definition);
   const closed = isClosedRoad(definition.points);
   const sourcePoints = closed ? definition.points.slice(0, -1) : definition.points;
   const planar = new THREE.CatmullRomCurve3(
@@ -73,18 +191,17 @@ function createAlignment(definition) {
     closed,
     'centripetal',
   );
-  // Secondary roads follow the actual terrain continuously instead of only
-  // matching elevation at sparse control points. This avoids floating/embedded
-  // mid-segments when the ground changes between junctions.
-  const sampleCount = Math.max(96, sourcePoints.length * 18);
-  const groundedPoints = [];
-  for (let index = 0; index <= sampleCount; index += 1) {
-    const t = index / sampleCount;
-    const point = planar.getPoint(t);
-    point.y = getTerrainHeight(point.x, point.z) + ROAD_SURFACE_OFFSET_M;
-    groundedPoints.push(point);
-  }
-  return new THREE.CatmullRomCurve3(groundedPoints, closed, 'centripetal');
+  const engineeredPoints = createGradeConstrainedServicePoints(planar, sourcePoints, definition);
+  const curve = new THREE.CatmullRomCurve3(engineeredPoints, closed, 'centripetal');
+  curve.userData = {
+    roadId,
+    engineeredVerticalProfile: true,
+    verticalTargetGrade: Math.min(
+      definition.maximumGrade ?? 0.12,
+      (definition.maximumGrade ?? 0.12) * SERVICE_ROAD_VERTICAL_PROFILE.targetGradeFactor,
+    ),
+  };
+  return curve;
 }
 
 
@@ -251,17 +368,70 @@ function buildRoadSurfaceGeometry(curve, definition, samples) {
   return geometry;
 }
 
-function buildPairStripGeometry(curve, definition, samples, selectorA, selectorB) {
+function receptionSafeVisualPoint(point, clearanceM = 0.04) {
+  const reception = TOPOGRAPHIC_ZONES.reception;
+  const distance = Math.hypot(point.x - reception.center[0], point.z - reception.center[1]);
+  // Scope the visual drape to the ROM/tie-in neighborhood. The pit ramp contains
+  // intentional deep cut conditions and must not be flattened by this visual fix.
+  if (distance > 82) return point;
+  const safe = point.clone();
+  safe.y = Math.max(safe.y, getTerrainHeight(safe.x, safe.z) + clearanceM);
+  return safe;
+}
+
+function buildPairStripGeometry(
+  curve,
+  definition,
+  samples,
+  selectorA,
+  selectorB,
+  { terrainSafeAtReception = false } = {},
+) {
   const vertices = [];
   const indices = [];
+  // The ROM tie-in crosses intentionally sharp terrain cuts. A denser lateral
+  // tessellation lets the visual shoulder/cut-fill skin follow getTerrainHeight()
+  // without cutting through convex terrain between sparse edge vertices.
+  const lateralSegments = terrainSafeAtReception ? 16 : 1;
+  const rowWidth = lateralSegments + 1;
+  const pushTriangle = (a, b, c) => {
+    if (terrainSafeAtReception) {
+      const indicesToLift = [a, b, c];
+      const x = indicesToLift.reduce((sum, vertex) => sum + vertices[vertex * 3], 0) / 3;
+      const y = indicesToLift.reduce((sum, vertex) => sum + vertices[vertex * 3 + 1], 0) / 3;
+      const z = indicesToLift.reduce((sum, vertex) => sum + vertices[vertex * 3 + 2], 0) / 3;
+      const reception = TOPOGRAPHIC_ZONES.reception;
+      if (Math.hypot(x - reception.center[0], z - reception.center[1]) <= 82) {
+        const minimumVisualY = getTerrainHeight(x, z) + 0.025;
+        if (y < minimumVisualY) {
+          const lift = minimumVisualY - y;
+          indicesToLift.forEach((vertex) => {
+            vertices[vertex * 3 + 1] += lift;
+          });
+        }
+      }
+    }
+    indices.push(a, b, c);
+  };
   for (let index = 0; index <= samples; index += 1) {
     const section = sampleCrossSection(curve, index / samples, definition);
     const a = selectorA(section);
     const b = selectorB(section);
-    vertices.push(a.x, a.y, a.z, b.x, b.y, b.z);
-    if (index < samples) {
-      const base = index * 2;
-      indices.push(base, base + 2, base + 1, base + 1, base + 2, base + 3);
+    for (let lateral = 0; lateral <= lateralSegments; lateral += 1) {
+      const fraction = lateral / lateralSegments;
+      let point = a.clone().lerp(b, fraction);
+      if (terrainSafeAtReception) point = receptionSafeVisualPoint(point);
+      vertices.push(point.x, point.y, point.z);
+    }
+  }
+  for (let index = 0; index < samples; index += 1) {
+    const row = index * rowWidth;
+    const nextRow = row + rowWidth;
+    for (let lateral = 0; lateral < lateralSegments; lateral += 1) {
+      const base = row + lateral;
+      const next = nextRow + lateral;
+      pushTriangle(base, next, base + 1);
+      pushTriangle(base + 1, next, next + 1);
     }
   }
   const geometry = new THREE.BufferGeometry();
@@ -364,7 +534,14 @@ function createRoadAssembly(roadId, definition, roadMaterial, group, materials) 
   group.add(road);
 
   const leftShoulder = new THREE.Mesh(
-    buildPairStripGeometry(curve, definition, samples, (s) => s.leftRoad, (s) => s.leftShoulder),
+    buildPairStripGeometry(
+      curve,
+      definition,
+      samples,
+      (s) => s.leftRoad,
+      (s) => s.leftShoulder,
+      { terrainSafeAtReception: true },
+    ),
     materials.shoulder,
   );
   leftShoulder.name = `${roadId}-left-shoulder`;
@@ -372,7 +549,14 @@ function createRoadAssembly(roadId, definition, roadMaterial, group, materials) 
   group.add(leftShoulder);
 
   const rightShoulder = new THREE.Mesh(
-    buildPairStripGeometry(curve, definition, samples, (s) => s.rightShoulder, (s) => s.rightRoad),
+    buildPairStripGeometry(
+      curve,
+      definition,
+      samples,
+      (s) => s.rightShoulder,
+      (s) => s.rightRoad,
+      { terrainSafeAtReception: true },
+    ),
     materials.shoulder,
   );
   rightShoulder.name = `${roadId}-right-shoulder`;
@@ -380,7 +564,14 @@ function createRoadAssembly(roadId, definition, roadMaterial, group, materials) 
   group.add(rightShoulder);
 
   const leftTransition = new THREE.Mesh(
-    buildPairStripGeometry(curve, definition, samples, (s) => s.leftTerrain, (s) => s.leftShoulder),
+    buildPairStripGeometry(
+      curve,
+      definition,
+      samples,
+      (s) => s.leftTerrain,
+      (s) => s.leftShoulder,
+      { terrainSafeAtReception: true },
+    ),
     materials.cutFill,
   );
   leftTransition.name = `${roadId}-left-cut-fill-transition`;
@@ -388,7 +579,14 @@ function createRoadAssembly(roadId, definition, roadMaterial, group, materials) 
   group.add(leftTransition);
 
   const rightTransition = new THREE.Mesh(
-    buildPairStripGeometry(curve, definition, samples, (s) => s.rightShoulder, (s) => s.rightTerrain),
+    buildPairStripGeometry(
+      curve,
+      definition,
+      samples,
+      (s) => s.rightShoulder,
+      (s) => s.rightTerrain,
+      { terrainSafeAtReception: true },
+    ),
     materials.cutFill,
   );
   rightTransition.name = `${roadId}-right-cut-fill-transition`;
@@ -433,11 +631,16 @@ function createRoadAssembly(roadId, definition, roadMaterial, group, materials) 
 export function createHaulRoads(material) {
   const group = new THREE.Group();
   group.name = 'haul-roads';
+  const roadOverlay = {
+    polygonOffset: true,
+    polygonOffsetFactor: -1,
+    polygonOffsetUnits: -1,
+  };
   const materials = {
-    shoulder: createIndustrialMaterial('terrain', { color: 0x88745e, roughness: 1 }),
-    cutFill: createIndustrialMaterial('terrain', { color: 0x7d6a57, roughness: 1 }),
-    berm: createIndustrialMaterial('terrain', { color: 0x74614f, roughness: 1 }),
-    ditch: createIndustrialMaterial('terrain', { color: 0x5f5b50, roughness: 1, metalness: 0 }),
+    shoulder: createIndustrialMaterial('terrain', { color: 0x756858, roughness: 1, preserveColor: true, ...roadOverlay }),
+    cutFill: createIndustrialMaterial('terrain', { color: 0x6a5b4a, roughness: 1, preserveColor: true, ...roadOverlay }),
+    berm: createIndustrialMaterial('terrain', { color: 0x665547, roughness: 1, preserveColor: true }),
+    ditch: createIndustrialMaterial('terrain', { color: 0x51514d, roughness: 1, metalness: 0, preserveColor: true, ...roadOverlay }),
   };
 
   Object.entries(ROAD_DEFINITIONS).forEach(([roadId, definition]) => {

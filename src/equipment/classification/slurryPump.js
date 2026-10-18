@@ -35,14 +35,19 @@ export function createSlurryPumpAsset() {
   const impeller = new THREE.Group();
   impeller.name = 'pump-impeller';
   impeller.position.set(-1.15, 1.05, 0);
+  impeller.userData.rotationAxis = 'x';
   root.add(impeller);
+  const impellerVisual = new THREE.Group();
+  impellerVisual.name = 'pump-impeller-visual';
+  impellerVisual.rotation.y = Math.PI / 2;
+  impeller.add(impellerVisual);
   const hub = cylinderMesh('impeller-hub', 0.18, 0.18, 0.44, steel.clone(), [0, 0, 0], 24, { role: 'interior' });
   hub.rotation.x = Math.PI / 2;
-  impeller.add(hub);
+  impellerVisual.add(hub);
   for (let i = 0; i < 7; i += 1) {
     const blade = boxMesh(`impeller-blade-${i}`, [0.68, 0.12, 0.2], steel.clone(), [0.31, 0, 0], { role: 'interior', lodTier: 1 });
     blade.rotation.z = (i / 7) * Math.PI * 2;
-    impeller.add(blade);
+    impellerVisual.add(blade);
   }
 
   const shaft = cylinderMesh('pump-shaft', 0.09, 0.09, 2.1, steel.clone(), [0.1, 1.05, 0], 20, { role: 'interior' });
@@ -81,7 +86,7 @@ export function createSlurryPumpAsset() {
     ],
     capabilities: { impellerRotation: true, slurryPath: true, cutaway: true, inspection: true, lod: true },
     update: (dt, elapsed) => {
-      impeller.rotation.z -= dt * 5.6;
+      impeller.rotation.x -= dt * 5.6;
       slurry.scale.setScalar(1 + Math.sin(elapsed * 5) * 0.015);
       animateSuspendedSolids(suspendedSolids, dt, elapsed, { speed: 0.42, phase: 0.7 });
     },

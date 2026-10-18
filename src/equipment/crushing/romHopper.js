@@ -48,6 +48,43 @@ export function createRomHopperAsset() {
     grizzly.add(bar);
   }
 
+  // V29: the truck fleet uses a low side-entry dump throat. The approved V26
+  // civil datum leaves the main grizzly deck above the physical truck dump lip,
+  // so the receiving pocket must be part of the hopper rather than faking an
+  // uphill ore stream or changing ROAD-01 / process XZ.
+  const truckDumpThroat = new THREE.Group();
+  truckDumpThroat.name = 'rom-truck-dump-throat';
+  truckDumpThroat.userData.visualOnly = true;
+  truckDumpThroat.userData.truckDumpReceiver = true;
+  const throatFloor = boxMesh(
+    'rom-truck-dump-throat-floor',
+    [3.1, 0.18, 5.4],
+    linerMat.clone(),
+    [-5.45, 2.02, 0],
+    { role: 'interior' },
+  );
+  throatFloor.rotation.z = -0.055;
+  truckDumpThroat.add(throatFloor);
+  for (const z of [-2.78, 2.78]) {
+    const side = boxMesh(
+      `rom-truck-dump-throat-side-${z < 0 ? 'left' : 'right'}`,
+      [3.15, 1.25, 0.16],
+      shellMat.clone(),
+      [-5.45, 2.58, z],
+      { role: 'shell' },
+    );
+    side.rotation.z = -0.055;
+    truckDumpThroat.add(side);
+  }
+  truckDumpThroat.add(boxMesh(
+    'rom-truck-dump-throat-impact-lip',
+    [0.18, 0.78, 5.55],
+    frameMat.clone(),
+    [-6.92, 2.38, 0],
+    { role: 'structure' },
+  ));
+  root.add(truckDumpThroat);
+
   const ore = new THREE.Mesh(new THREE.ConeGeometry(3.5, 4.2, 36, 1, true), createEquipmentMaterial('ore'));
   ore.name = 'rom-hopper-ore';
   ore.position.set(0, 4.85, 0);
@@ -80,7 +117,7 @@ export function createRomHopperAsset() {
     referenceClass: 'truck dump ROM hopper with grizzly',
     dimensions: DIMENSIONS,
     ports: [
-      { id: 'feedIn', type: 'materialIn', position: [0, 7.3, 0], direction: [0, -1, 0] },
+      { id: 'feedIn', type: 'materialIn', position: [-6.72, 2.18, 0], direction: [1, -0.08, 0] },
       { id: 'dischargeOut', type: 'materialOut', position: [0, 1.95, 0], direction: [0, -1, 0] },
     ],
     capabilities: { materialFlow: true, grizzlyVibration: true, inspection: true, cutaway: true, lod: false },

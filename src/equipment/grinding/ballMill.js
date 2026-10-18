@@ -69,13 +69,17 @@ export function createBallMillAsset() {
   rotatingGroup.add(liners);
   const charge = new THREE.Group();
   charge.name = 'mill-charge';
+  charge.position.y = AXIS_Y;
   for (let i = 0; i < 46; i += 1) {
     const ball = sphereMesh(`grinding-ball-${i}`, 0.10 + (i % 5) * 0.012, createEquipmentMaterial('bareSteel'), [-2.8 + (i % 12) * 0.5, -1.25 + ((i * 7) % 6) * 0.16, -1.4 + ((i * 11) % 10) * 0.28], { role: 'interior', lodTier: 2 });
     charge.add(ball);
   }
   const oreBed = boxMesh('mill-ore-charge', [5.8, 0.7, 2.9], createEquipmentMaterial('slurry'), [0, -1.45, 0], { role: 'interior', lodTier: 1 });
   charge.add(oreBed);
-  rotatingGroup.add(charge);
+  // The shell/liners rotate, but the bulk charge remains gravity-referenced in
+  // the lower half of the mill. Keeping it outside rotatingGroup also prevents
+  // the preserved Blender overlay from orbiting through the upper shell.
+  root.add(charge);
 
   for (const x of [-3.9, 3.9]) {
     staticGroup.add(boxMesh(`mill-concrete-foundation-${x}`, [1.45, 1.15, 4.5], createEquipmentMaterial('concrete'), [x, 0.575, 0], { role: 'structure' }));

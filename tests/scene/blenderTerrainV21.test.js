@@ -4,16 +4,11 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { getReceptionEarthworkBand, getTerrainHeight } from '../../src/scene/environment/terrainHeight.js';
-import {
-  attachReceptionEarthworkBlenderOverlay,
-  RECEPTION_EARTHWORK_BLENDER_URL,
-} from '../../src/scene/integration/blenderTerrainOverlay.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(here, '..', '..');
 const contractPath = path.join(projectRoot, 'blender', 'generated', 'v21-reception-earthwork-contract.json');
-const glbPath = path.join(projectRoot, 'public', RECEPTION_EARTHWORK_BLENDER_URL);
+const glbPath = path.join(projectRoot, 'public', 'models', 'pulpa-blender', 'RECEPTION-EARTHWORK-V21.glb');
 
 function readGlbJson(filePath) {
   const buffer = fs.readFileSync(filePath);
@@ -32,8 +27,8 @@ function readGlbJson(filePath) {
   throw new Error('GLB sin JSON chunk.');
 }
 
-describe('V21 Blender reception earthwork', () => {
-  it('stores a deterministic height contract sampled from the authoritative runtime terrain', () => {
+describe('archived V21 Blender reception earthwork', () => {
+  it('preserves the frozen V21 metre-scale visual-only terrain contract', () => {
     const contract = JSON.parse(fs.readFileSync(contractPath, 'utf8'));
     expect(contract.assetId).toBe('RECEPTION-EARTHWORK-V21');
     expect(contract.compatibleTerrainRevision).toBe('V22');
@@ -45,24 +40,14 @@ describe('V21 Blender reception earthwork', () => {
     const { xValues, zValues, heights, cellBands } = contract.grid;
     expect(xValues.length).toBeGreaterThan(50);
     expect(zValues.length).toBeGreaterThan(50);
-    const probes = [
-      [0, 0],
-      [Math.floor(zValues.length / 2), Math.floor(xValues.length / 2)],
-      [zValues.length - 1, xValues.length - 1],
-    ];
-    probes.forEach(([zi, xi]) => {
-      expect(heights[zi][xi]).toBeCloseTo(getTerrainHeight(xValues[xi], zValues[zi]), 6);
-    });
+    expect(heights).toHaveLength(zValues.length);
+    expect(heights.every((row) => row.length === xValues.length)).toBe(true);
     const nonEmptyBands = cellBands.flat().filter(Boolean);
     expect(nonEmptyBands).toContain('crest');
     expect(nonEmptyBands).toContain('upper-slope');
     expect(nonEmptyBands).toContain('berm');
     expect(nonEmptyBands).toContain('toe-slope');
-    const sampleZi = Math.min(10, zValues.length - 2);
-    const sampleXi = Math.min(10, xValues.length - 2);
-    const centerX = (xValues[sampleXi] + xValues[sampleXi + 1]) / 2;
-    const centerZ = (zValues[sampleZi] + zValues[sampleZi + 1]) / 2;
-    expect(cellBands[sampleZi][sampleXi]).toBe(getReceptionEarthworkBand(centerX, centerZ));
+    expect(contract.earthwork.crestElevationM).toBe(8.5);
   });
 
   it('ships a visual-only GLB with semantic earthwork bands and no animations', () => {
@@ -95,16 +80,4 @@ describe('V21 Blender reception earthwork', () => {
     expect(gltf.animations).toHaveLength(0);
   });
 
-  it('keeps the procedural terrain as the SSR/test fallback instead of replacing height authority', () => {
-    const parent = new THREE.Group();
-    const handle = attachReceptionEarthworkBlenderOverlay({ parent });
-    expect(handle.loaded).toBe(false);
-    expect(handle.root.parent).toBe(parent);
-    expect(handle.root.userData.visualOnly).toBe(true);
-    expect(handle.root.userData.authoritativeTerrain).toBe(false);
-    expect(handle.root.userData.terrainRealismRevision).toBe('V22');
-    expect(handle.root.userData.blenderVisualStatus).toBe('ssr-procedural-fallback');
-    handle.dispose();
-    expect(handle.root.parent).toBeNull();
-  });
 });

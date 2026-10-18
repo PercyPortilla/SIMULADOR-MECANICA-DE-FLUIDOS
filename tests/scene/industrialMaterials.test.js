@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  applyIndustrialPaletteToScene,
   createIndustrialMaterial,
   createPipeMaterial,
+  resetIndustrialPalette,
   SURFACE_MATERIAL_PROFILES,
 } from '../../src/scene/materials/industrialMaterials.js';
+import * as THREE from 'three';
 
 describe('industrial materials', () => {
   it('differentiates concrete and structural steel physically', () => {
@@ -58,5 +61,19 @@ describe('industrial materials', () => {
 
     expect(luminanceProxy(darkSteel)).toBeGreaterThan(luminanceProxy(belt));
     expect(luminanceProxy(processSteel)).toBeGreaterThan(luminanceProxy(darkSteel));
+  });
+
+  it('can lock specialized civil colors against global scene-palette recoloring', () => {
+    const material = createIndustrialMaterial('terrain', { color: 0x6a5b4a, preserveColor: true });
+    const original = material.color.getHex();
+    const root = new THREE.Group();
+    root.add(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), material));
+    try {
+      applyIndustrialPaletteToScene(root, { terrain: 0xf0dfbf });
+      expect(material.userData.paletteColorLocked).toBe(true);
+      expect(material.color.getHex()).toBe(original);
+    } finally {
+      resetIndustrialPalette();
+    }
   });
 });

@@ -1,13 +1,13 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-export const RECEPTION_EARTHWORK_BLENDER_URL = 'models/pulpa-blender/RECEPTION-EARTHWORK-V21.glb';
-export const RECEPTION_EARTHWORK_TERRAIN_REVISION = 'V22';
+export const RECEPTION_EARTHWORK_BLENDER_URL = 'models/pulpa-blender/RECEPTION-EARTHWORK-V26.glb';
+export const RECEPTION_EARTHWORK_TERRAIN_REVISION = 'V26';
 
 const loader = new GLTFLoader();
 
 function prepareVisual(scene) {
-  scene.name = 'RECEPTION-EARTHWORK-V21-BLENDER';
+  scene.name = 'RECEPTION-EARTHWORK-V26-BLENDER';
   scene.userData.visualOnly = true;
   scene.userData.authoritativeTerrain = false;
   scene.traverse((object) => {
@@ -29,7 +29,7 @@ function prepareVisual(scene) {
 export function attachReceptionEarthworkBlenderOverlay({ parent } = {}) {
   if (!parent?.add) throw new TypeError('attachReceptionEarthworkBlenderOverlay necesita un parent Three.js.');
   const root = new THREE.Group();
-  root.name = 'reception-earthwork-v21-overlay';
+  root.name = 'reception-earthwork-v26-overlay';
   root.userData.visualOnly = true;
   root.userData.authoritativeTerrain = false;
   root.userData.blenderVisualUrl = RECEPTION_EARTHWORK_BLENDER_URL;
@@ -64,7 +64,7 @@ export function attachReceptionEarthworkBlenderOverlay({ parent } = {}) {
       if (disposed) return;
       root.userData.blenderVisualStatus = 'error-procedural-fallback';
       root.userData.blenderVisualError = error?.message || String(error);
-      console.warn('[PULPA LAB] No se pudo cargar el terraplén Blender V21; se conserva el terreno procedural.', error);
+      console.warn('[PULPA LAB] No se pudo cargar el terraplén Blender V26; se conserva el terreno procedural.', error);
     },
   );
 

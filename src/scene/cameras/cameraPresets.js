@@ -56,13 +56,13 @@ export function createCameraPresetConfigs() {
       44,
     ),
     reception: preset(
-      safePosition(reception.x - 38, reception.y + 25, reception.z + 39, 9),
-      reception.clone().add(new THREE.Vector3(5, 0, 0)),
-      46,
+      safePosition(reception.x - 50, reception.y + 32, reception.z + 50, 9),
+      reception.clone().add(new THREE.Vector3(2, 0.5, -2)),
+      48,
     ),
     crushing: preset(
-      safePosition(crushingStockpile.x - 34, crushingStockpile.y + 24, crushingStockpile.z + 38, 9),
-      crushingStockpile,
+      safePosition(-105.75, 63.78, 49.32, 9),
+      new THREE.Vector3(-27.62, 8.63, -38),
       43,
     ),
     grinding: preset(
@@ -76,8 +76,8 @@ export function createCameraPresetConfigs() {
       42,
     ),
     recovery: preset(
-      safePosition(recovery.x, recovery.y + 27, recovery.z + 50, 9),
-      recovery.clone().add(new THREE.Vector3(0, 1.2, 0)),
+      safePosition(204.98, 45.42, -14.59, 9),
+      new THREE.Vector3(204.98, 6.35, -90.31),
       42,
     ),
     inspection: (() => {

@@ -3,6 +3,7 @@ import {
   CRUSHING_CUT,
   RECEPTION_EARTHWORK,
   ROAD_CIVIL_DETAIL,
+  SERVICE_ROAD_VERTICAL_PROFILE,
 } from '../../src/scene/config/siteDesign.js';
 import {
   getCrushingEarthworkBand,
@@ -75,7 +76,7 @@ describe('V22 terrain and civil realism', () => {
     );
     expect(getRoadSafetyBermHeight('ROAD-01', 0.5)).toBeCloseTo(ROAD_CIVIL_DETAIL.primaryBermHeightM, 6);
     expect(getRoadSafetyBermHeight('ROAD-01', 1)).toBeCloseTo(0, 6);
-    expect(getRoadCutFillTransitionWidth('ROAD-02', 1)).toBeCloseTo(3.2, 6);
+    expect(getRoadCutFillTransitionWidth('ROAD-02', 1)).toBeCloseTo(SERVICE_ROAD_VERTICAL_PROFILE.minimumTransitionWidthM, 6);
     expect(getRoadSafetyBermHeight('ROAD-02', 1)).toBeCloseTo(0.48, 6);
   });
 

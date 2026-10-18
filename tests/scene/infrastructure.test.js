@@ -13,11 +13,13 @@ describe('infraestructura de conexión', () => {
     return readonlyBase;
   };
 
-  it('mantiene cuatro caminos y ROAD-04 sigue la topografía', () => {
+  it('mantiene cuatro caminos y ROAD-04 usa una rasante diseñada cerca de la topografía', () => {
     const path = getRoadPath('ROAD-04');
     expect(path.length).toBeGreaterThan(2);
+    const metrics = getRoadDesignMetrics('ROAD-04', { samples: 640 });
+    expect(metrics.maximumGrade).toBeLessThanOrEqual(ROAD_DEFINITIONS['ROAD-04'].maximumGrade);
     path.forEach((point) => {
-      expect(point.y).toBeCloseTo(getTerrainHeight(point.x, point.z) + 0.10, 8);
+      expect(Math.abs(point.y - (getTerrainHeight(point.x, point.z) + 0.10))).toBeLessThan(1.2);
     });
   });
 

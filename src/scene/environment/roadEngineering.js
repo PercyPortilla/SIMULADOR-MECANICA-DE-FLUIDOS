@@ -1,5 +1,10 @@
 import * as THREE from 'three';
-import { PIT_DESIGN, ROAD_DEFINITIONS, TOPOGRAPHIC_ZONES } from '../config/siteDesign.js';
+import {
+  PIT_DESIGN,
+  PRIMARY_HAUL_VERTICAL_PROFILE,
+  ROAD_DEFINITIONS,
+  TOPOGRAPHIC_ZONES,
+} from '../config/siteDesign.js';
 
 const PRIMARY_ROAD_ID = 'ROAD-01';
 const alignmentCache = new Map();
@@ -25,9 +30,27 @@ export function createPrimaryRoadAlignment({ surfaceOffsetM = 0 } = {}) {
   const fractions = controlPointFractions(definition.points);
   const startElevation = PIT_DESIGN.floorElevation + 1.0;
   const endElevation = TOPOGRAPHIC_ZONES.reception.elevation;
+  const tieInIndex = Math.min(
+    definition.points.length - 2,
+    Math.max(1, PRIMARY_HAUL_VERTICAL_PROFILE.tieInStartControlIndex),
+  );
+  const tieInFraction = fractions[tieInIndex];
+  const tieInElevation = lerp(
+    startElevation,
+    PRIMARY_HAUL_VERTICAL_PROFILE.baselineReceptionElevationM,
+    tieInFraction,
+  );
   const controlPoints = definition.points.map(([x, z], index) => new THREE.Vector3(
     x,
-    lerp(startElevation, endElevation, fractions[index]) + surfaceOffsetM,
+    (
+      index <= tieInIndex
+        ? lerp(startElevation, PRIMARY_HAUL_VERTICAL_PROFILE.baselineReceptionElevationM, fractions[index])
+        : lerp(
+          tieInElevation,
+          endElevation,
+          (fractions[index] - tieInFraction) / Math.max(1e-9, 1 - tieInFraction),
+        )
+    ) + surfaceOffsetM,
     z,
   ));
   const curve = new THREE.CatmullRomCurve3(controlPoints, false, 'centripetal');

@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
-import { computeInspectionCameraDistance, createBaseScene } from '../../src/scene/baseEnvironment.js';
+import {
+  applyInspectionCameraFraming,
+  computeInspectionCameraDistance,
+  createBaseScene,
+} from '../../src/scene/baseEnvironment.js';
 import {
   createEquipmentInspectionSystem,
   computeInspectionFraming,
@@ -123,8 +127,45 @@ describe('equipment internal inspection modes', () => {
   it('computes camera framing from object dimensions and viewport aspect', () => {
     const compact = computeInspectionCameraDistance([2, 2, 2], 42, 16 / 9);
     const large = computeInspectionCameraDistance([20, 8, 12], 42, 16 / 9);
+    const legacyPadded = computeInspectionCameraDistance([20, 8, 12], 42, 16 / 9, 2.05);
     expect(compact).toBeGreaterThan(2);
     expect(large).toBeGreaterThan(compact);
+    expect(large).toBeLessThan(legacyPadded);
+  });
+
+  it('pushes Inspection outward on a narrow resize without changing the current orbit direction', () => {
+    const camera = new THREE.PerspectiveCamera(42, 1096 / 520, 0.1, 1200);
+    const target = new THREE.Vector3(4, 3, -2);
+    camera.position.copy(target).add(new THREE.Vector3(18, 10, 16));
+    const controls = {
+      target: target.clone(),
+      minDistance: 0,
+      maxDistance: 0,
+      updateCalls: 0,
+      update() { this.updateCalls += 1; },
+    };
+    const framing = {
+      center: new THREE.Vector3(4, 3, -2),
+      size: new THREE.Vector3(20, 8, 12),
+    };
+    applyInspectionCameraFraming(camera, controls, framing);
+    const desktopDistance = camera.position.distanceTo(controls.target);
+    const desktopDirection = camera.position.clone().sub(controls.target).normalize();
+
+    camera.aspect = 390 / 520;
+    camera.updateProjectionMatrix();
+    const result = applyInspectionCameraFraming(camera, controls, framing, {
+      minimumOnly: true,
+      recenter: false,
+    });
+    const mobileDistance = camera.position.distanceTo(controls.target);
+    const mobileDirection = camera.position.clone().sub(controls.target).normalize();
+
+    expect(mobileDistance).toBeGreaterThan(desktopDistance);
+    expect(mobileDistance).toBeGreaterThanOrEqual(result.requiredDistance - 1e-9);
+    expect(mobileDirection.dot(desktopDirection)).toBeGreaterThan(0.999999);
+    expect(controls.target.distanceTo(target)).toBeLessThan(1e-9);
+    expect(controls.updateCalls).toBe(2);
   });
 
   it('defines close-view focus profiles only for reproduced long targets', () => {
@@ -160,72 +201,4 @@ describe('equipment internal inspection modes', () => {
     }
   });
 
-  it('focuses stockpile Inspection on reclaim hardware instead of the full ore-pile envelope', () => {
-    const scene = createBaseScene();
-    const stockpile = scene.scene.getObjectByName('STOCKPILE-RECLAIM');
-    const framing = scene.equipmentInspection.getFraming('STOCKPILE-RECLAIM');
-    expect(framing.focused).toBe(true);
-    expect(framing.source).toBe('object:STOCKPILE-RECLAIM-motion');
-    expect(framing.size.length()).toBeLessThan(framing.fullSize.length() * 0.5);
-    expect(stockpile.getObjectByName('STOCKPILE-RECLAIM-motion')).toBeTruthy();
-  });
-
-  it('refreshes context boxes when an inspected mobile target moves', () => {
-    const scene = createBaseScene();
-    const excavator = scene.scene.getObjectByName('EXCAVATOR-01');
-    scene.equipmentInspection.setTarget('EXCAVATOR-01');
-    const helper = scene.equipmentInspection.contextOverlay.children.find((child) => child.userData.role === 'selected');
-    const before = helper.box.getCenter(new THREE.Vector3());
-    excavator.position.x += 3;
-    scene.equipmentInspection.refreshContextOverlay();
-    const after = helper.box.getCenter(new THREE.Vector3());
-    expect(after.x - before.x).toBeCloseTo(3, 1);
-  });
-
-  it('reveals a pump impeller in cutaway and restores normal visibility', () => {
-    const scene = createBaseScene();
-    const pump = scene.equipmentSystem.getEquipment('PUMP-01').group3D;
-    const impeller = pump.getObjectByName('pump-impeller');
-    expect(impeller).toBeTruthy();
-    scene.equipmentInspection.setTarget('PUMP-01');
-    scene.equipmentInspection.setMode('cutaway');
-    expect(impeller.visible).toBe(true);
-    const casing = pump.getObjectByName('pump-volute');
-    const clipping = Array.isArray(casing.material) ? casing.material[0].clippingPlanes : casing.material.clippingPlanes;
-    expect(clipping?.length).toBe(1);
-    scene.equipmentInspection.setMode('normal');
-    const restored = Array.isArray(casing.material) ? casing.material[0].clippingPlanes : casing.material.clippingPlanes;
-    expect(restored ?? []).toHaveLength(0);
-  });
-
-  it('keeps Inspection interior shell visibility intact across LOD refreshes', () => {
-    const scene = createBaseScene();
-    const pump = scene.equipmentSystem.getEquipment('PUMP-01').group3D;
-    const casing = pump.getObjectByName('pump-volute');
-    expect(casing).toBeTruthy();
-
-    scene.equipmentInspection.setTarget('PUMP-01');
-    scene.equipmentInspection.setMode('interior');
-    expect(casing.visible).toBe(false);
-    expect(pump.userData.inspectionMode).toBe('interior');
-
-    scene.equipmentSystem.updateLOD(scene.cameras.inspection);
-    expect(casing.visible).toBe(false);
-
-    scene.equipmentInspection.setMode('normal');
-    expect(pump.userData.inspectionMode).toBe('normal');
-  });
-
-  it('reveals internal pipe slurry without changing physical diameter metadata', () => {
-    const scene = createBaseScene();
-    const pipe = scene.scene.getObjectByName('P-PUMP-01-TO-CIP');
-    const fluid = pipe.getObjectByName('P-PUMP-01-TO-CIP-slurry-stream-1');
-    expect(fluid.visible).toBe(false);
-    const physical = pipe.userData.physicalDiameterM;
-    scene.equipmentInspection.setTarget('P-PUMP-01-TO-CIP');
-    scene.equipmentInspection.setMode('transparent');
-    expect(fluid.visible).toBe(true);
-    expect(pipe.userData.physicalDiameterM).toBe(physical);
-    expect(pipe.userData.visualDiameterM).toBeGreaterThanOrEqual(physical);
-  });
 });

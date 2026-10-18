@@ -118,11 +118,12 @@ it('adapts LOD updates to camera motion and keeps a slow safety refresh while st
 
   animations.setEnabled(false);
   camera.position.x += 1;
-  animations.updateViewLOD(0.13, camera);
+  expect(animations.updateViewLOD(0.13, camera)).toBe(true);
   expect(lodCalls).toBe(4);
+  expect(animations.updateViewLOD(0.13, camera)).toBe(false);
 
   const alternateCamera = new THREE.PerspectiveCamera();
-  animations.refreshLOD(alternateCamera);
+  expect(animations.refreshLOD(alternateCamera)).toBe(true);
   expect(lodCalls).toBe(5);
   expect(animations.lodUpdateIntervalSeconds).toBe(0.125);
   expect(animations.lodStationaryRefreshSeconds).toBe(2);

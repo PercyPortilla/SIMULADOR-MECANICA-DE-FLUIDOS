@@ -20,7 +20,11 @@ export const DEFAULT_INDUSTRIAL_PALETTE = Object.freeze({
 export const INDUSTRIAL_PALETTE = { ...DEFAULT_INDUSTRIAL_PALETTE };
 
 export const SURFACE_MATERIAL_PROFILES = Object.freeze({
-  terrain: Object.freeze({ albedoRepeat: [7, 5], roughnessRepeat: [5, 4], bumpRepeat: [9, 6], bumpScale: 0.078 }),
+  // Fewer large-scale repeats keep the mine surface from reading as a tiled
+  // procedural carpet in Top/General views. The V26 reception GLB itself remains
+  // world-planar and non-repeating; this profile only improves the surrounding
+  // procedural terrain so the visual transition is not obvious.
+  terrain: Object.freeze({ albedoRepeat: [1, 1], roughnessRepeat: [1.21, 1.07], bumpRepeat: [1.37, 1.19], bumpScale: 0.048 }),
   road: Object.freeze({ albedoRepeat: [9, 4], roughnessRepeat: [7, 3], bumpRepeat: [12, 4], bumpScale: 0.050 }),
   concrete: Object.freeze({ albedoRepeat: [4, 3], roughnessRepeat: [3, 3], bumpRepeat: [5, 4], bumpScale: 0.040 }),
 });
@@ -43,6 +47,25 @@ function makeBumpTexture(role) {
     value = Math.imul(value ^ (value >>> 13), 1274126177);
     return ((value ^ (value >>> 16)) >>> 0) / 4294967295;
   };
+  const valueNoise = (x, y, cell, seed) => {
+    const gx = x / cell;
+    const gy = y / cell;
+    const ix = Math.floor(gx);
+    const iy = Math.floor(gy);
+    const tx = gx - ix;
+    const ty = gy - iy;
+    const sx = tx * tx * (3 - 2 * tx);
+    const sy = ty * ty * (3 - 2 * ty);
+    const n00 = hash01(ix + seed * 19, iy - seed * 13);
+    const n10 = hash01(ix + 1 + seed * 19, iy - seed * 13);
+    const n01 = hash01(ix + seed * 19, iy + 1 - seed * 13);
+    const n11 = hash01(ix + 1 + seed * 19, iy + 1 - seed * 13);
+    return THREE.MathUtils.lerp(
+      THREE.MathUtils.lerp(n00, n10, sx),
+      THREE.MathUtils.lerp(n01, n11, sx),
+      sy,
+    ) * 2 - 1;
+  };
   const brushed = role.includes('Steel') || role === 'safetyYellow' || role === 'vehicleYellow';
   const isGround = role === 'terrain' || role === 'road';
   const isConcrete = role === 'concrete';
@@ -62,7 +85,11 @@ function makeBumpTexture(role) {
         const grain = (hash01(x, y) - 0.5) * 8;
         value = 128 + brush + grain;
       } else {
-        const broad = macroNoise(x, y) * (isGround ? 16 : 8);
+        const broad = (role === 'terrain'
+          ? valueNoise(x + 41, y - 29, 61, 5) * 0.55
+            + valueNoise(x - 23, y + 57, 27, 11) * 0.31
+            + valueNoise(x + 83, y + 17, 11, 17) * 0.14
+          : macroNoise(x, y)) * (isGround ? 16 : 8);
         const medium = (
           Math.sin(x * 0.081 + y * 0.049 + 0.5)
           + Math.cos(x * 0.037 - y * 0.069 - 0.8)
@@ -110,12 +137,33 @@ function makeSurfaceTexture(role, kind) {
     value = Math.imul(value ^ (value >>> 13), 1274126177);
     return ((value ^ (value >>> 16)) >>> 0) / 4294967295;
   };
+  const valueNoise = (x, y, cell, seed) => {
+    const gx = x / cell;
+    const gy = y / cell;
+    const ix = Math.floor(gx);
+    const iy = Math.floor(gy);
+    const tx = gx - ix;
+    const ty = gy - iy;
+    const sx = tx * tx * (3 - 2 * tx);
+    const sy = ty * ty * (3 - 2 * ty);
+    const n00 = hash01(ix + seed * 17, iy - seed * 11);
+    const n10 = hash01(ix + 1 + seed * 17, iy - seed * 11);
+    const n01 = hash01(ix + seed * 17, iy + 1 - seed * 11);
+    const n11 = hash01(ix + 1 + seed * 17, iy + 1 - seed * 11);
+    const nx0 = THREE.MathUtils.lerp(n00, n10, sx);
+    const nx1 = THREE.MathUtils.lerp(n01, n11, sx);
+    return THREE.MathUtils.lerp(nx0, nx1, sy) * 2 - 1;
+  };
   for (let y = 0; y < canvas.height; y += 1) {
     for (let x = 0; x < canvas.width; x += 1) {
       const index = (y * canvas.width + x) * 4;
-      const macro = Math.sin(x * 0.024 + y * 0.017 + 0.6) * 0.55
-        + Math.cos(x * 0.011 - y * 0.029 + 1.7) * 0.30
-        + Math.sin((x + y) * 0.0063 - 0.5) * 0.15;
+      const macro = role === 'terrain'
+        ? valueNoise(x + 31, y - 23, 58, 3) * 0.52
+          + valueNoise(x - 17, y + 47, 23, 7) * 0.32
+          + valueNoise(x + 89, y + 11, 9, 13) * 0.16
+        : Math.sin(x * 0.024 + y * 0.017 + 0.6) * 0.55
+          + Math.cos(x * 0.011 - y * 0.029 + 1.7) * 0.30
+          + Math.sin((x + y) * 0.0063 - 0.5) * 0.15;
       const grain = hash01(x, y) - 0.5;
       const stain = hash01(Math.floor(x / 11) + 3, Math.floor(y / 13) + 9) - 0.5;
       let value;
@@ -167,6 +215,7 @@ function bumpFor(role, scale) {
 }
 
 export function createIndustrialMaterial(role, overrides = {}) {
+  const { preserveColor = false, ...materialOverrides } = overrides;
   const presets = {
     terrain: { color: INDUSTRIAL_PALETTE.terrain, roughness: 0.99, metalness: 0, bumpScale: SURFACE_MATERIAL_PROFILES.terrain.bumpScale, ...surfaceMaps('terrain'), ...bumpFor('terrain', SURFACE_MATERIAL_PROFILES.terrain.bumpScale) },
     road: { color: INDUSTRIAL_PALETTE.road, roughness: 1, metalness: 0, bumpScale: SURFACE_MATERIAL_PROFILES.road.bumpScale, ...surfaceMaps('road'), ...bumpFor('road', SURFACE_MATERIAL_PROFILES.road.bumpScale) },
@@ -192,9 +241,10 @@ export function createIndustrialMaterial(role, overrides = {}) {
   const material = new THREE.MeshStandardMaterial({
     ...preset,
     envMapIntensity: role === 'glass' ? 0.65 : 0.9,
-    ...overrides,
+    ...materialOverrides,
   });
   material.userData.materialRole = role;
+  material.userData.paletteColorLocked = preserveColor === true;
   if (SURFACE_MATERIAL_PROFILES[role]) material.userData.surfaceProfile = { ...SURFACE_MATERIAL_PROFILES[role] };
   return material;
 }
@@ -239,6 +289,7 @@ export function applyIndustrialPaletteToScene(root, overrides = {}) {
   root?.traverse?.((object) => {
     const materials = Array.isArray(object.material) ? object.material : [object.material];
     materials.filter(Boolean).forEach((material) => {
+      if (material.userData?.paletteColorLocked === true) return;
       const role = material.userData?.materialRole ?? material.userData?.scenePaletteRole;
       if (role && Object.hasOwn(INDUSTRIAL_PALETTE, role) && material.color) {
         material.color.setHex(INDUSTRIAL_PALETTE[role]);

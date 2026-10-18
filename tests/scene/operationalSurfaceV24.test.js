@@ -10,9 +10,11 @@ describe('V24 Bloque 7 - huellas y desgaste operacional', () => {
     expect(details.userData.authoritativeTerrain).toBe(false);
     expect(details.userData.reusesExistingRoadTracks).toBe(true);
     expect(details.userData.reusesExistingDrainage).toBe(true);
-    expect(details.userData.surfacePatchCount).toBe(4);
+    expect(details.userData.surfacePatchCount).toBe(5);
     expect(details.userData.controlledSpillCount).toBe(3);
+    expect(details.userData.romStagingPileCount).toBe(1);
     expect(details.getObjectByName('v24-stockpile-loader-scuffs')).toBeTruthy();
+    expect(details.getObjectByName('ROM-STAGING-PILE')).toBeTruthy();
   });
 
   it('does not mutate terrain heights or ROAD-01..04 alignments', () => {

@@ -3,7 +3,14 @@ import { getReceptionEarthworkBand, getTerrainHeight, getZoneElevation } from '.
 import { createRoadAlignment, getRoadPath, getRoadSurfaceOffset, getRoadWidth, HAUL_ROAD_WIDTH } from '../../src/scene/environment/haulRoads.js';
 import { nearestOnPrimaryRoad } from '../../src/scene/environment/roadEngineering.js';
 import { getIndustrialPad } from '../../src/scene/environment/industrialPads.js';
-import { MINE_AUXILIARY_AREAS, PIT_DESIGN, RECEPTION_EARTHWORK, ROAD_DEFINITIONS, SITE_EXTENT } from '../../src/scene/config/siteDesign.js';
+import {
+  MINE_AUXILIARY_AREAS,
+  PIT_DESIGN,
+  RECEPTION_EARTHWORK,
+  RECEPTION_PROCESS_CUTS,
+  ROAD_DEFINITIONS,
+  SITE_EXTENT,
+} from '../../src/scene/config/siteDesign.js';
 import { createMineProps } from '../../src/scene/environment/mineProps.js';
 import { createBaseScene } from '../../src/scene/baseEnvironment.js';
 import { getPitVisualSector } from '../../src/scene/environment/terrain.js';
@@ -144,11 +151,11 @@ describe('mine terrain', () => {
     expect(getReceptionEarthworkBand(cx, cz + halfDepth + 2)).toBeNull();
   });
 
-  it('keeps the reception east side open for the existing crushing transition', () => {
+  it('keeps the reception east side open while honoring the lower crusher pocket', () => {
     const [cx, cz] = RECEPTION_EARTHWORK.center;
     const eastEdge = cx + RECEPTION_EARTHWORK.crestSizeM[0] / 2;
     expect(getReceptionEarthworkBand(eastEdge + 2, cz)).toBeNull();
-    expect(getTerrainHeight(-88, -30)).toBeCloseTo(getZoneElevation('crushing'), 0);
+    expect(getTerrainHeight(-88, -30)).toBeCloseTo(RECEPTION_PROCESS_CUTS.crusherPocket.elevationM, 6);
   });
 
   it('keeps decorative pit rocks inside the rendered terrain extent', () => {
