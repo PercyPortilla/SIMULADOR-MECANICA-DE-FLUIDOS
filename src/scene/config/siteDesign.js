@@ -63,7 +63,10 @@ export const MINE_DUMP_ACCESS_PATHS = Object.freeze({
 });
 
 export const TOPOGRAPHIC_ZONES = Object.freeze({
-  reception: Object.freeze({ id: 'reception', center: [-110, -30], size: [58, 48], elevation: 8.5 }),
+  // V26 approved reception contract: the ROM dump terrace is elevated above the
+  // feeder trench and primary-crusher pocket while downstream plant datums stay
+  // unchanged. X/Z process coordinates remain the V25 authoritative layout.
+  reception: Object.freeze({ id: 'reception', center: [-110, -30], size: [58, 48], elevation: 10.0 }),
   crushing: Object.freeze({ id: 'crushing', center: [-82, -30], size: [42, 34], elevation: 6.0 }),
   stockpile: Object.freeze({ id: 'stockpile', center: [8, -38], size: [66, 54], elevation: 3.4 }),
   process: Object.freeze({ id: 'process', center: [105, -6], size: [112, 54], elevation: 2.2 }),
@@ -80,13 +83,34 @@ export const RECEPTION_EARTHWORK = Object.freeze({
   center: Object.freeze([...TOPOGRAPHIC_ZONES.reception.center]),
   crestSizeM: Object.freeze([...TOPOGRAPHIC_ZONES.reception.size]),
   crestElevationM: TOPOGRAPHIC_ZONES.reception.elevation,
-  upperSlopeRunM: 5.0,
-  bermWidthM: 5.0,
-  bermDropM: 1.0,
+  upperSlopeRunM: 5.5,
+  bermWidthM: 4.5,
+  bermDropM: 2.4,
   toeSlopeRunM: 10.0,
-  eastBlendWidthM: 16.0,
+  eastBlendWidthM: 20.0,
   embankmentSide: 'south',
   openEast: true,
+});
+
+// Local civil cuts make the receiving train read as a gravity-assisted sequence:
+// ROM dump terrace -> apron feeder trench -> primary crusher pocket. They are
+// terrain datums, not post-construction Y offsets, so equipment grounding and
+// all derived transfer endpoints continue to come from getTerrainHeight().
+export const RECEPTION_PROCESS_CUTS = Object.freeze({
+  apronTrench: Object.freeze({
+    id: 'apron-trench',
+    center: Object.freeze([-99.4, -30]),
+    size: Object.freeze([12.0, 8.0]),
+    elevationM: 8.6,
+    featherM: 2.8,
+  }),
+  crusherPocket: Object.freeze({
+    id: 'crusher-pocket',
+    center: Object.freeze([-88.0, -30]),
+    size: Object.freeze([10.0, 10.0]),
+    elevationM: 4.9,
+    featherM: 0.9,
+  }),
 });
 
 export const CRUSHING_CUT = Object.freeze({
@@ -107,6 +131,24 @@ export const ROAD_CIVIL_DETAIL = Object.freeze({
   primaryBermHeightM: 1.20,
   primaryBermTaperStart: 0.88,
   primaryBermTaperEnd: 0.985,
+});
+
+// ROAD-01 keeps the V24/V25 vertical profile through control point 10 and then
+// develops a dedicated final ROM climb. This avoids globally lifting the whole
+// service-junction region when the reception datum changes.
+export const PRIMARY_HAUL_VERTICAL_PROFILE = Object.freeze({
+  baselineReceptionElevationM: 8.5,
+  tieInStartControlIndex: 10,
+});
+
+// V27 service-road vertical design. Service alignments retain their existing
+// plan geometry and all shared junction coordinates, but their road surface is
+// grade-constrained instead of copying every abrupt terrain/zone transition.
+// Terrain remains authoritative outside the engineered road prism.
+export const SERVICE_ROAD_VERTICAL_PROFILE = Object.freeze({
+  targetGradeFactor: 0.80,
+  minimumTransitionWidthM: 4.2,
+  iterations: 48,
 });
 
 export const PLANT_ZONE_DEFINITIONS = Object.freeze({

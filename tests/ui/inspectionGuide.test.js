@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { INSPECTION_CIRCUIT_ORDER } from '../../src/scene/inspection/equipmentInspection.js';
+import { INSPECTION_CIRCUIT_ORDER } from '../../src/scene/inspection/inspectionContracts.js';
 import {
   INSPECTION_GUIDE,
   INSPECTION_COMPONENT_HOTSPOTS,

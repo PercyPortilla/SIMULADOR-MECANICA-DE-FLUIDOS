@@ -1,0 +1,47 @@
+{
+  "asset": "RECEPTION-EARTHWORK-V26",
+  "contract": "C:\\Users\\USER\\OneDrive\\Desktop\\CHATON\\pulpa-v26-approved\\blender\\generated\\v26-reception-earthwork-contract.json",
+  "contractHash": "f5a918278666ca1461dae10b61a961da2bfd01f4bbe4ae50661c8e395ac9bfd8",
+  "output": "C:\\Users\\USER\\OneDrive\\Desktop\\CHATON\\pulpa-v26-approved\\public\\models\\pulpa-blender\\RECEPTION-EARTHWORK-V26.glb",
+  "bytes": 1497624,
+  "objects": [
+    "RECEPTION-EARTHWORK-V26_CREST",
+    "RECEPTION-EARTHWORK-V26_UPPER_SLOPE",
+    "RECEPTION-EARTHWORK-V26_BERM",
+    "RECEPTION-EARTHWORK-V26_TOE_SLOPE"
+  ],
+  "overlays": [
+    "ROM-DUMP-APRON-WEAR",
+    "ROM-HOPPER-FINES-STAIN",
+    "ROM-TIRE-RIBBON-INNER",
+    "ROM-TIRE-RIBBON-OUTER"
+  ],
+  "cells": {
+    "crest": 2784,
+    "upper-slope": 370,
+    "berm": 289,
+    "toe-slope": 817
+  },
+  "textures": [
+    "C:\\Users\\USER\\OneDrive\\Desktop\\CHATON\\pulpa-v26-approved\\blender\\generated\\v26-reception-pbr\\V26_CREST_BASECOLOR.png",
+    "C:\\Users\\USER\\OneDrive\\Desktop\\CHATON\\pulpa-v26-approved\\blender\\generated\\v26-reception-pbr\\V26_CREST_ROUGHNESS.png",
+    "C:\\Users\\USER\\OneDrive\\Desktop\\CHATON\\pulpa-v26-approved\\blender\\generated\\v26-reception-pbr\\V26_CREST_NORMAL.png",
+    "C:\\Users\\USER\\OneDrive\\Desktop\\CHATON\\pulpa-v26-approved\\blender\\generated\\v26-reception-pbr\\V26_CREST_AO.png",
+    "C:\\Users\\USER\\OneDrive\\Desktop\\CHATON\\pulpa-v26-approved\\blender\\generated\\v26-reception-pbr\\V26_UPPER_SLOPE_BASECOLOR.png",
+    "C:\\Users\\USER\\OneDrive\\Desktop\\CHATON\\pulpa-v26-approved\\blender\\generated\\v26-reception-pbr\\V26_UPPER_SLOPE_ROUGHNESS.png",
+    "C:\\Users\\USER\\OneDrive\\Desktop\\CHATON\\pulpa-v26-approved\\blender\\generated\\v26-reception-pbr\\V26_UPPER_SLOPE_NORMAL.png",
+    "C:\\Users\\USER\\OneDrive\\Desktop\\CHATON\\pulpa-v26-approved\\blender\\generated\\v26-reception-pbr\\V26_UPPER_SLOPE_AO.png",
+    "C:\\Users\\USER\\OneDrive\\Desktop\\CHATON\\pulpa-v26-approved\\blender\\generated\\v26-reception-pbr\\V26_BERM_BASECOLOR.png",
+    "C:\\Users\\USER\\OneDrive\\Desktop\\CHATON\\pulpa-v26-approved\\blender\\generated\\v26-reception-pbr\\V26_BERM_ROUGHNESS.png",
+    "C:\\Users\\USER\\OneDrive\\Desktop\\CHATON\\pulpa-v26-approved\\blender\\generated\\v26-reception-pbr\\V26_BERM_NORMAL.png",
+    "C:\\Users\\USER\\OneDrive\\Desktop\\CHATON\\pulpa-v26-approved\\blender\\generated\\v26-reception-pbr\\V26_BERM_AO.png",
+    "C:\\Users\\USER\\OneDrive\\Desktop\\CHATON\\pulpa-v26-approved\\blender\\generated\\v26-reception-pbr\\V26_TOE_SLOPE_BASECOLOR.png",
+    "C:\\Users\\USER\\OneDrive\\Desktop\\CHATON\\pulpa-v26-approved\\blender\\generated\\v26-reception-pbr\\V26_TOE_SLOPE_ROUGHNESS.png",
+    "C:\\Users\\USER\\OneDrive\\Desktop\\CHATON\\pulpa-v26-approved\\blender\\generated\\v26-reception-pbr\\V26_TOE_SLOPE_NORMAL.png",
+    "C:\\Users\\USER\\OneDrive\\Desktop\\CHATON\\pulpa-v26-approved\\blender\\generated\\v26-reception-pbr\\V26_TOE_SLOPE_AO.png"
+  ],
+  "uvProjection": "world-xz",
+  "textureResolutionPx": 512,
+  "textureWrap": "clamp",
+  "authoritativeHeight": false
+}

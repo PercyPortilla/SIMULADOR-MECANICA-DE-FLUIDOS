@@ -4,10 +4,11 @@ import {
   MINE_DRAINAGE_PATHS,
   PIT_DESIGN,
   RECEPTION_EARTHWORK,
+  RECEPTION_PROCESS_CUTS,
   SITE_EXTENT,
   TOPOGRAPHIC_ZONES,
 } from '../config/siteDesign.js';
-import { nearestOnPrimaryRoad } from './roadEngineering.js';
+import { nearestOnPrimaryRoadProfile } from './primaryRoadProfile.js';
 
 const ZONES = TOPOGRAPHIC_ZONES;
 
@@ -151,6 +152,17 @@ function applyCrushingSouthCut(x, z, baseHeight) {
     1 - smoothstep(cut.activeXRangeM[1] - 4, cut.activeXRangeM[1], x),
   );
   return lerp(baseHeight, Math.min(baseHeight, target), edgeFade);
+}
+
+function applyReceptionProcessCut(x, z, baseHeight, definition) {
+  const influence = roundedRectInfluence(
+    x,
+    z,
+    { center: definition.center, size: definition.size },
+    definition.featherM,
+  );
+  if (influence <= 0) return baseHeight;
+  return lerp(baseHeight, definition.elevationM, influence);
 }
 
 function distanceToSegment(x, z, ax, az, bx, bz) {
@@ -323,7 +335,7 @@ function pitHeight(x, z, naturalHeight) {
 
 function applyHaulRamp(x, z, height) {
   const definition = { widthM: 18.5, shoulderM: 2.2 };
-  const nearest = nearestOnPrimaryRoad(x, z);
+  const nearest = nearestOnPrimaryRoadProfile(x, z);
   const halfCorridor = definition.widthM / 2 + definition.shoulderM + 2.4;
   const influence = 1 - smoothstep(halfCorridor - 3.0, halfCorridor + 2.5, nearest.distance);
   if (influence <= 0) return height;
@@ -373,6 +385,12 @@ export function getTerrainHeight(x, z) {
   const ramp = distanceToSegment(x, z, reception.center[0], reception.center[1], crushing.center[0], crushing.center[1]);
   const rampInfluence = (1 - smoothstep(8.0, 16.0, ramp.distance)) * smoothstep(0.05, 0.18, ramp.t) * (1 - smoothstep(0.82, 0.97, ramp.t));
   height = lerp(height, lerp(reception.elevation, crushing.elevation, ramp.t), rampInfluence * 0.72);
+
+  // Local cuts are applied after the broad terrace blend so the feeder and
+  // crusher obtain their own physical datums. ROAD-01 is still applied last and
+  // therefore remains the terrain authority under the heavy-haul corridor.
+  height = applyReceptionProcessCut(x, z, height, RECEPTION_PROCESS_CUTS.apronTrench);
+  height = applyReceptionProcessCut(x, z, height, RECEPTION_PROCESS_CUTS.crusherPocket);
 
   // The engineered haul ramp is applied last so plant-zone flattening cannot create
   // an abrupt grade break at the ROM approach. This keeps the road profile within

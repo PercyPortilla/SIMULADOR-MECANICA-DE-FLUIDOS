@@ -1009,7 +1009,7 @@ const unsubscribeResultsRender = subscribeResults((results) => {
 
 async function initializeEnvironment(canvas) {
   try {
-    const { createBaseEnvironment } = await import('./scene/baseEnvironment.js');
+  const { createBaseEnvironment } = await import('./babylon/runtime/baseEnvironment.js');
     const environment = createBaseEnvironment({ canvas });
     environmentHandle = environment;
     environment.setScenePalette(paletteHexToNumbers(activeScenePalette));
@@ -1153,13 +1153,13 @@ async function initializeEnvironment(canvas) {
       const nextActive = Boolean(value) && presentationStops.length > 0;
       if (nextActive && !wasActive) {
         presentationPreviousLabelsVisible = labelsToggle?.checked ?? environment.labelsVisible;
-        if (labelsToggle) labelsToggle.checked = false;
-        environment.setLabelsVisible(false);
+        environment.setPresentationMode?.(true);
       }
       presentationActive = nextActive;
       clearPresentationTimer();
       if (!presentationActive) {
         presentationPlaying = false;
+        environment.setPresentationMode?.(false);
         if (wasActive && presentationPreviousLabelsVisible !== null) {
           if (labelsToggle) labelsToggle.checked = presentationPreviousLabelsVisible;
           environment.setLabelsVisible(presentationPreviousLabelsVisible);
@@ -1188,6 +1188,16 @@ async function initializeEnvironment(canvas) {
       const id = inspectionTarget?.value || '';
       const guide = getInspectionGuideEntry(id);
       const target = inspectionTargets.find((item) => item.id === id);
+      const presentationRank = presentationStops.findIndex((item) => item.id === id);
+      const presentationView = presentationActive && presentationRank >= 0;
+      if (environment.activeCamera !== 'inspection' && !presentationView) {
+        if (inspectionGuide) {
+          inspectionGuide.hidden = true;
+          inspectionGuide.classList.remove('presentation-summary');
+          inspectionGuide.replaceChildren();
+        }
+        return;
+      }
       if (!inspectionGuide || !guide || !target) {
         if (inspectionGuide) {
           inspectionGuide.hidden = true;
@@ -1196,8 +1206,6 @@ async function initializeEnvironment(canvas) {
         }
         return;
       }
-      const presentationRank = presentationStops.findIndex((item) => item.id === id);
-      const presentationView = presentationActive && presentationRank >= 0;
       inspectionGuide.classList.toggle('presentation-summary', presentationView);
       if (presentationView) {
         inspectionGuide.innerHTML =
@@ -1305,10 +1313,12 @@ async function initializeEnvironment(canvas) {
 
     document.querySelectorAll('[data-camera]').forEach((button) => {
       button.addEventListener('click', () => {
-        if (presentationActive && presentationPlaying) setPresentationPlaying(false);
+        if (presentationActive && button.dataset.camera !== 'inspection') setPresentationActive(false);
+        else if (presentationActive && presentationPlaying) setPresentationPlaying(false);
         environment.setCamera(button.dataset.camera);
         document.querySelector('#view-title').textContent = CAMERA_PRESET_LABELS[button.dataset.camera];
         document.querySelectorAll('[data-camera]').forEach((item) => item.classList.toggle('active', item === button));
+        renderInspectionGuide();
       });
     });
   } catch (error) {

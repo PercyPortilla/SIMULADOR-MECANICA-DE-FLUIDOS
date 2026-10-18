@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <link rel="icon" href="data:,">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="PULPA LAB V31 · preview de migración Babylon.js" />
+    <title>PULPA LAB V31 · Babylon Migration Preview</title>
+  </head>
+  <body>
+    <main id="babylon-preview">
+      <canvas id="babylon-canvas" aria-label="Vista 3D Babylon.js de PULPA LAB"></canvas>
+      <aside class="babylon-preview-panel" aria-label="Controles de validación Babylon.js">
+        <div>
+          <strong>PULPA LAB V31</strong>
+          <span>Babylon migration preview</span>
+        </div>
+        <label>
+          Cámara
+          <select id="babylon-camera"></select>
+        </label>
+        <dl>
+          <div><dt>Motor</dt><dd id="babylon-engine-status">Inicializando…</dd></div>
+          <div><dt>Topografía</dt><dd id="babylon-terrain-status">Pendiente</dd></div>
+          <div><dt>Blender</dt><dd id="babylon-blender-status">Cargando V26…</dd></div>
+          <div><dt>Equipos</dt><dd id="babylon-equipment-status">Cargando…</dd></div>
+          <div><dt>Piping</dt><dd id="babylon-piping-status">Validando…</dd></div>
+          <div><dt>Handedness</dt><dd id="babylon-handedness">Pendiente</dd></div>
+        </dl>
+      </aside>
+    </main>
+    <script type="module" src="/src/babylonPreview.js"></script>
+  </body>
+</html>

@@ -1,0 +1,90 @@
+html,
+body,
+#babylon-preview {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #10191f;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+#babylon-preview {
+  position: relative;
+}
+
+#babylon-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  outline: none;
+}
+
+.babylon-preview-panel {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: min(320px, calc(100vw - 32px));
+  box-sizing: border-box;
+  padding: 14px;
+  border: 1px solid rgb(255 255 255 / 18%);
+  border-radius: 10px;
+  background: rgb(10 22 28 / 94%);
+  color: #e5eef0;
+  box-shadow: 0 12px 32px rgb(0 0 0 / 28%);
+}
+
+.babylon-preview-panel > div:first-child {
+  display: grid;
+  gap: 3px;
+  margin-bottom: 12px;
+}
+
+.babylon-preview-panel strong {
+  color: #ffc568;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+}
+
+.babylon-preview-panel span,
+.babylon-preview-panel dt {
+  color: #9fb2b9;
+  font-size: 11px;
+}
+
+.babylon-preview-panel label {
+  display: grid;
+  gap: 5px;
+  color: #cbd8dc;
+  font-size: 12px;
+}
+
+.babylon-preview-panel select {
+  width: 100%;
+  min-height: 34px;
+  border: 1px solid rgb(255 255 255 / 15%);
+  border-radius: 6px;
+  padding: 0 9px;
+  background: #16262d;
+  color: #edf3f4;
+}
+
+.babylon-preview-panel dl {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0 0;
+}
+
+.babylon-preview-panel dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.babylon-preview-panel dd {
+  margin: 0;
+  color: #dce7ea;
+  font-size: 11px;
+  text-align: right;
+}
