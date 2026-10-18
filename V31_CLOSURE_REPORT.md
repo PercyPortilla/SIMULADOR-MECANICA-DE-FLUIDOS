@@ -26,9 +26,13 @@ The active workflow is recorded in `STATUS.md`, `CONTEXT_GRAPHIFY.md`, `CODEX_WO
 
 ## Deployment
 
-An earlier validated workspace upload reached the linked Vercel project but was `BLOCKED` by team configuration. The final V31 deployment is retried only after the four closures above are frozen.
+The final V31 release commit `9d5dddd` (`v31.0.0`) was exported without Git metadata and deployed to the existing Vercel project after an earlier upload was blocked by a historical commit-author permission check.
 
-- Inspect: https://vercel.com/jan1diaz-5594/simulador-mecanica-de-fluidos/kqWqJNgNMk58CbNGXVqx7RztgFiY
-- Preview hostname: `simulador-mecanica-de-fluidos-nc7mo5sxo-jan1diaz-5594.vercel.app`
+- Status: `READY` (production).
+- Production: https://simulador-mecanica-de-fluidos.vercel.app
+- Deployment: https://simulador-mecanica-de-fluidos-297doc2iq-jan1diaz-5594.vercel.app
+- Inspect: https://vercel.com/jan1diaz-5594/simulador-mecanica-de-fluidos/E7wSaHew6eny4RB9ABrdqu2TY234
 - Vercel project: `prj_PogZVuyRfwH0Kzz0TWfRVIxF7zHX`
-- Build result: blocked before production readiness; local build remains verified.
+- Vercel build: passed; 881 modules transformed; build duration 1m20s.
+- Post-deploy HTTP check: `200`, PULPA LAB marker present.
+- Production dependency audit: 0 vulnerabilities. Three advisories remain in development-only Vitest/Tinypool tooling and are not shipped in the static production dependency set.
