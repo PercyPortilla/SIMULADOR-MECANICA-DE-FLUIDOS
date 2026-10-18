@@ -8,7 +8,7 @@ import {
   SITE_EXTENT,
   TOPOGRAPHIC_ZONES,
 } from '../config/siteDesign.js';
-import { nearestOnPrimaryRoad } from './roadEngineering.js';
+import { nearestOnPrimaryRoadProfile } from './primaryRoadProfile.js';
 
 const ZONES = TOPOGRAPHIC_ZONES;
 
@@ -335,7 +335,7 @@ function pitHeight(x, z, naturalHeight) {
 
 function applyHaulRamp(x, z, height) {
   const definition = { widthM: 18.5, shoulderM: 2.2 };
-  const nearest = nearestOnPrimaryRoad(x, z);
+  const nearest = nearestOnPrimaryRoadProfile(x, z);
   const halfCorridor = definition.widthM / 2 + definition.shoulderM + 2.4;
   const influence = 1 - smoothstep(halfCorridor - 3.0, halfCorridor + 2.5, nearest.distance);
   if (influence <= 0) return height;

@@ -9,7 +9,7 @@ describe('scene palette preferences', () => {
     expect(palette.fake).toBeUndefined();
   });
 
-  it('converts visual preferences into Three-compatible numeric colors', () => {
+  it('converts visual preferences into renderer-compatible numeric colors', () => {
     expect(paletteHexToNumbers({ terrain: '#112233' }).terrain).toBe(0x112233);
   });
 });

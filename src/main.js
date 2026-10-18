@@ -1009,7 +1009,7 @@ const unsubscribeResultsRender = subscribeResults((results) => {
 
 async function initializeEnvironment(canvas) {
   try {
-    const { createBaseEnvironment } = await import('./scene/baseEnvironment.js');
+  const { createBaseEnvironment } = await import('./babylon/runtime/baseEnvironment.js');
     const environment = createBaseEnvironment({ canvas });
     environmentHandle = environment;
     environment.setScenePalette(paletteHexToNumbers(activeScenePalette));
