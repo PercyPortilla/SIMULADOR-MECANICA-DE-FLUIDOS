@@ -59,7 +59,7 @@ for o in scene.objects:
     if min(s)<.01 or max(s)>100:bad.append((o.name,tuple(round(v,4) for v in s)))
 print('SCALE_ANOMALIES',len(bad),'SAMPLE',bad[:10])
 
-for pad in ['V49_PAD_RECOVERY','V49_PAD_LEACH_CIP','V49_PAD_GRIND_CLASS','V49_PROCESS_ACCESS_ROAD']:
+for pad in ['V49_PAD_RECOVERY','V49_PAD_LEACH_CIP','V49_PAD_CLASS_PUMP','V49_PAD_SUMP','V49_PAD_MILL','V49_PROCESS_ACCESS_ROAD']:
     o=bpy.data.objects.get(pad);print('CIVIL',pad,'OK' if o else 'MISSING',tuple(round(float(v),2) for v in o.dimensions) if o else None)
 
 print('PASS_BASIC',scene.get('PULPA_LAB_MASTER_VERSION')=='V49' and FRAME is not None and not legacy and not [n for n in REQ if not bpy.data.objects.get(n)])

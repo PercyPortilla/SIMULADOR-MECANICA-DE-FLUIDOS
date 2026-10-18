@@ -211,7 +211,12 @@ pipe=bpy.data.objects.new('V49_PIPE_MILL_TO_SUMP',cu);CONV.objects.link(pipe);pi
 # ------------------------------------------------------------------
 box('V49_PAD_RECOVERY',(201.0,35.0,1.72),(51.0,11.0,.56),M_CONC)
 box('V49_PAD_LEACH_CIP',(263.0,35.0,1.72),(70.0,11.0,.56),M_CONC)
-box('V49_PAD_GRIND_CLASS',(319.0,35.0,1.72),(47.0,11.0,.56),M_CONC)
+# The mill's evaluated shell/trunnion envelope dips below its root plane while
+# rotating (validated V48 behavior).  Use stepped equipment foundations so its
+# moving envelope stays clear instead of burying it in one high slab.
+box('V49_PAD_CLASS_PUMP',(306.5,35.0,1.72),(21.0,11.0,.56),M_CONC)
+box('V49_PAD_SUMP',(322.0,35.0,1.25),(8.0,7.0,.40),M_CONC)
+box('V49_PAD_MILL',(334.0,35.0,1.15),(11.5,8.5,.40),M_CONC)
 box('V49_PROCESS_ACCESS_ROAD',(258.0,47.0,1.58),(174.0,5.6,.20),M_ROAD)
 
 # Remove only loose decorative rocks that would poke through the new pads/road.
