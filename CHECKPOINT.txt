@@ -1,9 +1,12 @@
-PULPA-LAB-V2-V25-PERFORMANCE-OPERATIONAL-FIDELITY-CHECKPOINT
+PULPA-LAB-V2-V57-INDUSTRIAL-PRESENTATION-CHECKPOINT
 Project: PULPA LAB V2
 Date: 2026-10-17
-Status: V25 CLOSED — PERFORMANCE + OPERATIONAL FIDELITY VERIFIED; READY FOR PUBLICATION
+Status: V57 CLOSED — INDUSTRIAL PRESENTATION FINISH VERIFIED; READY FOR PUBLICATION
 Architecture: Three.js authoritative runtime + Blender/GLB industrial asset pipeline. No Babylon.js migration.
-Baseline: published V24 SHA 8812f8b75f90059b2f55fc06455fe8ecab3c954f; V24 remains rollback checkpoint.
+Baseline: published V25/V56 visual release; V25 remains rollback checkpoint.
+Visual pass: V57 adds a parented presentation layer with service pipe racks, tank farm, safety lights and process headers. Existing V56 GLB meshes, materials, routes, endpoints and animation groups remain authoritative.
+Camera: V56 general and oblique presets are reframed for a closer plant-scale overview.
+Animation: V57 operation beacon follows the global Animaciones toggle; imported V56 clips are unchanged.
 LOD: camera motion remains responsive at 0.125 s; static view refreshes every 2 s; per-equipment cache skips unchanged tier/mode/status/revision states; hidden Blender procedural fallbacks are pruned safely.
 Async GLB safety: Blender module loads increment LOD content revision so late HEAD/TAIL/idler/hood content invalidates the cache instead of becoming stale.
 Inspection: 38 targets and 7 focus profiles preserved; LOD respects Interior shell visibility; EW-CELLS and SMELTING-FURNACE receive component-level educational hotspots.
@@ -20,5 +23,5 @@ Blender master unchanged: blender/PULPA_LAB_BLENDER_MASTER_V17.blend — SHA-256
 Terrain GLB unchanged: RECEPTION-EARTHWORK-V21.glb — SHA-256 59CB2AE7471EE5DE85A7E1186243C5C4D0D68E826897C4A8DF4DC6BE928FBA6A.
 GitHub release target: PercyPortilla/SIMULADOR-MECANICA-DE-FLUIDOS.
 Vercel production target: https://simulador-mecanica-de-fluidos.vercel.app
-Report: V25_PERFORMANCE_OPERATIONAL_FIDELITY_CHECKPOINT.md
+Report: V57_INDUSTRIAL_PRESENTATION_CHECKPOINT.md
 Rule: preserve equations, process route, physical pipe diameters/endpoints/centerlines, parametric conveyors, scene.fog=null, cameras, Inspection contracts, V17 master Blender, V21 grounding and V22 terrain authority.

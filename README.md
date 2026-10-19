@@ -4,7 +4,7 @@ Simulador académico de transporte, bombeo, reología y recuperación de pulpas 
 
 ## Estado actual
 
-**V25 · Rendimiento y Fidelidad Operacional**
+**V57 · Acabado industrial de planta**
 
 La versión actual integra:
 
@@ -51,6 +51,8 @@ La versión actual integra:
 - shovel y loader importados arrancan con el mineral del balde oculto hasta que su ciclo operacional realmente lo carga;
 - desfase reproducible de R-01..04 sobre la animación Blender y contrato real-loaded para estaciones HEAD/TAIL de conveyors;
 - hotspots educativos ampliados a EW-CELLS y SMELTING-FURNACE sin cambiar los 38 targets ni los 7 focus profiles.
+- capa de acabado V57 sobre Blender V56 con pórticos de servicio, headers de tubería, tanques auxiliares, iluminación de operación y beacon conectado al toggle `Animaciones`;
+- encuadres general y oblicuo ajustados para mostrar la planta con mayor escala visual, conservando el contexto de terreno y tajo.
 
 ## Arquitectura
 

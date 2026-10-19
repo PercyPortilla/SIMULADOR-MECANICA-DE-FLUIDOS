@@ -171,9 +171,11 @@ export function createV56CameraPresetConfigs() {
   const leaching = v56Anchor('Z6');
   const recovery = v56Anchor('Z8');
   return Object.freeze({
-    general: preset(vector(300, 118, 255), vector(255, 0.5, 32), 42),
+    // Presentation framing keeps the full process train readable while
+    // giving the foreground earthworks and pipe corridor enough scale.
+    general: preset(vector(326, 82, 214), vector(258, 3.4, 24), 43),
     top: preset(vector(siteCenter[0], 520, siteCenter[2]), siteCenter, 40),
-    oblique: preset(vector(440, 105, 235), vector(330, -5.0, 72), 44),
+    oblique: preset(vector(430, 78, 198), vector(305, 0.0, 46), 44),
     reception: preset(vector(190, 23, 46), vector(205, 2.8, -1), 42),
     crushing: preset(vector(214, 24, 42), vector(228, 3.2, -3), 40),
     grinding: preset(vector(300, 33, 48), vector(305, 4.2, -18), 42),

@@ -1,6 +1,7 @@
 import { TransformNode } from '@babylonjs/core/Meshes/transformNode.js';
 import { V56_SITE_VISUAL_URL } from '../../scene/integration/v56Layout.js';
 import { loadBabylonAssetContainer } from './gltfLoader.js';
+import { createBabylonV57PresentationFinish } from './v57PresentationFinish.js';
 
 function visitHierarchy(root, callback) {
   callback(root);
@@ -43,6 +44,7 @@ export function attachBabylonV56SiteVisual({
   let container = null;
   let rootNodes = [];
   let animationGroups = [];
+  let presentationFinish = null;
   let animationsEnabled = true;
   let disposed = false;
 
@@ -55,6 +57,7 @@ export function attachBabylonV56SiteVisual({
         group.pause?.();
       }
     });
+    presentationFinish?.setAnimationsEnabled?.(animationsEnabled);
   }
 
   const ready = Promise.resolve()
@@ -72,6 +75,7 @@ export function attachBabylonV56SiteVisual({
         root.parent = host;
         visitHierarchy(root, markV56Node);
       });
+      presentationFinish = createBabylonV57PresentationFinish({ scene, parent: host });
       host.metadata.blenderVisualStatus = 'loaded';
       host.metadata.blenderVisualLoaded = true;
       host.metadata.importedRootCount = rootNodes.length;
@@ -80,6 +84,8 @@ export function attachBabylonV56SiteVisual({
         0,
       );
       host.metadata.animationGroupCount = animationGroups.length;
+      host.metadata.presentationFinishRevision = 'V57';
+      host.metadata.presentationFinishEnabled = true;
       syncAnimationState();
       return host;
     })
@@ -107,6 +113,8 @@ export function attachBabylonV56SiteVisual({
       disposed = true;
       animationGroups.forEach((group) => group.stop?.());
       animationGroups = [];
+      presentationFinish?.dispose?.();
+      presentationFinish = null;
       container?.dispose?.();
       rootNodes = [];
       host.dispose();

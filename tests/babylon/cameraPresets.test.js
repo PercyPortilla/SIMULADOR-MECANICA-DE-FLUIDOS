@@ -22,9 +22,9 @@ describe('Babylon camera preset parity', () => {
     expect(createBabylonCameraPresetConfigs()).toEqual(createCameraPresetConfigs());
     expect(createCameraPresetConfigs()).toEqual(createV56CameraPresetConfigs());
     expect(createV56CameraPresetConfigs().general).toMatchObject({
-      position: [300, 118, 255],
-      target: [255, 0.5, 32],
-      fov: 42,
+      position: [326, 82, 214],
+      target: [258, 3.4, 24],
+      fov: 43,
     });
     expect(createV55CameraPresetConfigs().general.position).toEqual([300, 118, 255]);
     expect(createV50CameraPresetConfigs().general.position).toEqual([260, 64, 138]);
