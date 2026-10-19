@@ -11,7 +11,7 @@ import {
   getInspectionCircuitContext,
   getInspectionTargetLabel,
 } from '../../scene/inspection/inspectionContracts.js';
-import { V49_INSPECTION_NODE_ALIASES } from '../../scene/integration/v49Layout.js';
+import { V50_INSPECTION_NODE_ALIASES } from '../../scene/integration/v50Layout.js';
 
 function nodeMetadata(node) {
   return node?.metadata ?? {};
@@ -40,13 +40,13 @@ function allSceneNodes(scene) {
   return [...(scene.transformNodes ?? []), ...(scene.meshes ?? [])];
 }
 
-function resolveV49AliasSources(scene, alias) {
+function resolveV50AliasSources(scene, alias) {
   if (!alias) return [];
   const names = new Set(alias.names ?? []);
   const prefixes = alias.prefixes ?? [];
   const seen = new Set();
   return allSceneNodes(scene).filter((node) => {
-    if (nodeMetadata(node).v49AuthoritativeVisual !== true) return false;
+    if (nodeMetadata(node).v50AuthoritativeVisual !== true) return false;
     const match = names.has(node.name) || prefixes.some((prefix) => node.name?.startsWith(prefix));
     if (!match || seen.has(node)) return false;
     seen.add(node);
@@ -58,26 +58,26 @@ function findTarget(scene, id, aliasRoot = null) {
   const transformMatches = (scene.transformNodes ?? []).filter((node) => node.name === id);
   const meshMatches = (scene.meshes ?? []).filter((node) => node.name === id);
   const candidates = [...transformMatches, ...meshMatches];
-  const exactV49 = candidates.find((node) => nodeMetadata(node).v49AuthoritativeVisual === true);
-  if (exactV49) return exactV49;
+  const exactV50 = candidates.find((node) => nodeMetadata(node).v50AuthoritativeVisual === true);
+  if (exactV50) return exactV50;
 
-  const alias = V49_INSPECTION_NODE_ALIASES[id];
+  const alias = V50_INSPECTION_NODE_ALIASES[id];
   if (alias && aliasRoot) {
-    const sources = resolveV49AliasSources(scene, alias);
-    const hasV49Scene = sources.length > 0 || allSceneNodes(scene).some(
-      (node) => nodeMetadata(node).v49AuthoritativeVisual === true,
+    const sources = resolveV50AliasSources(scene, alias);
+    const hasV50Scene = sources.length > 0 || allSceneNodes(scene).some(
+      (node) => nodeMetadata(node).v50AuthoritativeVisual === true,
     );
-    if (sources.length || (alias.semanticOnly && hasV49Scene)) {
-      const proxy = new TransformNode(`inspection-v49-alias-${id}`, scene);
+    if (sources.length || (alias.semanticOnly && hasV50Scene)) {
+      const proxy = new TransformNode(`inspection-v50-alias-${id}`, scene);
       proxy.parent = aliasRoot;
       proxy.metadata = {
-        v49InspectionAlias: true,
+        v50InspectionAlias: true,
         inspectionCanonicalId: id,
         inspectionAliasSources: sources,
         inspectionAliasBounds: alias.bounds ?? null,
         semanticOnly: alias.semanticOnly === true,
         proxySemantics: alias.proxySemantics ?? null,
-        siteRevision: 'V49',
+        siteRevision: 'V50',
       };
       return proxy;
     }
@@ -246,7 +246,7 @@ export function createBabylonEquipmentInspectionSystem({ scene } = {}) {
   const targets = new Map();
   const contextOverlay = new TransformNode('inspection-circuit-context', scene);
   contextOverlay.metadata = { inspectionOverlay: true };
-  const aliasRoot = new TransformNode('inspection-v49-aliases', scene);
+  const aliasRoot = new TransformNode('inspection-v50-aliases', scene);
   aliasRoot.metadata = { inspectionAliasRoot: true, visualOnly: true };
   let currentTargetId = null;
   let currentMode = 'normal';

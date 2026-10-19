@@ -1,4 +1,4 @@
-import { V49_SITE_BOUNDS, V49_ZONE_ANCHORS } from '../integration/v49Layout.js';
+import { V50_SITE_BOUNDS, V50_ZONE_ANCHORS } from '../integration/v50Layout.js';
 import { getPlantLayoutBounds, getPlantZone } from '../layout/plantLayout.js';
 import { getTerrainHeight } from '../environment/terrainHeight.js';
 import { getSiteOverviewBounds, PIT_DESIGN } from '../config/siteDesign.js';
@@ -37,23 +37,24 @@ function safePosition(x, y, z, clearance = 4) {
 }
 
 function anchor(zoneId) {
-  const point = V49_ZONE_ANCHORS[zoneId];
-  if (!point) throw new RangeError(`Ancla V49 desconocida: ${zoneId}.`);
+  const point = V50_ZONE_ANCHORS[zoneId];
+  if (!point) throw new RangeError(`Ancla V50 desconocida: ${zoneId}.`);
   return vector(point.x, point.y, point.z);
 }
 
 /**
- * Renderer-neutral V49 camera contract.
+ * Renderer-neutral V50 camera contract.
  *
- * V49 is authored in Blender and exported to glTF/Babylon Y-up coordinates.
+ * V50 is authored from the V48 Blender environment with the corrected circuit
+ * and exported to glTF/Babylon Y-up coordinates.
  * These presets deliberately frame that final 422 x 112 m site instead of the
  * superseded V30 open-pit/procedural layout.
  */
-export function createV49CameraPresetConfigs() {
+export function createV50CameraPresetConfigs() {
   const siteCenter = vector(
-    (V49_SITE_BOUNDS.minX + V49_SITE_BOUNDS.maxX) / 2,
+    (V50_SITE_BOUNDS.minX + V50_SITE_BOUNDS.maxX) / 2,
     2.5,
-    (V49_SITE_BOUNDS.minZ + V49_SITE_BOUNDS.maxZ) / 2,
+    (V50_SITE_BOUNDS.minZ + V50_SITE_BOUNDS.maxZ) / 2,
   );
   const reception = anchor('Z1');
   const grinding = anchor('Z4');
@@ -62,43 +63,37 @@ export function createV49CameraPresetConfigs() {
   const recovery = anchor('Z8');
 
   return Object.freeze({
-    general: preset(
-      vector(430, 155, 165),
-      vector(205, 3.0, -6),
-      44,
-    ),
+    // Exact Blender V50 review-camera mapping:
+    // Blender (x,y,z) -> Babylon (x,z,-y).
+    general: preset(vector(260, 105, 120), vector(255, 2.8, -13), 40),
     top: preset(
       vector(siteCenter[0], 420, siteCenter[2]),
       siteCenter,
       40,
     ),
-    oblique: preset(
-      vector(410, 120, 120),
-      vector(200, 2.5, -7),
-      44,
-    ),
+    oblique: preset(vector(300, 78, 95), vector(255, 3.0, -18), 42),
     reception: preset(
-      vector(reception[0] - 34, reception[1] + 30, reception[2] + 44),
-      vector(191, 3.0, 0),
-      48,
+      vector(190, 23, 46),
+      vector(205, 2.8, -1),
+      42,
     ),
     crushing: preset(
-      vector(185, 33, 40),
-      vector(223, 3.3, 0),
-      44,
+      vector(214, 24, 42),
+      vector(228, 3.2, -3),
+      40,
     ),
     grinding: preset(
-      vector(grinding[0] + 22, grinding[1] + 26, -4),
-      vector((grinding[0] + classification[0]) / 2, 4.5, -35),
-      44,
+      vector(300, 33, 48),
+      vector(305, 4.2, -18),
+      42,
     ),
     leaching: preset(
-      vector(leaching[0] + 32, leaching[1] + 28, 3),
+      vector(260, 30, 48),
       vector(leaching[0], leaching[1] - 0.5, leaching[2]),
       42,
     ),
     recovery: preset(
-      vector(recovery[0] + 24, recovery[1] + 27, 1),
+      vector(225, 26, 46),
       vector(recovery[0], recovery[1] - 0.5, recovery[2]),
       42,
     ),
@@ -160,6 +155,6 @@ export function createV30CameraPresetConfigs() {
   });
 }
 
-export function createCameraPresetConfigs({ revision = 'V49' } = {}) {
-  return revision === 'V30' ? createV30CameraPresetConfigs() : createV49CameraPresetConfigs();
+export function createCameraPresetConfigs({ revision = 'V50' } = {}) {
+  return revision === 'V30' ? createV30CameraPresetConfigs() : createV50CameraPresetConfigs();
 }

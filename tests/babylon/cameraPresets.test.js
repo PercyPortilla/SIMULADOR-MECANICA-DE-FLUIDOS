@@ -3,7 +3,7 @@ import { ArcRotateCamera, FreeCamera, NullEngine, Scene, Vector3 } from '@babylo
 import {
   createCameraPresetConfigs,
   createV30CameraPresetConfigs,
-  createV49CameraPresetConfigs,
+  createV50CameraPresetConfigs,
 } from '../../src/scene/cameras/cameraPresetConfigs.js';
 import {
   BABYLON_CAMERA_FAR,
@@ -15,10 +15,15 @@ import {
 } from '../../src/babylon/cameras/cameraPresets.js';
 
 describe('Babylon camera preset parity', () => {
-  it('uses the nine authoritative V49 preset configs by default', () => {
+  it('uses the nine authoritative V50 preset configs by default', () => {
     expect(CAMERA_PRESET_ORDER).toHaveLength(9);
     expect(createBabylonCameraPresetConfigs()).toEqual(createCameraPresetConfigs());
-    expect(createCameraPresetConfigs()).toEqual(createV49CameraPresetConfigs());
+    expect(createCameraPresetConfigs()).toEqual(createV50CameraPresetConfigs());
+    expect(createV50CameraPresetConfigs().general).toMatchObject({
+      position: [260, 105, 120],
+      target: [255, 2.8, -13],
+      fov: 40,
+    });
   });
 
   it('can switch the existing camera rig back to the V30 fallback contract', () => {

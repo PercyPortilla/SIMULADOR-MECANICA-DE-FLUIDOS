@@ -6,7 +6,7 @@ import { CreatePlane } from '@babylonjs/core/Meshes/Builders/planeBuilder.js';
 import { Mesh } from '@babylonjs/core/Meshes/mesh.js';
 import { TransformNode } from '@babylonjs/core/Meshes/transformNode.js';
 import { PLANT_ZONE_ORDER, getPlantZone } from '../../scene/layout/plantLayout.js';
-import { V49_ZONE_ANCHORS } from '../../scene/integration/v49Layout.js';
+import { V50_ZONE_ANCHORS } from '../../scene/integration/v50Layout.js';
 import {
   EQUIPMENT_LABEL_DEFINITIONS,
   LABEL_ASPECT,
@@ -125,12 +125,12 @@ function hierarchyBounds(target) {
   return { min: bounds.min.clone(), max: bounds.max.clone(), size, center: Vector3.Center(bounds.min, bounds.max) };
 }
 
-function findV49VisualTarget(scene, id) {
+function findV50VisualTarget(scene, id) {
   const candidates = [
     ...(scene.transformNodes ?? []).filter((node) => node.name === id),
     ...(scene.meshes ?? []).filter((node) => node.name === id),
   ];
-  return candidates.find((node) => node?.metadata?.v49AuthoritativeVisual === true) ?? null;
+  return candidates.find((node) => node?.metadata?.v50AuthoritativeVisual === true) ?? null;
 }
 
 function componentLabelText(mesh) {
@@ -165,7 +165,7 @@ export function createBabylonPlantLabels({ scene, equipmentSystem } = {}) {
         textureSize: { width: 768, height: 144 },
       });
       if (label) {
-        const anchor = V49_ZONE_ANCHORS[zone.id];
+        const anchor = V50_ZONE_ANCHORS[zone.id];
         label.position.set(
           anchor?.x ?? zone.position.x,
           (anchor?.y ?? zone.elevation) + 6.0,
@@ -202,9 +202,9 @@ export function createBabylonPlantLabels({ scene, equipmentSystem } = {}) {
       const metadata = label.metadata ?? {};
       if (metadata.labelKind === 'zone' && metadata.zoneId) {
         const zone = getPlantZone(metadata.zoneId);
-        const useV49 = scene.metadata?.activeVisualRevision === 'V49'
-          || scene.metadata?.activeVisualRevision === 'V49-loading';
-        const anchor = useV49 ? V49_ZONE_ANCHORS[metadata.zoneId] : null;
+        const useV50 = scene.metadata?.activeVisualRevision === 'V50'
+          || scene.metadata?.activeVisualRevision === 'V50-loading';
+        const anchor = useV50 ? V50_ZONE_ANCHORS[metadata.zoneId] : null;
         label.position.set(
           anchor?.x ?? zone.position.x,
           (anchor?.y ?? zone.elevation) + 6.0,
@@ -213,11 +213,11 @@ export function createBabylonPlantLabels({ scene, equipmentSystem } = {}) {
         return;
       }
       if (metadata.dynamicPipe1) {
-        const v49Pipe = findV49VisualTarget(scene, 'V39_PIPE_R01_TO_R02');
-        const v49Bounds = hierarchyBounds(v49Pipe);
-        if (v49Bounds) {
-          label.position.copyFrom(v49Bounds.center);
-          label.position.y = v49Bounds.max.y + (metadata.lift ?? 1.25);
+        const v50Pipe = findV50VisualTarget(scene, 'V39_PIPE_R01_TO_R02');
+        const v50Bounds = hierarchyBounds(v50Pipe);
+        if (v50Bounds) {
+          label.position.copyFrom(v50Bounds.center);
+          label.position.y = v50Bounds.max.y + (metadata.lift ?? 1.25);
           return;
         }
         try {
@@ -231,11 +231,11 @@ export function createBabylonPlantLabels({ scene, equipmentSystem } = {}) {
         return;
       }
       if (metadata.labelKind !== 'equipment' || !metadata.equipmentId) return;
-      const v49Target = findV49VisualTarget(scene, metadata.equipmentId);
-      const v49Bounds = hierarchyBounds(v49Target);
-      if (v49Bounds) {
-        label.position.copyFrom(v49Bounds.center);
-        label.position.y = v49Bounds.max.y + (metadata.lift ?? 1.6);
+      const v50Target = findV50VisualTarget(scene, metadata.equipmentId);
+      const v50Bounds = hierarchyBounds(v50Target);
+      if (v50Bounds) {
+        label.position.copyFrom(v50Bounds.center);
+        label.position.y = v50Bounds.max.y + (metadata.lift ?? 1.6);
         return;
       }
       try {

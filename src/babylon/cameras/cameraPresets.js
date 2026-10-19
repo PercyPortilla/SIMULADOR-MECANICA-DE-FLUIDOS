@@ -80,7 +80,7 @@ export function createBabylonCameraPresetConfigs() {
   return createCameraPresetConfigs();
 }
 
-export function applyBabylonCameraPresetRevision(cameras, revision = 'V49') {
+export function applyBabylonCameraPresetRevision(cameras, revision = 'V50') {
   if (!cameras) throw new TypeError('Babylon camera revision switch requires camera handles.');
   const configs = createCameraPresetConfigs({ revision });
   CAMERA_PRESET_ORDER.forEach((id) => {
