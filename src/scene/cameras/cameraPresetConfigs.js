@@ -1,4 +1,5 @@
 import { V50_SITE_BOUNDS, V50_ZONE_ANCHORS } from '../integration/v50Layout.js';
+import { V55_SITE_BOUNDS, V55_ZONE_ANCHORS } from '../integration/v55Layout.js';
 import { getPlantLayoutBounds, getPlantZone } from '../layout/plantLayout.js';
 import { getTerrainHeight } from '../environment/terrainHeight.js';
 import { getSiteOverviewBounds, PIT_DESIGN } from '../config/siteDesign.js';
@@ -39,6 +40,12 @@ function safePosition(x, y, z, clearance = 4) {
 function anchor(zoneId) {
   const point = V50_ZONE_ANCHORS[zoneId];
   if (!point) throw new RangeError(`Ancla V50 desconocida: ${zoneId}.`);
+  return vector(point.x, point.y, point.z);
+}
+
+function v55Anchor(zoneId) {
+  const point = V55_ZONE_ANCHORS[zoneId];
+  if (!point) throw new RangeError(`Ancla V55 desconocida: ${zoneId}.`);
   return vector(point.x, point.y, point.z);
 }
 
@@ -107,6 +114,42 @@ export function createV50CameraPresetConfigs() {
   });
 }
 
+/**
+ * V55 keeps the corrected V50 process anchors but extends the authored scene
+ * south/east with the final open pit, ramps, drains and waste dumps.
+ */
+export function createV55CameraPresetConfigs() {
+  const siteCenter = vector(
+    (V55_SITE_BOUNDS.minX + V55_SITE_BOUNDS.maxX) / 2,
+    2.0,
+    (V55_SITE_BOUNDS.minZ + V55_SITE_BOUNDS.maxZ) / 2,
+  );
+  const leaching = v55Anchor('Z6');
+  const recovery = v55Anchor('Z8');
+
+  return Object.freeze({
+    general: preset(vector(300, 118, 255), vector(255, 0.5, 32), 42),
+    top: preset(vector(siteCenter[0], 520, siteCenter[2]), siteCenter, 40),
+    // Oblique intentionally gives the new open pit enough screen area while
+    // retaining the plant in the background for presentation context.
+    oblique: preset(vector(440, 105, 235), vector(330, -5.0, 72), 44),
+    reception: preset(vector(190, 23, 46), vector(205, 2.8, -1), 42),
+    crushing: preset(vector(214, 24, 42), vector(228, 3.2, -3), 40),
+    grinding: preset(vector(300, 33, 48), vector(305, 4.2, -18), 42),
+    leaching: preset(
+      vector(260, 30, 48),
+      vector(leaching[0], leaching[1] - 0.5, leaching[2]),
+      42,
+    ),
+    recovery: preset(
+      vector(225, 26, 46),
+      vector(recovery[0], recovery[1] - 0.5, recovery[2]),
+      42,
+    ),
+    inspection: preset(vector(338, 18, -12), vector(320, 4.0, -35), 50),
+  });
+}
+
 export function createV30CameraPresetConfigs() {
   const plantBounds = getPlantLayoutBounds();
   const siteBounds = getSiteOverviewBounds();
@@ -157,6 +200,8 @@ export function createV30CameraPresetConfigs() {
   });
 }
 
-export function createCameraPresetConfigs({ revision = 'V50' } = {}) {
-  return revision === 'V30' ? createV30CameraPresetConfigs() : createV50CameraPresetConfigs();
+export function createCameraPresetConfigs({ revision = 'V55' } = {}) {
+  if (revision === 'V30') return createV30CameraPresetConfigs();
+  if (revision === 'V50') return createV50CameraPresetConfigs();
+  return createV55CameraPresetConfigs();
 }

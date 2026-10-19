@@ -11,10 +11,15 @@ import {
   getInspectionCircuitContext,
   getInspectionTargetLabel,
 } from '../../scene/inspection/inspectionContracts.js';
-import { V50_INSPECTION_NODE_ALIASES } from '../../scene/integration/v50Layout.js';
+import { V55_INSPECTION_NODE_ALIASES } from '../../scene/integration/v55Layout.js';
 
 function nodeMetadata(node) {
   return node?.metadata ?? {};
+}
+
+function isAuthoritativeBlenderVisual(node) {
+  const metadata = nodeMetadata(node);
+  return metadata.v55AuthoritativeVisual === true || metadata.v50AuthoritativeVisual === true;
 }
 
 function inferImportedRole(mesh) {
@@ -46,7 +51,7 @@ function resolveV50AliasSources(scene, alias) {
   const prefixes = alias.prefixes ?? [];
   const seen = new Set();
   return allSceneNodes(scene).filter((node) => {
-    if (nodeMetadata(node).v50AuthoritativeVisual !== true) return false;
+    if (!isAuthoritativeBlenderVisual(node)) return false;
     const match = names.has(node.name) || prefixes.some((prefix) => node.name?.startsWith(prefix));
     if (!match || seen.has(node)) return false;
     seen.add(node);
@@ -58,26 +63,27 @@ function findTarget(scene, id, aliasRoot = null) {
   const transformMatches = (scene.transformNodes ?? []).filter((node) => node.name === id);
   const meshMatches = (scene.meshes ?? []).filter((node) => node.name === id);
   const candidates = [...transformMatches, ...meshMatches];
-  const exactV50 = candidates.find((node) => nodeMetadata(node).v50AuthoritativeVisual === true);
+  const exactV50 = candidates.find(isAuthoritativeBlenderVisual);
   if (exactV50) return exactV50;
 
-  const alias = V50_INSPECTION_NODE_ALIASES[id];
+  const alias = V55_INSPECTION_NODE_ALIASES[id];
   if (alias && aliasRoot) {
     const sources = resolveV50AliasSources(scene, alias);
     const hasV50Scene = sources.length > 0 || allSceneNodes(scene).some(
-      (node) => nodeMetadata(node).v50AuthoritativeVisual === true,
+      (node) => isAuthoritativeBlenderVisual(node),
     );
     if (sources.length || (alias.semanticOnly && hasV50Scene)) {
       const proxy = new TransformNode(`inspection-v50-alias-${id}`, scene);
       proxy.parent = aliasRoot;
       proxy.metadata = {
         v50InspectionAlias: true,
+        v55InspectionAlias: true,
         inspectionCanonicalId: id,
         inspectionAliasSources: sources,
         inspectionAliasBounds: alias.bounds ?? null,
         semanticOnly: alias.semanticOnly === true,
         proxySemantics: alias.proxySemantics ?? null,
-        siteRevision: 'V50',
+        siteRevision: 'V55',
       };
       return proxy;
     }

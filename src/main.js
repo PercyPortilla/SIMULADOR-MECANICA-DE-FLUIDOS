@@ -1038,9 +1038,10 @@ async function initializeEnvironment(canvas) {
     });
 
     const sceneLoading = document.querySelector('#scene-loading');
-    if (environment.v50SiteVisual?.ready) {
-      await environment.v50SiteVisual.ready;
-      if (!environment.v50SiteVisual.loaded) {
+    const siteVisual = environment.v55SiteVisual ?? environment.v50SiteVisual;
+    if (siteVisual?.ready) {
+      await siteVisual.ready;
+      if (!siteVisual.loaded) {
         await Promise.allSettled([
           environment.receptionEarthworkOverlay?.ready,
           environment.processEquipmentSystem?.ready,
@@ -1048,23 +1049,23 @@ async function initializeEnvironment(canvas) {
         ].filter(Boolean));
       }
       if (sceneLoading) {
-        const v50Ready = environment.v50SiteVisual.loaded;
-        sceneLoading.querySelector('strong').textContent = v50Ready
-          ? 'Entorno Blender V50 listo'
+        const v55Ready = siteVisual.loaded;
+        sceneLoading.querySelector('strong').textContent = v55Ready
+          ? 'Entorno Blender V55 listo'
           : 'Entorno de respaldo listo';
-        sceneLoading.querySelector('span').textContent = v50Ready
-          ? 'Planta V50 cargada correctamente.'
-          : 'No se pudo cargar V50; se activó el entorno de respaldo.';
-        window.setTimeout(() => sceneLoading.classList.add('is-ready'), v50Ready ? 120 : 650);
+        sceneLoading.querySelector('span').textContent = v55Ready
+          ? 'Planta V55 y tajo abierto cargados correctamente.'
+          : 'No se pudo cargar V55; se activó el entorno de respaldo.';
+        window.setTimeout(() => sceneLoading.classList.add('is-ready'), v55Ready ? 120 : 650);
       }
       if (geotechToggle) {
-        const v50Ready = environment.v50SiteVisual.loaded;
-        geotechToggle.disabled = v50Ready;
-        geotechToggle.checked = v50Ready ? false : persistedGeotech;
-        if (v50Ready) environment.setGeotechnicsVisible(false);
+        const v55Ready = siteVisual.loaded;
+        geotechToggle.disabled = v55Ready;
+        geotechToggle.checked = v55Ready ? false : persistedGeotech;
+        if (v55Ready) environment.setGeotechnicsVisible(false);
         else environment.setGeotechnicsVisible(persistedGeotech);
       }
-      if (geotechLegend) geotechLegend.hidden = environment.v50SiteVisual.loaded || !persistedGeotech;
+      if (geotechLegend) geotechLegend.hidden = siteVisual.loaded || !persistedGeotech;
     } else {
       sceneLoading?.classList.add('is-ready');
     }

@@ -87,15 +87,15 @@ describe('Babylon Inspection parity', () => {
     system.dispose(); scene.dispose(); engine.dispose();
   });
 
-  it('resolves canonical conveyor Inspection to V50 alias geometry instead of hidden V30 roots', () => {
+  it('resolves canonical conveyor Inspection to V55 alias geometry instead of hidden V30 roots', () => {
     const { engine, scene } = makeScene();
     const legacy = target(scene, 'CV-02-CRUSHER-TO-STOCKPILE', [-60, 2, 0], [30, 2, 3]);
     const v49A = CreateBox('V49_CV02_BELT_01', { width: 18, height: 0.4, depth: 2 }, scene);
     const v49B = CreateBox('V49_CV02_BELT_02', { width: 18, height: 0.4, depth: 2 }, scene);
     v49A.position.set(210, 4, 0);
     v49B.position.set(226, 5, 0);
-    v49A.metadata = { v50AuthoritativeVisual: true };
-    v49B.metadata = { v50AuthoritativeVisual: true };
+    v49A.metadata = { v55AuthoritativeVisual: true };
+    v49B.metadata = { v55AuthoritativeVisual: true };
     v49A.material = new StandardMaterial('v49-cv02-a', scene);
     v49B.material = new StandardMaterial('v49-cv02-b', scene);
     const originalV49Material = v49A.material;
@@ -104,6 +104,7 @@ describe('Babylon Inspection parity', () => {
     const selected = system.setTarget('CV-02-CRUSHER-TO-STOCKPILE');
     const framing = system.getFraming('CV-02-CRUSHER-TO-STOCKPILE');
     expect(selected.metadata.v50InspectionAlias).toBe(true);
+    expect(selected.metadata.v55InspectionAlias).toBe(true);
     expect(framing.center.x).toBeGreaterThan(190);
     system.setMode('transparent');
     expect(v49A.material).not.toBe(originalV49Material);
@@ -113,12 +114,12 @@ describe('Babylon Inspection parity', () => {
     system.dispose(); scene.dispose(); engine.dispose();
   });
 
-  it('marks semantic-only V50 inspection routes as non-cutaway and keeps their mode normal', () => {
+  it('marks semantic-only V55 inspection routes as non-cutaway and keeps their mode normal', () => {
     const { engine, scene } = makeScene();
-    const v49Marker = CreateBox('V49_SITE_MARKER', { size: 1 }, scene);
-    v49Marker.metadata = { v50AuthoritativeVisual: true };
+    const v55Marker = CreateBox('V55_SITE_MARKER', { size: 1 }, scene);
+    v55Marker.metadata = { v55AuthoritativeVisual: true };
     const system = createBabylonEquipmentInspectionSystem({ scene });
-    const route = system.getTargets().find((item) => item.id === 'P-CYCLONE-UNDERFLOW-RETURN');
+    const route = system.getTargets().find((item) => item.id === 'MT-ELUTION-TO-CIP-BARREN-CARBON');
     expect(route).toMatchObject({ supportsModes: false, semanticOnly: true });
     system.setTarget(route.id);
     expect(system.setMode('cutaway')).toBe('normal');

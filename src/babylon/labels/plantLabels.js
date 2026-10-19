@@ -6,7 +6,7 @@ import { CreatePlane } from '@babylonjs/core/Meshes/Builders/planeBuilder.js';
 import { Mesh } from '@babylonjs/core/Meshes/mesh.js';
 import { TransformNode } from '@babylonjs/core/Meshes/transformNode.js';
 import { PLANT_ZONE_ORDER, getPlantZone } from '../../scene/layout/plantLayout.js';
-import { V50_ZONE_ANCHORS } from '../../scene/integration/v50Layout.js';
+import { V55_ZONE_ANCHORS } from '../../scene/integration/v55Layout.js';
 import {
   EQUIPMENT_LABEL_DEFINITIONS,
   LABEL_ASPECT,
@@ -165,7 +165,7 @@ export function createBabylonPlantLabels({ scene, equipmentSystem } = {}) {
         textureSize: { width: 768, height: 144 },
       });
       if (label) {
-        const anchor = V50_ZONE_ANCHORS[zone.id];
+        const anchor = V55_ZONE_ANCHORS[zone.id];
         label.position.set(
           anchor?.x ?? zone.position.x,
           (anchor?.y ?? zone.elevation) + 6.0,
@@ -202,9 +202,9 @@ export function createBabylonPlantLabels({ scene, equipmentSystem } = {}) {
       const metadata = label.metadata ?? {};
       if (metadata.labelKind === 'zone' && metadata.zoneId) {
         const zone = getPlantZone(metadata.zoneId);
-        const useV50 = scene.metadata?.activeVisualRevision === 'V50'
-          || scene.metadata?.activeVisualRevision === 'V50-loading';
-        const anchor = useV50 ? V50_ZONE_ANCHORS[metadata.zoneId] : null;
+        const useV55 = scene.metadata?.activeVisualRevision === 'V55'
+          || scene.metadata?.activeVisualRevision === 'V55-loading';
+        const anchor = useV55 ? V55_ZONE_ANCHORS[metadata.zoneId] : null;
         label.position.set(
           anchor?.x ?? zone.position.x,
           (anchor?.y ?? zone.elevation) + 6.0,

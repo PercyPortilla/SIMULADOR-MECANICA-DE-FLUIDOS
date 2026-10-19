@@ -20,7 +20,7 @@ import {
   setInspectionControlsAttached,
 } from '../cameras/cameraPresets.js';
 import { attachBabylonReceptionEarthwork } from '../assets/receptionEarthwork.js';
-import { attachBabylonV50SiteVisual } from '../assets/v50SiteVisual.js';
+import { attachBabylonV55SiteVisual } from '../assets/v55SiteVisual.js';
 import { loadBabylonAssetContainer } from '../assets/gltfLoader.js';
 import { createBabylonMaterialTransportSystem } from '../conveying/materialTransportSystem.js';
 import { createBabylonProcessEquipmentSystem } from '../equipment/processEquipmentSystem.js';
@@ -350,7 +350,7 @@ export function createBabylonBaseScene(engine, { pipe1State = null } = {}) {
   const technicalGrid = createBabylonTechnicalGrid({ scene });
   const industrialSafety = createBabylonIndustrialSafety({ scene });
   const v50SiteVisual = typeof window !== 'undefined'
-    ? attachBabylonV50SiteVisual({ scene })
+    ? attachBabylonV55SiteVisual({ scene })
     : null;
   const deferredLegacyLoader = v50SiteVisual
     ? async (url, targetScene) => {
@@ -422,6 +422,7 @@ export function createBabylonBaseScene(engine, { pipe1State = null } = {}) {
     industrialInfrastructure,
     technicalGrid,
     industrialSafety,
+    v55SiteVisual: v50SiteVisual,
     v50SiteVisual,
     receptionEarthworkOverlay,
     processEquipmentSystem,
@@ -499,7 +500,7 @@ export function createBabylonRuntime({
 
   if (base.v50SiteVisual) {
     setLegacyVisualsEnabled(false);
-    base.scene.metadata.activeVisualRevision = 'V50-loading';
+    base.scene.metadata.activeVisualRevision = 'V55-loading';
   }
 
   function registerShadowCasters(root) {
@@ -586,12 +587,15 @@ export function createBabylonRuntime({
     base.materialTransportSystem?.setAnimationsEnabled?.(false);
     base.mobileEquipmentSystem?.setEnabled?.(false);
     base.v50SiteVisual.setAnimationsEnabled(animationsEnabled);
-    base.scene.metadata.activeVisualRevision = 'V50';
-    applyBabylonCameraPresetRevision(base.cameras, 'V50');
+    base.scene.metadata.activeVisualRevision = 'V55';
+    applyBabylonCameraPresetRevision(base.cameras, 'V55');
     base.geotechnicalSystem?.setVisible?.(false);
     base.scene.metadata.v50ImportedRootCount = base.v50SiteVisual.host.metadata?.importedRootCount ?? 0;
     base.scene.metadata.v50ImportedMeshCount = base.v50SiteVisual.host.metadata?.importedMeshCount ?? 0;
     base.scene.metadata.v50ShadowCasterCount = registerV50ShadowCasters(base.v50SiteVisual.host);
+    base.scene.metadata.v55ImportedRootCount = base.scene.metadata.v50ImportedRootCount;
+    base.scene.metadata.v55ImportedMeshCount = base.scene.metadata.v50ImportedMeshCount;
+    base.scene.metadata.v55ShadowCasterCount = base.scene.metadata.v50ShadowCasterCount;
     base.equipmentInspection?.refreshTargets?.();
     base.plantLabels?.updatePositions?.();
     invalidateRender(300);
