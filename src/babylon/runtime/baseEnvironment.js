@@ -500,7 +500,10 @@ export function createBabylonRuntime({
   }
 
   if (base.v50SiteVisual) {
-    setLegacyVisualsEnabled(false);
+    // Keep the lightweight procedural site visible while the authoritative V56
+    // GLB downloads/parses. It is disabled atomically once V56 is ready so the
+    // viewport never presents an empty canvas on slower connections.
+    setLegacyVisualsEnabled(true);
     base.scene.metadata.activeVisualRevision = 'V56-loading';
   }
 

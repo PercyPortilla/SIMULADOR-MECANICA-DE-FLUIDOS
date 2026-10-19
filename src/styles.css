@@ -179,7 +179,7 @@ h2 { margin: 8px 0 8px; font-size: clamp(25px, 3vw, 36px); font-weight: 530; let
 .camera-switcher button.active, .camera-switcher button:hover { border-color: var(--ui-accent); color: var(--ui-accent-strong); }
 .scene-viewport { position: relative; height: min(53vw, 520px); min-height: 320px; overflow: hidden; background: linear-gradient(180deg, #8195a1 0%, #9cabb0 50%, #6e716e 100%); }
 .scene-viewport canvas { display: block; width: 100%; height: 100%; }
-.scene-loading { position: absolute; z-index: 10; inset: 0; display: grid; place-content: center; gap: 7px; padding: 24px; background: linear-gradient(180deg, rgba(16, 31, 38, .76), rgba(16, 31, 38, .56)); color: var(--ui-text); text-align: center; pointer-events: none; transition: opacity .22s ease, visibility .22s ease; }
+.scene-loading { position: absolute; z-index: 10; inset: 0; display: grid; place-content: center; gap: 7px; padding: 24px; background: linear-gradient(180deg, rgba(16, 31, 38, .50), rgba(16, 31, 38, .34)); color: var(--ui-text); text-align: center; pointer-events: none; transition: opacity .22s ease, visibility .22s ease; }
 .scene-loading strong { color: var(--ui-accent-strong); font-size: 13px; letter-spacing: .04em; }
 .scene-loading span { color: var(--ui-muted); font-size: 11px; }
 .scene-loading.is-ready { opacity: 0; visibility: hidden; }
