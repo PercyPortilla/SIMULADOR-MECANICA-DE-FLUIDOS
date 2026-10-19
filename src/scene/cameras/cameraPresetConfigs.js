@@ -63,9 +63,11 @@ export function createV50CameraPresetConfigs() {
   const recovery = anchor('Z8');
 
   return Object.freeze({
-    // Exact Blender V50 review-camera mapping:
-    // Blender (x,y,z) -> Babylon (x,z,-y).
-    general: preset(vector(260, 105, 120), vector(255, 2.8, -13), 40),
+    // Keep Planta general low enough to read the V48 earthworks/terraces in the
+    // web viewport. The previous high review pose visually flattened the civil
+    // work even though the V50 GLB was loaded correctly. Top remains the full
+    // orthographic-like overview; General is the presentation view.
+    general: preset(vector(260, 64, 138), vector(255, 3.2, -13), 38),
     top: preset(
       vector(siteCenter[0], 420, siteCenter[2]),
       siteCenter,

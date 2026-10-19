@@ -20,10 +20,17 @@ describe('Babylon camera preset parity', () => {
     expect(createBabylonCameraPresetConfigs()).toEqual(createCameraPresetConfigs());
     expect(createCameraPresetConfigs()).toEqual(createV50CameraPresetConfigs());
     expect(createV50CameraPresetConfigs().general).toMatchObject({
-      position: [260, 105, 120],
-      target: [255, 2.8, -13],
-      fov: 40,
+      position: [260, 64, 138],
+      target: [255, 3.2, -13],
+      fov: 38,
     });
+    const general = createV50CameraPresetConfigs().general;
+    const horizontalRun = Math.hypot(
+      general.position[0] - general.target[0],
+      general.position[2] - general.target[2],
+    );
+    const verticalRun = general.position[1] - general.target[1];
+    expect(verticalRun / horizontalRun).toBeLessThan(0.45);
   });
 
   it('can switch the existing camera rig back to the V30 fallback contract', () => {
