@@ -46,6 +46,70 @@ import { getState, subscribe as subscribeState } from '../../state/simulationSta
 export const BABYLON_WORLD_UNITS_PER_METER = 1;
 export const BABYLON_VIEW_DECORATION_REFRESH_INTERVAL_MS = 125;
 
+export const V50_MAJOR_SHADOW_EQUIPMENT_IDS = Object.freeze([
+  'ROM-HOPPER', 'APRON-FEEDER', 'PRIMARY-CRUSHER', 'STOCKPILE-RECLAIM',
+  'MILL-01', 'SUMP-01', 'SLURRY-PUMP-01', 'CLASS-01',
+  'R-01', 'R-02', 'R-03', 'R-04', 'PUMP-01', 'CIP-ADSORPTION',
+  'ELUTION-SKID', 'EW-CELLS', 'SMELTING-FURNACE',
+  'TRUCK-01', 'TRUCK-02', 'TRUCK-03', 'LOADER-01', 'EXCAVATOR-01',
+]);
+
+function shadowMeshEntry(mesh) {
+  if (!mesh?.isEnabled?.() || mesh.isVisible === false) return null;
+  mesh.computeWorldMatrix?.(true);
+  const extend = mesh.getBoundingInfo?.()?.boundingBox?.extendSizeWorld;
+  const span = extend?.length?.() ?? 0;
+  return Number.isFinite(span) ? { mesh, span } : null;
+}
+
+export function selectV50ShadowCasterMeshes(root, {
+  maxCasters = 180,
+  perEquipment = 2,
+} = {}) {
+  if (!root || maxCasters <= 0) return [];
+  const allNodes = [root, ...(root.getDescendants?.(false) ?? [])];
+  const allMeshes = root.getChildMeshes?.(false) ?? [];
+  const selected = [];
+  const seen = new Set();
+
+  const add = (mesh) => {
+    if (!mesh || seen.has(mesh) || selected.length >= maxCasters) return false;
+    seen.add(mesh);
+    selected.push(mesh);
+    return true;
+  };
+
+  V50_MAJOR_SHADOW_EQUIPMENT_IDS.forEach((equipmentId) => {
+    if (selected.length >= maxCasters) return;
+    const equipmentRoot = allNodes.find((node) => node?.name === equipmentId);
+    if (!equipmentRoot) return;
+    const familyMeshes = [
+      ...(equipmentRoot.getBoundingInfo && 'material' in equipmentRoot ? [equipmentRoot] : []),
+      ...(equipmentRoot.getChildMeshes?.(false) ?? []),
+    ]
+      .map(shadowMeshEntry)
+      .filter((entry) => entry && entry.span >= 0.25)
+      .sort((a, b) => b.span - a.span)
+      .slice(0, Math.max(1, perEquipment));
+    familyMeshes.forEach(({ mesh }) => add(mesh));
+  });
+
+  const secondary = /(?:GROUND|ROAD|PAD|TERRACE|BENCH|BERM|SHOULDER|DRAIN|CULVERT|PIPE|FLANGE|VALVE|BOLT|RUNG|RAIL|ORE|SLURRY|SURFACE|SWIRL|TRACK|LINE|LABEL|SIGN)/i;
+  const primary = /(?:TRUCK|EXCAVATOR|LOADER|ROM|FEEDER|CRUSHER|STOCKPILE|MILL|SUMP|PUMP|CLASS|CYCLONE|R-0[1-4]|CIP|ELUTION|EW|SMELTING|CONVEYOR|CV0[1-3]|BUILDING|HOUSE|TOWER|FRAME|SHELL|BODY|TANK|COLUMN|MOTOR|FURNACE)/i;
+  allMeshes
+    .map(shadowMeshEntry)
+    .filter((entry) => entry && entry.span >= 0.45 && !seen.has(entry.mesh))
+    .filter(({ mesh }) => !SECONDARY_SHADOW_DETAIL.test(String(mesh.name || '')))
+    .filter(({ mesh }) => primary.test(String(mesh.name || '')) && !secondary.test(String(mesh.name || '')))
+    .sort((a, b) => b.span - a.span)
+    .some(({ mesh }) => {
+      add(mesh);
+      return selected.length >= maxCasters;
+    });
+
+  return selected;
+}
+
 function isSceneDisposed(scene) {
   if (!scene) return true;
   return typeof scene.isDisposed === 'function' ? scene.isDisposed() : Boolean(scene.isDisposed);
@@ -449,22 +513,8 @@ export function createBabylonRuntime({
   }
 
   function registerV50ShadowCasters(root) {
-    const meshes = root?.getChildMeshes?.(false) ?? [];
-    const secondary = /(?:GROUND|ROAD|PAD|TERRACE|BENCH|BERM|SHOULDER|DRAIN|CULVERT|PIPE|FLANGE|VALVE|BOLT|RUNG|RAIL|ORE|SLURRY|SURFACE|SWIRL|TRACK|LINE|LABEL|SIGN)/i;
-    const primary = /(?:TRUCK|EXCAVATOR|LOADER|ROM|FEEDER|CRUSHER|STOCKPILE|MILL|SUMP|PUMP|CLASS|CYCLONE|R-0[1-4]|CIP|ELUTION|EW|SMELTING|CONVEYOR|CV0[1-3]|BUILDING|HOUSE|TOWER|FRAME|SHELL|BODY|TANK|COLUMN|MOTOR|FURNACE)/i;
-    const candidates = meshes
-      .filter((mesh) => mesh?.isEnabled?.() && mesh.isVisible !== false)
-      .filter((mesh) => !SECONDARY_SHADOW_DETAIL.test(String(mesh.name || '')))
-      .filter((mesh) => primary.test(String(mesh.name || '')) && !secondary.test(String(mesh.name || '')))
-      .map((mesh) => {
-        mesh.computeWorldMatrix?.(true);
-        const extend = mesh.getBoundingInfo?.()?.boundingBox?.extendSizeWorld;
-        return { mesh, span: extend?.length?.() ?? 0 };
-      })
-      .filter((entry) => entry.span >= 0.45)
-      .sort((a, b) => b.span - a.span)
-      .slice(0, 180);
-    candidates.forEach(({ mesh }) => {
+    const candidates = selectV50ShadowCasterMeshes(root, { maxCasters: 180, perEquipment: 2 });
+    candidates.forEach((mesh) => {
       base.shadowGenerator.addShadowCaster(mesh, false);
       mesh.receiveShadows = true;
     });
