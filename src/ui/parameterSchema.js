@@ -1,7 +1,7 @@
 export const PARAMETER_SECTIONS = Object.freeze([
   {
     id: 'slurry',
-    title: '01 / Pulpa y constitución',
+    title: '01 / Pulpa',
     fields: [
       { path: ['slurry', 'solidsMassFraction'], label: 'Sólidos · % masa', help: 'Fracción másica de sólidos de la pulpa.', type: 'number', min: 0, max: 100, step: 0.1, display: (value) => value * 100, parse: (value) => value / 100 },
       { path: ['slurry', 'solidDensityKgM3'], label: 'Densidad sólido · kg/m³', help: 'Densidad real de la fase sólida.', type: 'number', min: 0, step: 1 },
@@ -15,13 +15,19 @@ export const PARAMETER_SECTIONS = Object.freeze([
   },
   {
     id: 'transport',
-    title: '02 / Línea de transporte',
+    title: '03 / Tubería',
     fields: [
       { path: ['transport', 'pipe1', 'innerDiameterM'], label: 'Diámetro interno · m', help: 'Diámetro hidráulico real; la exageración visual 3D no altera este valor.', type: 'number', min: 0, step: 0.001 },
       { path: ['transport', 'pipe1', 'lengthM'], label: 'Longitud hidráulica · m', help: 'Longitud usada en ΔP; no desplaza físicamente los equipos del layout.', type: 'number', min: 0, step: 0.1 },
-      { path: ['transport', 'pipe1', 'roughnessM'], label: 'Rugosidad absoluta · m', help: 'Usada por Colebrook-White únicamente en el modelo Newtoniano turbulento.', type: 'number', min: 0, step: 0.000001, disabledWhen: (state) => state.rheology.model !== 'newtonian' },
       { path: ['transport', 'pipe1', 'material'], label: 'Material visual', help: 'Afecta la apariencia de Pipe 1, no el cálculo hidráulico actual.', type: 'select', options: [['', 'Predeterminado'], ['Acero', 'Acero'], ['HDPE', 'HDPE / PEAD']] },
       { path: ['transport', 'pipe1', 'velocityMps'], label: 'Velocidad media · m/s', help: 'Velocidad objetivo usada para caudal y para invertir el perfil reológico laminar.', type: 'number', min: 0, step: 0.01 },
+    ],
+  },
+  {
+    id: 'losses',
+    title: '04 / Pérdidas y elevación',
+    fields: [
+      { path: ['transport', 'pipe1', 'roughnessM'], label: 'Rugosidad absoluta · m', help: 'Usada por Colebrook-White únicamente en el modelo Newtoniano turbulento.', type: 'number', min: 0, step: 0.000001, disabledWhen: (state) => state.rheology.model !== 'newtonian' },
       { path: ['transport', 'pipe1', 'minorLossCoefficient'], label: 'K adicional / legado · adim.', help: 'K manual adicional. Los accesorios explícitos se suman automáticamente.', type: 'number', min: 0, step: 0.01 },
       { path: ['transport', 'pipe1', 'elevationChangeM'], label: 'Δz descarga − succión · m', help: 'Positivo cuando la descarga está más alta; puede ser negativo.', type: 'number', step: 0.1 },
       { path: ['transport', 'settlingFactorFl'], label: 'Factor Fl sedimentación', type: 'number', min: 0, step: 0.01, advanced: true },
@@ -38,7 +44,7 @@ export const PARAMETER_SECTIONS = Object.freeze([
   },
   {
     id: 'rheology',
-    title: '03 / Reología',
+    title: '02 / Reología',
     fields: [
       { path: ['rheology', 'model'], label: 'Modelo', help: 'Selecciona la ley constitutiva.', type: 'select', options: [['', 'Seleccionar'], ['newtonian', 'Newtoniano'], ['hb', 'Herschel–Bulkley'], ['bingham', 'Bingham plástico'], ['power', 'Ley de potencia'], ['casson', 'Casson']] },
       { path: ['rheology', 'newtonianViscosityPaS'], label: 'Viscosidad dinámica · Pa·s', models: ['newtonian'], type: 'number', min: 0, step: 0.0001 },
@@ -57,7 +63,7 @@ export const PARAMETER_SECTIONS = Object.freeze([
   },
   {
     id: 'energy',
-    title: '04 / Bombeo y energía',
+    title: '05 / Bomba y energía',
     fields: [
       { path: ['energy', 'pumpEfficiency'], label: 'Eficiencia bomba · %', type: 'number', min: 0, max: 100, step: 0.1, display: (value) => value * 100, parse: (value) => value / 100 },
       { path: ['energy', 'motorEfficiency'], label: 'Eficiencia motor · %', type: 'number', min: 0, max: 100, step: 0.1, display: (value) => value * 100, parse: (value) => value / 100 },
@@ -71,7 +77,7 @@ export const PARAMETER_SECTIONS = Object.freeze([
   },
   {
     id: 'leaching',
-    title: '05 / Lixiviación',
+    title: '06A / Proceso · Lixiviación',
     fields: [
       { path: ['leaching', 'totalUsefulVolumeM3'], label: 'Volumen útil total · m³', help: 'Entrada operativa; no se deriva de la escala visual de los reactores.', type: 'number', min: 0, step: 1 },
       { path: ['leaching', 'kineticModel'], label: 'Modelo cinético', type: 'select', options: [['', 'Solo tiempo de residencia'], ['first-order-cstr-series', '1er orden · CSTR iguales en serie']] },
@@ -98,7 +104,7 @@ export const PARAMETER_SECTIONS = Object.freeze([
   },
   {
     id: 'recovery',
-    title: '06 / Recuperación',
+    title: '06B / Proceso · Recuperación',
     fields: [
       { path: ['recovery', 'model'], label: 'Modelo de recuperación', help: 'El balance usa únicamente eficiencias que tú ingresas.', type: 'select', options: [['', 'Desactivado'], ['stage-efficiency', 'Balance por eficiencias de etapa']] },
       { path: ['recovery', 'feedGoldKgH'], label: 'Oro a recuperación · kg/h', type: 'number', min: 0, step: 0.001 },
@@ -110,7 +116,7 @@ export const PARAMETER_SECTIONS = Object.freeze([
   },
   {
     id: 'process',
-    title: '07 / Balance de masa',
+    title: '06C / Proceso · Balance de masa',
     fields: [
       { path: ['process', 'tankDischargeM3h'], label: 'Descarga tanque · m³/h', type: 'number', min: 0, step: 0.01 },
       { path: ['process', 'tankVolumeM3'], label: 'Volumen tanque · m³', type: 'number', min: 0, step: 0.1, advanced: true },

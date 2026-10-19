@@ -58,10 +58,12 @@ let unsubscribeProcessMetrics = null;
 let activeWorkspaceTab = 'circuit';
 let startPresentationTour = null;
 let lastAcademicLabEvaluation = null;
+let activeComparisonScenarioId = null;
 
 loadExampleSimulation(updateState);
 
 const sections = PARAMETER_SECTIONS;
+const PARAMETER_SECTION_ORDER = Object.freeze(['slurry', 'rheology', 'transport', 'losses', 'energy', 'leaching', 'recovery', 'process']);
 
 function readPath(state, path) {
   return path.reduce((value, key) => value[key], state);
@@ -74,7 +76,18 @@ function makeField(field, state) {
   label.htmlFor = `field-${field.path.join('-')}`;
 
   const name = document.createElement('span');
-  name.textContent = field.label;
+  name.className = 'parameter-field-label';
+  const [labelText, ...unitParts] = String(field.label).split(' · ');
+  const labelName = document.createElement('span');
+  labelName.className = 'parameter-field-name';
+  labelName.textContent = labelText;
+  name.append(labelName);
+  if (unitParts.length) {
+    const unit = document.createElement('span');
+    unit.className = 'parameter-field-unit';
+    unit.textContent = unitParts.join(' · ');
+    name.append(unit);
+  }
   if (field.help) name.title = field.help;
   label.append(name);
   if (field.help) {
@@ -136,7 +149,9 @@ function updateNestedState(path, value) {
 
 function makeSection(section, state) {
   const details = document.createElement('details');
-  details.className = 'parameter-section';
+  const processSection = ['leaching', 'recovery', 'process'].includes(section.id);
+  details.className = `parameter-section ${processSection ? 'parameter-section-process' : 'parameter-section-hydraulic'}`;
+  details.dataset.sectionId = section.id;
   details.open = section.id === 'slurry'
     || section.id === 'transport'
     || (section.id === 'rheology' && Boolean(state.rheology.model));
@@ -184,7 +199,9 @@ function renderParameterSections() {
   if (!sectionHost) return;
   const state = getState();
   sectionHost.replaceChildren();
-  sections.forEach((section) => sectionHost.append(makeSection(section, state)));
+  [...sections]
+    .sort((left, right) => PARAMETER_SECTION_ORDER.indexOf(left.id) - PARAMETER_SECTION_ORDER.indexOf(right.id))
+    .forEach((section) => sectionHost.append(makeSection(section, state)));
   sectionHost.append(createSegmentEditor(state));
   sectionHost.append(createPumpCurveEditor(state));
 }
@@ -193,7 +210,7 @@ function createSegmentEditor(state) {
   const details = document.createElement('details');
   details.className = 'parameter-section circuit-segments';
   const summary = document.createElement('summary');
-  summary.textContent = '08 / Circuito por tramos';
+  summary.textContent = '07 / Circuito por tramos';
   details.append(summary);
   const body = document.createElement('div');
   body.className = 'section-content segment-editor-body';
@@ -267,7 +284,7 @@ function createPumpCurveEditor(state) {
   const details = document.createElement('details');
   details.className = 'parameter-section pump-curve-editor';
   const summary = document.createElement('summary');
-  summary.textContent = '09 / Curvas de bomba';
+  summary.textContent = '08 / Curvas de bomba';
   details.append(summary);
   const body = document.createElement('div');
   body.className = 'section-content pump-curve-body';
@@ -280,7 +297,7 @@ function createPumpCurveEditor(state) {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'segment-action';
-    button.textContent = 'Cargar curva didáctica de ejemplo';
+    button.textContent = 'Cargar curva académica de ejemplo';
     button.addEventListener('click', () => {
       updateState({ energy: {
         pumpCurve: [
@@ -436,9 +453,18 @@ function formatScenarioValue(value) {
   return String(value ?? '—');
 }
 
+function formatScenarioDelta(left, right) {
+  if (typeof left !== 'number' || typeof right !== 'number') return ['—', '—'];
+  const delta = right - left;
+  const relative = Math.abs(left) > 1e-12 ? delta / left * 100 : null;
+  return [formatScenarioValue(delta), relative === null ? '—' : `${relative >= 0 ? '+' : ''}${relative.toFixed(2)} %`];
+}
+
 function renderScenarioComparison(scenario) {
   const host = document.querySelector('#scenario-comparison');
-  if (!host) return;
+  const engineeringHost = document.querySelector('#engineering-comparison');
+  if (!host && !engineeringHost) return;
+  activeComparisonScenarioId = scenario?.id ?? null;
   const diffs = compareScenarios(scenario, getState());
   const defaultState = getInitialState();
   const savedState = structuredClone(defaultState);
@@ -449,19 +475,42 @@ function renderScenarioComparison(scenario) {
   if (scenario.inputs?.transport?.pipe1) savedState.transport.pipe1 = { ...defaultState.transport.pipe1, ...scenario.inputs.transport.pipe1 };
   const savedResults = calculateSimulationResults(savedState);
   const currentResults = getResults();
+  const currentState = getState();
   const resultRows = [
-    ['ΔP total', savedResults.transport?.pressureDropPa, currentResults.transport?.pressureDropPa, 'Pa'],
-    ['Caudal', savedResults.transport?.flowRateM3s, currentResults.transport?.flowRateM3s, 'm³/s'],
-    ['Potencia eléctrica', savedResults.energy?.electricalPowerW, currentResults.energy?.electricalPowerW, 'W'],
-    ['Energía anual', savedResults.energy?.annualEnergyKwh, currentResults.energy?.annualEnergyKwh, 'kWh/año'],
-    ['Recuperación', savedResults.recovery?.overallRecovery, currentResults.recovery?.overallRecovery, 'fracción'],
-    ['Residencia', savedResults.leaching?.residenceTimeH, currentResults.leaching?.residenceTimeH, 'h'],
+    ['Q · caudal', savedResults.transport?.flowRateM3s === undefined ? undefined : savedResults.transport.flowRateM3s * 3600, currentResults.transport?.flowRateM3s === undefined ? undefined : currentResults.transport.flowRateM3s * 3600, 'm³/h'],
+    ['V · velocidad', savedState.transport?.pipe1?.velocityMps, currentState.transport?.pipe1?.velocityMps, 'm/s'],
+    ['Re · Reynolds', savedResults.transport?.reynoldsNumber, currentResults.transport?.reynoldsNumber, ''],
+    ['f · Darcy', savedResults.transport?.frictionFactor, currentResults.transport?.frictionFactor, ''],
+    ['ΔP total', savedResults.transport?.pressureDropPa === undefined ? undefined : savedResults.transport.pressureDropPa / 1000, currentResults.transport?.pressureDropPa === undefined ? undefined : currentResults.transport.pressureDropPa / 1000, 'kPa'],
+    ['H · carga', savedResults.transport?.totalHeadM, currentResults.transport?.totalHeadM, 'm'],
+    ['P · eléctrica', savedResults.energy?.electricalPowerW === undefined ? undefined : savedResults.energy.electricalPowerW / 1000, currentResults.energy?.electricalPowerW === undefined ? undefined : currentResults.energy.electricalPowerW / 1000, 'kW'],
+    ['NPSH-A', savedResults.pump?.npshAvailableM, currentResults.pump?.npshAvailableM, 'm'],
+    ['Densidad pulpa', savedResults.slurry?.densityKgM3, currentResults.slurry?.densityKgM3, 'kg/m³'],
+    ['Recuperación', savedResults.recovery?.overallRecovery === undefined ? undefined : savedResults.recovery.overallRecovery * 100, currentResults.recovery?.overallRecovery === undefined ? undefined : currentResults.recovery.overallRecovery * 100, '%'],
   ].filter(([, left, right]) => left !== undefined || right !== undefined);
-  const inputHtml = diffs.length ? diffs.slice(0, 20).map(({ key, left, right }) => `<tr><td>${key}</td><td>${formatScenarioValue(left)}</td><td>${formatScenarioValue(right)}</td><td>${typeof left === 'number' && typeof right === 'number' ? formatScenarioValue(right - left) : '—'}</td></tr>`).join('') : '<tr><td colspan="4">Sin diferencias de entrada.</td></tr>';
-  const resultHtml = resultRows.map(([name, left, right, unit]) => `<tr><td>${name}</td><td>${formatScenarioValue(left)} ${unit}</td><td>${formatScenarioValue(right)} ${unit}</td><td>${typeof left === 'number' && typeof right === 'number' ? formatScenarioValue(right - left) : '—'}</td></tr>`).join('');
-  host.innerHTML = `<div class="scenario-comparison-head"><strong>Comparación</strong><button type="button" aria-label="Cerrar comparación">×</button></div><table><thead><tr><th>Variable</th><th>Guardado</th><th>Actual</th><th>Δ</th></tr></thead><tbody>${inputHtml}${resultHtml}</tbody></table>`;
-  host.hidden = false;
-  host.querySelector('button')?.addEventListener('click', () => { host.hidden = true; });
+  const inputHtml = diffs.length ? diffs.slice(0, 20).map(({ key, left, right }) => {
+    const [delta, relative] = formatScenarioDelta(left, right);
+    return `<tr><td>${key}</td><td>${formatScenarioValue(left)}</td><td>${formatScenarioValue(right)}</td><td>${delta}</td><td>${relative}</td></tr>`;
+  }).join('') : '<tr><td colspan="5">Sin diferencias de entrada.</td></tr>';
+  const resultHtml = resultRows.map(([name, left, right, unit]) => {
+    const [delta, relative] = formatScenarioDelta(left, right);
+    return `<tr><td>${name}</td><td>${formatScenarioValue(left)}${unit ? ` ${unit}` : ''}</td><td>${formatScenarioValue(right)}${unit ? ` ${unit}` : ''}</td><td>${delta}${unit ? ` ${unit}` : ''}</td><td>${relative}</td></tr>`;
+  }).join('');
+  const closeComparison = () => {
+    activeComparisonScenarioId = null;
+    if (host) host.hidden = true;
+    if (engineeringHost) engineeringHost.hidden = true;
+  };
+  if (host) {
+    host.innerHTML = `<div class="scenario-comparison-head"><strong>Comparación A/B</strong><button type="button" aria-label="Cerrar comparación">×</button></div><table><thead><tr><th>Entrada</th><th>A</th><th>B</th><th>Δ</th><th>Δ %</th></tr></thead><tbody>${inputHtml}</tbody></table>`;
+    host.hidden = false;
+    host.querySelector('button')?.addEventListener('click', closeComparison);
+  }
+  if (engineeringHost) {
+    engineeringHost.innerHTML = `<div class="engineering-comparison-head"><div><span>COMPARACIÓN DE ESCENARIOS</span><strong>${scenario.name} vs escenario actual</strong></div><button type="button" aria-label="Cerrar comparación técnica">×</button></div><table><thead><tr><th>Variable</th><th>Escenario A</th><th>Escenario B</th><th>Δ</th><th>Δ %</th></tr></thead><tbody>${resultHtml}</tbody></table>`;
+    engineeringHost.hidden = false;
+    engineeringHost.querySelector('button')?.addEventListener('click', closeComparison);
+  }
 }
 
 function setScenarioStatus(message, tone = 'muted') {
@@ -630,7 +679,7 @@ function wireAcademicCaseControls() {
     renderAcademicCaseGuide(select.value);
     const selected = getAcademicCase(select.value);
     setAcademicCaseStatus(
-      selected ? 'Caso seleccionado: ' + selected.shortName + '. Aún no modifica parámetros.' : 'Valores didácticos: revisar siempre el alcance del modelo.',
+      selected ? 'Caso seleccionado: ' + selected.shortName + '. Aún no modifica parámetros.' : 'Valores académicos de referencia: revisar siempre el alcance del modelo.',
       'muted',
     );
   });
@@ -844,10 +893,10 @@ function wireAcademicLabControls() {
 }
 
 const WORKSPACE_TABS = Object.freeze([
-  ['circuit', '01', 'Circuito 3D'],
-  ['curves', '02', 'Curvas y sondas'],
-  ['balance', '03', 'Balance y energía'],
-  ['memory', '04', 'Memoria de cálculo'],
+  ['circuit', '01', 'Entradas y modelo'],
+  ['curves', '02', 'Resultados y curvas'],
+  ['balance', '03', 'Análisis hidráulico'],
+  ['memory', '04', 'Memoria y supuestos'],
 ]);
 
 function installWorkspaceTabs(shell) {
@@ -875,9 +924,9 @@ function installWorkspaceTabs(shell) {
   content.append(circuit);
 
   const placeholders = [
-    ['curves', 'CURVAS Y SONDAS', 'Respuesta reológica y sondas virtuales', 'Ley constitutiva, viscosidad, curva del sistema y sondas calculadas por el mismo motor numérico.'],
-    ['balance', 'BALANCE Y ENERGÍA', 'Continuidad, presión y consumo', 'Continuidad, balance de masa, presión, energía y sensibilidad del circuito activo.'],
-    ['memory', 'MEMORIA DE CÁLCULO', 'Trazabilidad del modelo', 'Ecuaciones, sustitución numérica, supuestos, resultados y referencias del escenario activo.'],
+    ['curves', 'RESULTADOS', 'Curvas y respuesta del sistema', 'Reología, perfil radial, curva del sistema, bomba y sondas calculadas por el mismo motor numérico.'],
+    ['balance', 'ANÁLISIS', 'Hidráulica, energía y sensibilidad', 'Desglose de presión, continuidad, punto de operación, energía y sensibilidad del circuito activo.'],
+    ['memory', 'TRAZABILIDAD', 'Memoria, ecuaciones y supuestos', 'Ecuaciones, sustitución numérica, supuestos, resultados y referencias del escenario activo.'],
   ];
   placeholders.forEach(([id, eyebrow, title, description]) => {
     const panel = document.createElement('section');
@@ -923,6 +972,41 @@ function renderScientificWorkspace(tabId = activeWorkspaceTab) {
   }
 }
 
+function inspectionMetricRows(id, state, results) {
+  const t = results.transport ?? {};
+  const p = results.pump ?? {};
+  const e = results.energy ?? {};
+  const slurry = results.slurry ?? {};
+  const recovery = results.recovery ?? {};
+  const leaching = results.leaching ?? {};
+  const qM3h = t.flowRateM3s === undefined ? null : t.flowRateM3s * 3600;
+  const rows = [];
+  const add = (label, value) => { if (value !== null && value !== undefined) rows.push([label, value]); };
+  if (['SLURRY-PUMP-01', 'PUMP-01'].includes(id)) {
+    add('Q', qM3h === null ? '—' : `${qM3h.toFixed(2)} m³/h`);
+    add('ΔP requerida', t.pressureDropPa === undefined ? '—' : `${(t.pressureDropPa / 1000).toFixed(2)} kPa`);
+    add('Carga H', t.totalHeadM === undefined ? '—' : `${t.totalHeadM.toFixed(2)} m`);
+    add('Potencia', e.electricalPowerW === undefined ? '—' : `${(e.electricalPowerW / 1000).toFixed(2)} kW`);
+    add('NPSH-A', p.npshAvailableM === undefined ? '—' : `${p.npshAvailableM.toFixed(2)} m`);
+  } else if (id.startsWith('P-') || id === 'SUMP-01' || id === 'CLASS-01') {
+    add('Q', qM3h === null ? '—' : `${qM3h.toFixed(2)} m³/h`);
+    add('V', state.transport?.pipe1?.velocityMps === undefined ? '—' : `${state.transport.pipe1.velocityMps.toFixed(3)} m/s`);
+    add('Re', t.reynoldsNumber === undefined ? '—' : t.reynoldsNumber.toFixed(0));
+    add('ΔP', t.pressureDropPa === undefined ? '—' : `${(t.pressureDropPa / 1000).toFixed(2)} kPa`);
+  } else if (id === 'MILL-01') {
+    add('ρ pulpa', slurry.densityKgM3 === undefined ? '—' : `${slurry.densityKgM3.toFixed(1)} kg/m³`);
+    add('Sólidos vol.', slurry.solidVolumeFraction === undefined ? '—' : `${(slurry.solidVolumeFraction * 100).toFixed(2)} %`);
+    add('Modelo reológico', results.rheology?.model ?? '—');
+  } else if (/^R-0[1-4]$/.test(id)) {
+    add('Residencia', leaching.residenceTimeH === undefined ? '—' : `${leaching.residenceTimeH.toFixed(2)} h`);
+    add('Conversión', leaching.conversion === undefined ? '—' : `${(leaching.conversion * 100).toFixed(2)} %`);
+  } else if (['CIP-ADSORPTION', 'ELUTION-SKID', 'EW-CELLS', 'SMELTING-FURNACE'].includes(id)) {
+    add('Recuperación global', recovery.overallRecovery === undefined ? '—' : `${(recovery.overallRecovery * 100).toFixed(2)} %`);
+    add('Metal final', recovery.finalMetalKgH === undefined ? '—' : `${recovery.finalMetalKgH.toFixed(4)} kg/h`);
+  }
+  return rows;
+}
+
 function wireSceneFullscreen() {
   const sceneCard = document.querySelector('.scene-card');
   const controls = document.querySelector('.scene-controls');
@@ -963,6 +1047,17 @@ function wireSceneFullscreen() {
   });
 }
 
+function wireMobileWorkspaceJump() {
+  document.querySelectorAll('[data-scroll-target]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const target = button.dataset.scrollTarget === 'parameters'
+        ? document.querySelector('.sidebar')
+        : document.querySelector('.content');
+      target?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+    });
+  });
+}
+
 function render() {
   const state = getState();
   app.replaceChildren();
@@ -975,8 +1070,9 @@ function render() {
       <div class="topbar-meta">MOTOR DE PARÁMETROS · SI</div><button id="theme-toggle" class="theme-toggle" type="button">PALETA</button>
     </header>
     <main class="workspace">
-      <aside class="sidebar"><div id="theme-panel" class="theme-panel" hidden><div class="theme-panel-head"><strong>Paleta de interfaz</strong><button id="theme-reset" type="button">Restablecer UI</button></div><p>La apariencia se guarda en este navegador y no modifica la física.</p><div class="theme-grid"><label>Acento<input type="color" data-theme-key="accent"></label><label>Fondo<input type="color" data-theme-key="background"></label><label>Panel<input type="color" data-theme-key="panel"></label><label>Texto<input type="color" data-theme-key="text"></label></div><div class="theme-panel-head scene-theme-head"><strong>Paleta escena 3D</strong><button id="scene-palette-reset" type="button">Restablecer 3D</button></div><p>Roles visuales semánticos. No cambian densidad, rugosidad hidráulica ni ninguna propiedad física.</p><div class="theme-grid scene-theme-grid"><label>Terreno<input type="color" data-scene-role="terrain"></label><label>Caminos<input type="color" data-scene-role="road"></label><label>Concreto<input type="color" data-scene-role="concrete"></label><label>Acero<input type="color" data-scene-role="structuralSteel"></label><label>Proceso<input type="color" data-scene-role="processSteel"></label><label>Pipe acero<input type="color" data-scene-role="pipeSteel"></label><label>Pipe HDPE<input type="color" data-scene-role="pipeHdpe"></label><label>Seguridad<input type="color" data-scene-role="safetyYellow"></label><label>Mineral<input type="color" data-scene-role="mineral"></label><label>Vehículos<input type="color" data-scene-role="vehicleYellow"></label></div></div><div class="sidebar-heading"><span>PARÁMETROS</span><small>ENTRADA SI</small></div><div class="scenario-panel"><input id="scenario-name" type="text" value="Escenario" aria-label="Nombre del escenario"><select id="scenario-select" aria-label="Escenario guardado"></select><div class="scenario-controls" aria-label="Escenarios de simulación"><button id="scenario-save" type="button">Guardar / actualizar</button><button id="scenario-load" type="button">Cargar</button><button id="scenario-compare" type="button">Comparar</button><button id="scenario-delete" type="button">Eliminar</button><button id="scenario-export-json" type="button">Exportar JSON</button><button id="scenario-export-csv" type="button">Exportar CSV</button><button id="scenario-reset" type="button">Reset parámetros</button></div></div><p id="scenario-status" class="scenario-status" data-tone="muted">Los escenarios guardan entradas físicas; materiales/tema visual no se mezclan con la física.</p><section class="academic-case-panel" aria-labelledby="academic-case-title"><div class="academic-case-heading"><div><span>GUÍA DIDÁCTICA</span><strong id="academic-case-title">Casos académicos</strong></div><small>V19</small></div><select id="academic-case-select" aria-label="Caso académico"><option value="">Seleccionar caso…</option></select><div class="academic-case-actions"><button id="academic-case-load" type="button">Cargar caso</button><button id="academic-case-present" type="button" disabled>Cargar + presentar</button></div><div id="academic-case-guide" class="academic-case-guide" hidden></div><p id="academic-case-status" class="academic-case-status" aria-live="polite">Valores didácticos: revisar siempre el alcance del modelo.</p><small class="academic-global-scope">Sedimentación Durand: indicador orientativo legado, no calibrado; d50/d80 se registran pero no alimentan esa correlación.</small><details id="academic-comparator" class="academic-comparator"><summary>Comparar dos casos</summary><div class="academic-comparator-body"><div class="academic-comparator-selects"><label>A<select id="academic-compare-left" aria-label="Caso A"></select></label><label>B<select id="academic-compare-right" aria-label="Caso B"></select></label></div><button id="academic-compare-run" type="button">Comparar A vs B</button><div id="academic-comparison-result" class="academic-comparison-result" hidden></div></div></details></section><div id="sections"></div><p id="validation-message" class="validation-message" aria-live="polite"></p></aside>
-<section class="content"><div class="content-heading"><div><p class="eyebrow">MODELO CENTRAL</p><h2>Configuración de la simulación</h2><p class="subtitle">Cálculo SI con alcance explícito por modelo; la apariencia permanece separada.</p></div><span class="status-dot">● ESPERANDO PARÁMETROS</span></div><div class="scene-card"><div class="scene-card-head"><div><p class="eyebrow">ENTORNO 3D</p><h3 id="view-title">Planta general</h3></div><div class="scene-controls"><div class="scene-toggles"><label class="label-toggle"><input id="labels-toggle" type="checkbox" checked><span>Mostrar etiquetas</span></label><label class="label-toggle"><input id="animations-toggle" type="checkbox" checked><span>Animaciones</span></label><label class="label-toggle geotech-toggle"><input id="geotech-toggle" type="checkbox"><span>Geotecnia / subsuelo</span></label></div><div class="inspection-toolbar" aria-label="Inspección interna"><label>Equipo<select id="inspection-target"><option value="">Seleccionar…</option></select></label><div class="inspection-stepper" role="group" aria-label="Recorrer circuito"><button id="inspection-prev" type="button" disabled>← Anterior</button><button id="inspection-next" type="button" disabled>Siguiente →</button></div><label>Modo<select id="inspection-mode" disabled><option value="normal">Normal</option><option value="transparent">Transparente</option><option value="cutaway">Corte</option><option value="interior">Interior</option></select></label></div><div id="camera-switcher" class="camera-switcher" role="group" aria-label="Vista de cámara"></div></div></div><div class="scene-viewport"><canvas id="environment-canvas" aria-label="Entorno exterior industrial base"></canvas><div id="scene-loading" class="scene-loading" role="status" aria-live="polite"><strong>Cargando entorno Blender V56</strong><span>Preparando planta final, materiales y animaciones…</span></div><div id="presentation-controls" class="presentation-controls" data-active="false" aria-label="Modo presentación"><button id="presentation-toggle" class="presentation-toggle" type="button" aria-pressed="false">▶ Modo presentación</button><div id="presentation-player" class="presentation-player" hidden><button id="presentation-prev" type="button" aria-label="Parada anterior">←</button><button id="presentation-play" type="button" aria-label="Reproducir presentación" aria-pressed="false">▶</button><button id="presentation-next" type="button" aria-label="Siguiente parada">→</button><span id="presentation-progress" aria-live="polite">01 / 19</span></div></div><aside id="inspection-guide" class="inspection-guide" hidden aria-live="polite" aria-label="Guía educativa del equipo seleccionado"></aside><aside id="geotech-legend" class="geotech-legend" hidden aria-label="Leyenda geotécnica"><strong>SUBSUELO CONCEPTUAL</strong><span><i data-geotech-color="natural"></i>Natural: suelo / roca</span><span><i data-geotech-color="engineered"></i>Construido: relleno / cimentación</span><span><i data-geotech-color="water"></i>Hidrogeología conceptual</span><small>No representa campaña geotécnica ni modelo hidrogeológico calibrado.</small></aside><p id="scene-error" class="scene-error" hidden></p></div></div><div class="kpi-grid"><article><span>DENSIDAD DE PULPA</span><strong id="kpi-density">—</strong><small>mezcla homogénea</small></article><article><span>CAUDAL</span><strong id="kpi-flow">—</strong><small>Pipe 1</small></article><article><span>SÓLIDOS VOL.</span><strong id="kpi-phi">—</strong><small>fracción volumétrica</small></article><article><span>ΔP TOTAL</span><strong id="kpi-dp">—</strong><small id="kpi-dp-note">requiere modelo aplicable</small></article><article><span>RÉGIMEN</span><strong id="kpi-regime">—</strong><small>alcance hidráulico</small></article><article><span>CARGA TOTAL</span><strong id="kpi-head">—</strong><small>m de fluido</small></article><article><span>POTENCIA ELÉCTRICA</span><strong id="kpi-power">—</strong><small>con eficiencias explícitas</small></article><article><span>RECUPERACIÓN GLOBAL</span><strong id="kpi-recovery">—</strong><small>balance por etapas</small></article></div><div class="result-panel"><div><p class="eyebrow">RESULTADOS VALIDADOS</p><h3>Estado → reología → hidráulica → energía</h3></div><div class="result-metrics"><div><span>Modelo activo</span><strong id="result-model">Pendiente de parámetros</strong></div><div><span>Esfuerzo de pared</span><strong id="result-wall-stress">—</strong></div><div><span>Reynolds</span><strong id="result-reynolds">—</strong></div><div><span>Factor Darcy</span><strong id="result-friction-factor">—</strong></div><div><span>Gradiente ΔP/L</span><strong id="result-pressure-gradient">—</strong></div><div><span>Pérdidas locales</span><strong id="result-local-loss">—</strong></div><div><span>Componente estática</span><strong id="result-static">—</strong></div><div><span>Energía anual</span><strong id="result-energy">—</strong></div><div><span>Costo anual</span><strong id="result-cost">—</strong></div><div><span>Residencia lixiviación</span><strong id="result-residence">—</strong></div><div><span>Conversión CSTR</span><strong id="result-leach-conversion">—</strong></div><div><span>Oro final</span><strong id="result-gold">—</strong></div></div><div class="chart-grid"><div id="rheology-chart" class="result-chart"></div><div id="pressure-chart" class="result-chart"></div></div><p id="model-status" class="model-status">Sin advertencias de aplicabilidad.</p><p class="result-note">Newtoniano: Darcy-Weisbach + Colebrook fuera de transición. No newtoniano: perfil laminar validado, sin extrapolación turbulenta. Lixiviación usa k explícita; recuperación usa eficiencias explícitas.</p></div></section>
+      <nav class="mobile-workspace-jump" aria-label="Navegación móvil del simulador"><button type="button" data-scroll-target="results">Resultados / 3D</button><button type="button" data-scroll-target="parameters">Parámetros</button></nav>
+      <aside class="sidebar"><div id="theme-panel" class="theme-panel" hidden><div class="theme-panel-head"><strong>Paleta de interfaz</strong><button id="theme-reset" type="button">Restablecer UI</button></div><p>La apariencia se guarda en este navegador y no modifica la física.</p><div class="theme-grid"><label>Acento<input type="color" data-theme-key="accent"></label><label>Fondo<input type="color" data-theme-key="background"></label><label>Panel<input type="color" data-theme-key="panel"></label><label>Texto<input type="color" data-theme-key="text"></label></div><div class="theme-panel-head scene-theme-head"><strong>Paleta escena 3D</strong><button id="scene-palette-reset" type="button">Restablecer 3D</button></div><p>Roles visuales semánticos. No cambian densidad, rugosidad hidráulica ni ninguna propiedad física.</p><div class="theme-grid scene-theme-grid"><label>Terreno<input type="color" data-scene-role="terrain"></label><label>Caminos<input type="color" data-scene-role="road"></label><label>Concreto<input type="color" data-scene-role="concrete"></label><label>Acero<input type="color" data-scene-role="structuralSteel"></label><label>Proceso<input type="color" data-scene-role="processSteel"></label><label>Pipe acero<input type="color" data-scene-role="pipeSteel"></label><label>Pipe HDPE<input type="color" data-scene-role="pipeHdpe"></label><label>Seguridad<input type="color" data-scene-role="safetyYellow"></label><label>Mineral<input type="color" data-scene-role="mineral"></label><label>Vehículos<input type="color" data-scene-role="vehicleYellow"></label></div></div><div class="sidebar-heading"><span>PARÁMETROS</span><small>ENTRADA SI</small></div><div class="scenario-panel"><input id="scenario-name" type="text" value="Escenario" aria-label="Nombre del escenario"><select id="scenario-select" aria-label="Escenario guardado"></select><div class="scenario-controls" aria-label="Escenarios de simulación"><button id="scenario-save" type="button">Guardar / actualizar</button><button id="scenario-load" type="button">Cargar</button><button id="scenario-compare" type="button">Comparar</button><button id="scenario-delete" type="button">Eliminar</button><button id="scenario-export-json" type="button">Exportar JSON</button><button id="scenario-export-csv" type="button">Exportar CSV</button><button id="scenario-reset" type="button">Reset parámetros</button></div></div><p id="scenario-status" class="scenario-status" data-tone="muted">Los escenarios guardan entradas físicas; materiales/tema visual no se mezclan con la física.</p><section class="academic-case-panel" aria-labelledby="academic-case-title"><div class="academic-case-heading"><div><span>CASOS DE ESTUDIO</span><strong id="academic-case-title">Casos académicos</strong></div><small>V19</small></div><select id="academic-case-select" aria-label="Caso académico"><option value="">Seleccionar caso…</option></select><div class="academic-case-actions"><button id="academic-case-load" type="button">Cargar caso</button><button id="academic-case-present" type="button" disabled>Cargar + presentar</button></div><div id="academic-case-guide" class="academic-case-guide" hidden></div><p id="academic-case-status" class="academic-case-status" aria-live="polite">Valores académicos de referencia: revisar siempre el alcance del modelo.</p><small class="academic-global-scope">Sedimentación Durand: indicador orientativo legado, no calibrado; d50/d80 se registran pero no alimentan esa correlación.</small><details id="academic-comparator" class="academic-comparator"><summary>Comparar dos casos</summary><div class="academic-comparator-body"><div class="academic-comparator-selects"><label>A<select id="academic-compare-left" aria-label="Caso A"></select></label><label>B<select id="academic-compare-right" aria-label="Caso B"></select></label></div><button id="academic-compare-run" type="button">Comparar A vs B</button><div id="academic-comparison-result" class="academic-comparison-result" hidden></div></div></details></section><div id="sections"></div><p id="validation-message" class="validation-message" aria-live="polite"></p></aside>
+<section class="content"><div class="content-heading"><div><p class="eyebrow">SIMULADOR UNIVERSITARIO</p><h2>Mec&aacute;nica de fluidos aplicada a transporte de pulpas</h2><p class="subtitle">Entradas f&iacute;sicas &rarr; modelo reol&oacute;gico/hidr&aacute;ulico &rarr; resultados &rarr; an&aacute;lisis. Sistema SI y alcance expl&iacute;cito por modelo.</p></div><span class="status-dot">● ESPERANDO PARÁMETROS</span></div><div class="scene-card"><div class="scene-card-head"><div><p class="eyebrow">GEMELO DIGITAL 3D</p><h3 id="view-title">Planta general</h3></div><div class="scene-controls"><div class="scene-toggles"><label class="label-toggle"><input id="labels-toggle" type="checkbox" checked><span>Mostrar etiquetas</span></label><label class="label-toggle"><input id="animations-toggle" type="checkbox" checked><span>Animaciones</span></label><label class="label-toggle geotech-toggle"><input id="geotech-toggle" type="checkbox"><span>Geotecnia / subsuelo</span></label></div><div class="inspection-toolbar" aria-label="Inspección interna"><label>Equipo<select id="inspection-target"><option value="">Seleccionar…</option></select></label><div class="inspection-stepper" role="group" aria-label="Recorrer circuito"><button id="inspection-prev" type="button" disabled>← Anterior</button><button id="inspection-next" type="button" disabled>Siguiente →</button></div><label>Modo<select id="inspection-mode" disabled><option value="normal">Normal</option><option value="transparent">Transparente</option><option value="cutaway">Corte</option><option value="interior">Interior</option></select></label></div><div id="camera-switcher" class="camera-switcher" role="group" aria-label="Vista de cámara"></div></div></div><div class="scene-viewport"><canvas id="environment-canvas" aria-label="Entorno exterior industrial base"></canvas><div id="scene-loading" class="scene-loading" role="status" aria-live="polite"><strong>Cargando entorno Blender V56</strong><span>Preparando planta final, materiales y animaciones…</span></div><div id="presentation-controls" class="presentation-controls" data-active="false" aria-label="Modo presentación"><button id="presentation-toggle" class="presentation-toggle" type="button" aria-pressed="false">▶ Modo presentación</button><div id="presentation-player" class="presentation-player" hidden><button id="presentation-prev" type="button" aria-label="Parada anterior">←</button><button id="presentation-play" type="button" aria-label="Reproducir presentación" aria-pressed="false">▶</button><button id="presentation-next" type="button" aria-label="Siguiente parada">→</button><span id="presentation-progress" aria-live="polite">01 / 19</span></div></div><aside id="inspection-guide" class="inspection-guide" hidden aria-live="polite" aria-label="Ficha t&eacute;cnica del equipo seleccionado"></aside><aside id="geotech-legend" class="geotech-legend" hidden aria-label="Leyenda geotécnica"><strong>SUBSUELO CONCEPTUAL</strong><span><i data-geotech-color="natural"></i>Natural: suelo / roca</span><span><i data-geotech-color="engineered"></i>Construido: relleno / cimentación</span><span><i data-geotech-color="water"></i>Hidrogeología conceptual</span><small>No representa campaña geotécnica ni modelo hidrogeológico calibrado.</small></aside><p id="scene-error" class="scene-error" hidden></p></div></div><section class="hydraulic-summary" aria-labelledby="hydraulic-summary-title"><div class="technical-section-head"><div><p class="eyebrow">RESULTADOS PRINCIPALES</p><h3 id="hydraulic-summary-title">Estado hidr&aacute;ulico del circuito</h3></div><small>Valores del escenario activo</small></div><div class="kpi-grid"><article><span>CAUDAL Q</span><strong id="kpi-flow">&mdash;</strong><small>caudal volum&eacute;trico</small></article><article><span>VELOCIDAD V</span><strong id="kpi-velocity">&mdash;</strong><small>velocidad media</small></article><article><span>REYNOLDS Re</span><strong id="kpi-reynolds">&mdash;</strong><small id="kpi-regime-note">r&eacute;gimen pendiente</small></article><article><span>FACTOR DARCY f</span><strong id="kpi-friction-factor">&mdash;</strong><small>adimensional</small></article><article><span>&Delta;P TOTAL</span><strong id="kpi-dp">&mdash;</strong><small id="kpi-dp-note">requiere modelo aplicable</small></article><article><span>CARGA H</span><strong id="kpi-head">&mdash;</strong><small>m de fluido</small></article><article><span>POTENCIA P</span><strong id="kpi-power">&mdash;</strong><small>potencia el&eacute;ctrica</small></article><article><span>NPSH DISPONIBLE</span><strong id="kpi-npsh">&mdash;</strong><small id="kpi-npsh-note">requiere curva de bomba</small></article></div></section><div class="result-panel"><div class="result-panel-heading"><div><p class="eyebrow">VALIDACI&Oacute;N Y RESULTADOS</p><h3>Reolog&iacute;a &rarr; hidr&aacute;ulica &rarr; bombeo &rarr; proceso</h3></div></div><div class="validity-strip" aria-label="Estado de aplicabilidad"><span id="validity-hydraulic" class="validity-badge" data-state="pending">Hidr&aacute;ulica &middot; pendiente</span><span id="validity-rheology" class="validity-badge" data-state="pending">Reolog&iacute;a &middot; pendiente</span><span id="validity-pump" class="validity-badge" data-state="pending">Bomba &middot; pendiente</span><span id="validity-process" class="validity-badge" data-state="pending">Proceso &middot; pendiente</span></div><section id="engineering-comparison" class="engineering-comparison" hidden></section><div class="result-metrics"><div><span>Modelo activo</span><strong id="result-model">Pendiente de par&aacute;metros</strong></div><div><span>R&eacute;gimen</span><strong id="result-regime">&mdash;</strong></div><div><span>Densidad de pulpa</span><strong id="result-density">&mdash;</strong></div><div><span>S&oacute;lidos vol.</span><strong id="result-phi">&mdash;</strong></div><div><span>Esfuerzo de pared</span><strong id="result-wall-stress">&mdash;</strong></div><div><span>Gradiente &Delta;P/L</span><strong id="result-pressure-gradient">&mdash;</strong></div><div><span>P&eacute;rdidas locales</span><strong id="result-local-loss">&mdash;</strong></div><div><span>Componente est&aacute;tica</span><strong id="result-static">&mdash;</strong></div><div><span>Energ&iacute;a anual</span><strong id="result-energy">&mdash;</strong></div><div><span>Costo anual</span><strong id="result-cost">&mdash;</strong></div><div><span>Residencia lixiviaci&oacute;n</span><strong id="result-residence">&mdash;</strong></div><div><span>Recuperaci&oacute;n global</span><strong id="result-recovery">&mdash;</strong></div></div><details class="equations-panel"><summary>Ecuaciones / Supuestos</summary><div class="equations-grid"><article><span>Continuidad</span><strong>Q = V&middot;A</strong><small>A = &pi;D<sup>2</sup>/4</small></article><article><span>Reynolds</span><strong>Re = &rho;VD/&mu;</strong><small>Newtoniano; no newtoniano usa Reynolds generalizado.</small></article><article><span>Darcy&ndash;Weisbach</span><strong>&Delta;P<sub>f</sub> = f(L/D)(&rho;V<sup>2</sup>/2)</strong><small>Factor Darcy seg&uacute;n r&eacute;gimen y rugosidad.</small></article><article><span>P&eacute;rdidas locales</span><strong>&Delta;P<sub>m</sub> = &Sigma;K(&rho;V<sup>2</sup>/2)</strong><small>Accesorios expl&iacute;citos + K adicional.</small></article><article><span>Componente est&aacute;tica</span><strong>&Delta;P<sub>z</sub> = &rho;g&Delta;z</strong><small>&Delta;z positivo cuando descarga est&aacute; m&aacute;s alta.</small></article><article><span>Carga total</span><strong>H = &Delta;P/(&rho;g)</strong><small>Conversi&oacute;n de presi&oacute;n requerida a metros de fluido.</small></article><article><span>Potencia</span><strong>P<sub>e</sub> = Q&Delta;P/(&eta;<sub>p</sub>&eta;<sub>m</sub>)</strong><small>Eficiencias de bomba y motor expl&iacute;citas.</small></article><article><span>NPSH disponible</span><strong>NPSH<sub>A</sub> = (P<sub>a</sub>-P<sub>v</sub>)/(&rho;g)+z<sub>s</sub>-h<sub>fs</sub></strong><small>Comparaci&oacute;n de margen; no predice cavitaci&oacute;n.</small></article></div><p class="equation-scope">Modelo activo: <strong id="equation-active-model">pendiente</strong>. Los resultados fuera del dominio implementado se identifican expl&iacute;citamente como estimaci&oacute;n educativa o no calculable.</p></details><div class="chart-grid"><div id="rheology-chart" class="result-chart"></div><div id="pressure-chart" class="result-chart"></div></div><p id="model-status" class="model-status">Sin advertencias de aplicabilidad.</p><p class="result-note">El bloque hidr&aacute;ulico/reol&oacute;gico es el n&uacute;cleo de Mec&aacute;nica de Fluidos. Lixiviaci&oacute;n, recuperaci&oacute;n y fundici&oacute;n permanecen como contexto del proceso minero y se reportan por separado.</p></div></section>
     </main>
   </div>`;
   app.append(shell);
@@ -997,6 +1093,7 @@ function render() {
   wireAcademicLabControls();
   compactScenarioPanel();
   wireSceneFullscreen();
+  wireMobileWorkspaceJump();
   setScenarioStatus('Caso de ejemplo precargado. Modifica los valores o guarda tu propio escenario.', 'success');
   renderResultsPanel(getResults(), getState());
 }
@@ -1004,6 +1101,11 @@ function render() {
 render();
 const unsubscribeResultsRender = subscribeResults((results) => {
   renderResultsPanel(results, getState());
+  if (activeComparisonScenarioId) {
+    const scenario = loadNamedScenario(activeComparisonScenarioId);
+    if (scenario) renderScenarioComparison(scenario);
+    else activeComparisonScenarioId = null;
+  }
   if (activeWorkspaceTab !== 'circuit') renderScientificWorkspace(activeWorkspaceTab);
 });
 
@@ -1277,6 +1379,10 @@ async function initializeEnvironment(canvas) {
       const next = inspectionTargets.find((item) => item.id === target.nextId);
       const stage = getInspectionStage(id);
       const relatedResult = getInspectionRelatedResult(id);
+      const liveMetrics = inspectionMetricRows(id, getState(), getResults());
+      const liveMetricsHtml = liveMetrics.length
+        ? `<section class="inspection-live-metrics" aria-label="Variables del equipo">${liveMetrics.map(([label, value]) => `<div><span>${label}</span><strong>${value}</strong></div>`).join('')}</section>`
+        : '';
       const componentHotspots = getInspectionComponentHotspots(id);
       const componentHotspotsHtml = componentHotspots.length
         ? `<section class="inspection-component-hotspots" aria-label="Componentes clave de ${target.label}">
@@ -1296,16 +1402,19 @@ async function initializeEnvironment(canvas) {
           ? `<p class="inspection-proxy-note">Referencia visual V50: ${target.proxySemantics}. La geometría representa el corredor físico disponible, no una transferencia de carbón modelada por separado.</p>`
           : '';
       inspectionGuide.innerHTML = `
-        <header><span>GUÍA DE PROCESO</span><strong>${target.label}</strong></header>
-        <p class="inspection-guide-purpose"><b>Qué hace:</b> ${guide.purpose}</p>
+        <header><span>FICHA TÉCNICA · ${id}</span><strong>${target.label}</strong></header>
+        <p class="inspection-guide-purpose"><b>Función:</b> ${guide.purpose}</p>
         <dl>
           <div><dt>Etapa</dt><dd>${stage}</dd></div>
-          <div><dt>Resultado relacionado</dt><dd>${relatedResult}</dd></div>
-          <div><dt>Entrada</dt><dd>${guide.input}</dd></div>
-          <div><dt>Salida</dt><dd>${guide.output}</dd></div>
+          <div><dt>Variable / resultado</dt><dd>${relatedResult}</dd></div>
+          <div><dt>Aguas arriba</dt><dd>${previous?.label ?? 'Inicio del recorrido'}</dd></div>
+          <div><dt>Aguas abajo</dt><dd>${next?.label ?? 'Fin del recorrido'}</dd></div>
+          <div><dt>Entrada de proceso</dt><dd>${guide.input}</dd></div>
+          <div><dt>Salida de proceso</dt><dd>${guide.output}</dd></div>
           <div><dt>Variable clave</dt><dd>${guide.keyVariable}</dd></div>
-          <div class="inspection-guide-impact"><dt>Qué cambia en el cálculo</dt><dd>${guide.calculationImpact}</dd></div>
+          <div class="inspection-guide-impact"><dt>Alcance del modelo</dt><dd>${guide.calculationImpact}</dd></div>
         </dl>
+        ${liveMetricsHtml}
         ${componentHotspotsHtml}
         ${proxyNote}
         <div class="inspection-context-legend" aria-label="Leyenda de contexto del circuito">
@@ -1313,7 +1422,7 @@ async function initializeEnvironment(canvas) {
           <span><i data-context="selected"></i>Seleccionado</span>
           <span><i data-context="downstream"></i>Siguiente</span>
         </div>
-        <footer><span>Anterior: ${previous?.label ?? 'Inicio del recorrido'}</span><span>Siguiente: ${next?.label ?? 'Fin del recorrido'}</span></footer>
+        <footer><span>Conexión anterior: ${previous?.label ?? 'Inicio del recorrido'}</span><span>Conexión siguiente: ${next?.label ?? 'Fin del recorrido'}</span></footer>
       `;
       inspectionGuide.hidden = false;
     };

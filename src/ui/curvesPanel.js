@@ -63,7 +63,7 @@ export function buildSystemCurve(state, calculate, pointCount = 13) {
   return flowRateM3h.length >= 2 ? { velocityMps, flowRateM3h, pressureDropKpa } : null;
 }
 
-function chartSvg({ title, subtitle, xLabel, yLabel, series }) {
+function chartSvg({ title, subtitle, xLabel, yLabel, series, focusPoint = null }) {
   const validSeries = series.filter((item) => item?.x?.length && item.x.length === item.y.length);
   if (!validSeries.length) return `<article class="science-chart"><div class="science-card-head"><strong>${title}</strong><small>${subtitle}</small></div><p class="science-empty">Datos insuficientes.</p></article>`;
   const width = 520; const height = 230; const padding = { left: 48, right: 16, top: 18, bottom: 38 };
@@ -71,12 +71,27 @@ function chartSvg({ title, subtitle, xLabel, yLabel, series }) {
   const allY = validSeries.flatMap((item) => item.y);
   const xDomain = [Math.min(0, ...allX), Math.max(...allX, 1e-12)];
   const yDomain = [Math.min(0, ...allY), Math.max(...allY, 1e-12)];
+  const plotWidth = width - padding.left - padding.right;
+  const plotHeight = height - padding.top - padding.bottom;
+  const sx = (value) => padding.left + ((value - xDomain[0]) / Math.max(xDomain[1] - xDomain[0], 1e-12)) * plotWidth;
+  const sy = (value) => padding.top + (1 - (value - yDomain[0]) / Math.max(yDomain[1] - yDomain[0], 1e-12)) * plotHeight;
+  const tickCount = 4;
+  const xTicks = Array.from({ length: tickCount + 1 }, (_, index) => xDomain[0] + (xDomain[1] - xDomain[0]) * index / tickCount);
+  const yTicks = Array.from({ length: tickCount + 1 }, (_, index) => yDomain[0] + (yDomain[1] - yDomain[0]) * index / tickCount);
+  const grid = [
+    ...xTicks.map((value) => `<g><line class="science-grid-line" x1="${sx(value)}" y1="${padding.top}" x2="${sx(value)}" y2="${height - padding.bottom}"/><text class="chart-label" x="${sx(value)}" y="${height - 23}" text-anchor="middle">${Number(value.toPrecision(3))}</text></g>`),
+    ...yTicks.map((value) => `<g><line class="science-grid-line" x1="${padding.left}" y1="${sy(value)}" x2="${width - padding.right}" y2="${sy(value)}"/><text class="chart-label" x="${padding.left - 5}" y="${sy(value) + 3}" text-anchor="end">${Number(value.toPrecision(3))}</text></g>`),
+  ].join('');
   const lines = validSeries.map((item, index) => {
     const geometry = seriesToSvgPolyline(createNumericSeries(item.x, item.y), { width, height, padding, xDomain, yDomain });
-    return `<polyline class="science-line science-line-${index + 1}" points="${geometry.points}" />`;
+    const hitPoints = item.x.map((x, pointIndex) => `<circle class="science-hit-point" cx="${sx(x)}" cy="${sy(item.y[pointIndex])}" r="5"><title>${item.label}: ${xLabel} = ${Number(x.toPrecision(5))}; ${yLabel} = ${Number(item.y[pointIndex].toPrecision(5))}</title></circle>`).join('');
+    return `<polyline class="science-line science-line-${index + 1}" points="${geometry.points}" />${hitPoints}`;
   }).join('');
   const legend = validSeries.map((item, index) => `<span><i class="science-key science-key-${index + 1}"></i>${item.label}</span>`).join('');
-  return `<article class="science-chart"><div class="science-card-head"><strong>${title}</strong><small>${subtitle}</small></div><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${title}"><line class="chart-axis" x1="${padding.left}" y1="${padding.top}" x2="${padding.left}" y2="${height - padding.bottom}"/><line class="chart-axis" x1="${padding.left}" y1="${height - padding.bottom}" x2="${width - padding.right}" y2="${height - padding.bottom}"/>${lines}<text class="chart-label" x="${width / 2}" y="${height - 7}" text-anchor="middle">${xLabel}</text><text class="chart-label" x="12" y="${height / 2}" transform="rotate(-90 12 ${height / 2})" text-anchor="middle">${yLabel}</text></svg><div class="science-legend">${legend}</div></article>`;
+  const focus = focusPoint && finite(focusPoint.x) && finite(focusPoint.y)
+    ? `<g class="science-focus-point"><circle cx="${sx(focusPoint.x)}" cy="${sy(focusPoint.y)}" r="5"/><text x="${sx(focusPoint.x) + 8}" y="${sy(focusPoint.y) - 8}">${focusPoint.label ?? 'Punto de operación'}</text><title>${focusPoint.label ?? 'Punto de operación'}: ${xLabel} = ${Number(focusPoint.x.toPrecision(5))}; ${yLabel} = ${Number(focusPoint.y.toPrecision(5))}</title></g>`
+    : '';
+  return `<article class="science-chart"><div class="science-card-head"><strong>${title}</strong><small>${subtitle}</small></div><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${title}">${grid}<line class="chart-axis" x1="${padding.left}" y1="${padding.top}" x2="${padding.left}" y2="${height - padding.bottom}"/><line class="chart-axis" x1="${padding.left}" y1="${height - padding.bottom}" x2="${width - padding.right}" y2="${height - padding.bottom}"/>${lines}${focus}<text class="chart-label chart-axis-title" x="${width / 2}" y="${height - 7}" text-anchor="middle">${xLabel}</text><text class="chart-label chart-axis-title" x="12" y="${height / 2}" transform="rotate(-90 12 ${height / 2})" text-anchor="middle">${yLabel}</text></svg><div class="science-legend">${legend}<span class="science-hover-note">Pase el cursor por los puntos para ver valores.</span></div></article>`;
 }
 
 function downloadText(filename, content, mime = 'text/csv;charset=utf-8') {
@@ -105,7 +120,7 @@ export function renderCurvesAndProbes(root, { state, results, calculate }) {
   root.innerHTML = `<div class="science-grid">
     ${chartSvg({ title: 'Ley constitutiva', subtitle: state.rheology.model || 'sin modelo', xLabel: 'γ̇ · s⁻¹', yLabel: 'τ · Pa', series: [{ label: 'Modelo activo', x: constitutive.shearRateS_1, y: constitutive.shearStressPa }] })}
     ${chartSvg({ title: 'Viscosidad aparente', subtitle: 'μa = τ/γ̇ · no definida en plug', xLabel: 'γ̇ · s⁻¹', yLabel: 'μa · Pa·s', series: [{ label: 'μ aparente', x: muX, y: muY }] })}
-    ${pumpCurves?.flowRateM3s?.length ? chartSvg({ title: 'Bomba y sistema', subtitle: results.pump?.status ?? '', xLabel: 'Q · m³/h', yLabel: 'H · m', series: [{ label: 'Sistema', x: pumpCurves.flowRateM3s.map((q) => q * 3600), y: pumpCurves.systemHeadM }, { label: 'Bomba', x: pumpCurves.flowRateM3s.map((q) => q * 3600), y: pumpCurves.pumpHeadM }] }) : chartSvg({ title: 'Curva del sistema', subtitle: 'recalculada con el motor activo', xLabel: 'Q · m³/h', yLabel: 'ΔP · kPa', series: system ? [{ label: 'Sistema', x: system.flowRateM3h, y: system.pressureDropKpa }] : [] })}
+    ${pumpCurves?.flowRateM3s?.length ? chartSvg({ title: 'Bomba y sistema', subtitle: results.pump?.status ?? '', xLabel: 'Q · m³/h', yLabel: 'H · m', series: [{ label: 'Sistema', x: pumpCurves.flowRateM3s.map((q) => q * 3600), y: pumpCurves.systemHeadM }, { label: 'Bomba', x: pumpCurves.flowRateM3s.map((q) => q * 3600), y: pumpCurves.pumpHeadM }], focusPoint: results.pump?.operatingPoint ? { x: results.pump.operatingPoint.flowRateM3s * 3600, y: results.pump.operatingPoint.pumpHeadM, label: 'Punto de operación' } : null }) : chartSvg({ title: 'Curva del sistema', subtitle: 'recalculada con el motor activo', xLabel: 'Q · m³/h', yLabel: 'ΔP · kPa', series: system ? [{ label: 'Sistema', x: system.flowRateM3h, y: system.pressureDropKpa }] : [] })}
     ${chartSvg({ title: 'Perfil de velocidad', subtitle: results.transport?.flowRegime ? `régimen: ${results.transport.flowRegime}` : '', xLabel: 'u · m/s', yLabel: 'r/R', series: profileRows.length ? [{ label: 'Perfil radial', x: radialVelocity, y: radialRatio }] : [] })}
   </div><section class="probe-panel"><div class="probe-head"><div><p class="eyebrow">SONDA RADIAL</p><h3>Perfil laminar equivalente</h3></div><button id="probe-export-csv" type="button" ${profileRows.length ? '' : 'disabled'}>Exportar perfiles CSV</button></div><label class="probe-slider">r/R <input id="probe-ratio" type="range" min="0" max="1000" value="${Math.round(selectedProbeRatio * 1000)}"><output id="probe-ratio-value">${selectedProbeRatio.toFixed(2)}</output></label><div id="probe-metrics" class="probe-metrics"></div><div class="probe-table-wrap">${profileRows.length ? radialProbeToHtmlTable(profile, { decimals: 4, caption: 'Sondas virtuales · perfil radial' }) : '<p class="science-empty">Selecciona un modelo reológico no newtoniano válido para generar sondas.</p>'}</div></section>`;
 

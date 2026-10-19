@@ -36,6 +36,8 @@ export function buildSimulationMemo({ state, results, scenarioName = 'Escenario 
     row('pipe.D', 'Diámetro Pipe 1', num(state.transport.pipe1.innerDiameterM), 'm'),
     row('pipe.L', 'Longitud Pipe 1', num(state.transport.pipe1.lengthM), 'm'),
     row('pipe.V', 'Velocidad Pipe 1', num(state.transport.pipe1.velocityMps), 'm/s'),
+    row('pipe.epsilon', 'Rugosidad absoluta', num(state.transport.pipe1.roughnessM), 'm'),
+    row('pipe.K', 'K adicional', num(state.transport.pipe1.minorLossCoefficient), 'adim.'),
     row('pipe.dz', 'Desnivel Pipe 1', num(state.transport.pipe1.elevationChangeM), 'm'),
     row('energy.etaPump', 'Eficiencia bomba', num(state.energy.pumpEfficiency), '0–1'),
     row('energy.etaMotor', 'Eficiencia motor', num(state.energy.motorEfficiency), '0–1'),
@@ -51,9 +53,16 @@ export function buildSimulationMemo({ state, results, scenarioName = 'Escenario 
     equationRows.push(row('eq.flow', 'Caudal', 'Q = V·πD²/4'));
     equationRows.push(row('sub.flow', 'Sustitución caudal', `${num(state.transport.pipe1.velocityMps)}·π·${num(state.transport.pipe1.innerDiameterM)}²/4 = ${num(results.transport.flowRateM3s)}`, 'm³/s'));
   }
+  if (state.rheology.model === 'newtonian' && results.transport?.reynoldsNumber !== undefined) {
+    equationRows.push(row('eq.reynolds', 'Reynolds', 'Re = ρVD/μ'));
+    equationRows.push(row('sub.reynolds', 'Sustitución Reynolds', `${num(results.slurry?.densityKgM3)}·${num(state.transport.pipe1.velocityMps)}·${num(state.transport.pipe1.innerDiameterM)}/${num(state.rheology.newtonianViscosityPaS)} = ${num(results.transport.reynoldsNumber)}`));
+  }
   equationRows.push(row('eq.rheology', 'Ley constitutiva', rheologyEquation(state.rheology.model)));
   if (results.rheology?.wallStressPa !== undefined) equationRows.push(row('sub.tauw', 'Esfuerzo de pared resuelto', `τw = ${num(results.rheology.wallStressPa)}`, 'Pa'));
   if (results.transport?.pressureDropPa !== undefined) {
+    equationRows.push(row('eq.darcy', 'Darcy–Weisbach', 'ΔPf = f·(L/D)·(ρV²/2)'));
+    equationRows.push(row('eq.minor', 'Pérdidas locales', 'ΔPm = ΣK·(ρV²/2)'));
+    equationRows.push(row('eq.static', 'Componente estática', 'ΔPz = ρgΔz'));
     equationRows.push(row('eq.dp', 'Presión total', 'ΔPtotal = ΣΔPdistribuida + ΣΔPmenor + ΣΔPestática'));
     equationRows.push(row('sub.dp', 'Sustitución presión', `${num(results.transport.distributedPressureDropPa)} + ${num(results.transport.minorLossPressurePa)} + ${num(results.transport.staticPressurePa)} = ${num(results.transport.pressureDropPa)}`, 'Pa'));
   }
@@ -61,16 +70,28 @@ export function buildSimulationMemo({ state, results, scenarioName = 'Escenario 
     equationRows.push(row('eq.power', 'Potencia', 'Ph = ΔP·Q; Pe = Ph/(ηbomba·ηmotor)'));
     equationRows.push(row('sub.power', 'Sustitución potencia eléctrica', `${num(results.transport.requiredPressurePa)}·${num(results.transport.flowRateM3s)}/(${num(state.energy.pumpEfficiency)}·${num(state.energy.motorEfficiency)}) = ${num(results.energy.electricalPowerW)}`, 'W'));
   }
+  if (results.pump?.npshAvailableM !== undefined) {
+    equationRows.push(row('eq.npsha', 'NPSH disponible', 'NPSHa = (Pabs − Pv)/(ρg) + zs − hfs'));
+    equationRows.push(row('sub.npsha', 'NPSH disponible calculado', num(results.pump.npshAvailableM), 'm'));
+  }
   if (results.leaching?.conversion !== undefined) equationRows.push(row('eq.leach', 'CSTRs en serie', 'X = 1 − [1/(1 + k·τ/N)]ᴺ'));
 
   const resultRows = [
     row('result.rho', 'Densidad mezcla', num(results.slurry?.densityKgM3), 'kg/m³'),
     row('result.q', 'Caudal', num(results.transport?.flowRateM3s), 'm³/s'),
+    row('result.v', 'Velocidad media', num(state.transport.pipe1.velocityMps), 'm/s'),
+    row('result.restar', 'Re* / Reynolds', num(results.transport?.reynoldsNumber)),
+    row('result.f', 'Factor Darcy', num(results.transport?.frictionFactor)),
+    row('result.dp.distributed', 'Pérdida distribuida', num(results.transport?.distributedPressureDropPa), 'Pa'),
+    row('result.dp.minor', 'Pérdidas locales', num(results.transport?.minorLossPressurePa), 'Pa'),
+    row('result.dp.static', 'Componente estática', num(results.transport?.staticPressurePa), 'Pa'),
     row('result.dp', 'Presión total', num(results.transport?.pressureDropPa), 'Pa'),
     row('result.head', 'Carga total', num(results.transport?.totalHeadM), 'm'),
     row('result.regime', 'Régimen', results.transport?.flowRegime ?? '—'),
-    row('result.restar', 'Re* / Reynolds', num(results.transport?.reynoldsNumber)),
     row('result.power', 'Potencia eléctrica', num(results.energy?.electricalPowerW), 'W'),
+    row('result.npsha', 'NPSH disponible', num(results.pump?.npshAvailableM), 'm'),
+    row('result.npshr', 'NPSH requerido', num(results.pump?.npsh?.requiredNpshM), 'm'),
+    row('result.npshmargin', 'Margen NPSH', num(results.pump?.npsh?.marginM), 'm'),
     row('result.energy', 'Energía anual', num(results.energy?.annualEnergyKwh), 'kWh/año'),
     row('result.solids', 'Sólidos', num(results.balance?.solidsMassFlowTh), 't/h'),
     row('result.residence', 'Tiempo residencia', num(results.leaching?.residenceTimeH), 'h'),

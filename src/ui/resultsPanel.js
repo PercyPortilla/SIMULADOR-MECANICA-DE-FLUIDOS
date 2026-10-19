@@ -3,6 +3,7 @@ const MODEL_LABELS = Object.freeze({
   hb: 'Herschel–Bulkley',
   bingham: 'Bingham plástico',
   power: 'Ley de potencia',
+  casson: 'Casson',
 });
 
 const REGIME_LABELS = Object.freeze({
@@ -18,6 +19,21 @@ function setText(selector, value) {
   if (node) node.textContent = value;
 }
 
+function setValidity(selector, label, state = 'pending') {
+  const node = document.querySelector(selector);
+  if (!node) return;
+  node.textContent = label;
+  node.dataset.state = state;
+}
+
+function hydraulicValidity(results, state) {
+  if (!state?.rheology?.model) return ['Hidráulica · sin modelo', 'pending'];
+  if (results.transport?.pressureDropPa === undefined) return ['Hidráulica · no calculable', 'invalid'];
+  if (results.transport?.resultQuality === 'educational-estimate') return ['Hidráulica · resultado educativo', 'educational'];
+  if (results.transport?.resultQuality === 'laminar-profile-only') return ['Hidráulica · alcance limitado', 'limited'];
+  return ['Hidráulica · modelo válido', 'valid'];
+}
+
 export function renderResultsPanel(results, state) {
   const density = results.slurry?.densityKgM3;
   const phi = results.slurry?.solidVolumeFraction;
@@ -25,16 +41,24 @@ export function renderResultsPanel(results, state) {
   const pressureDrop = results.transport?.pressureDropPa;
   const wallStress = results.rheology?.wallStressPa;
 
-  setText('#kpi-density', density === undefined ? '—' : `${density.toFixed(1)} kg/m³`);
   setText('#kpi-flow', flow === undefined ? '—' : `${(flow * 3600).toFixed(2)} m³/h`);
-  setText('#kpi-phi', phi === undefined ? '—' : `${(phi * 100).toFixed(2)} %`);
+  setText('#kpi-velocity', state?.transport?.pipe1?.velocityMps === undefined ? '—' : `${state.transport.pipe1.velocityMps.toFixed(3)} m/s`);
+  setText('#kpi-reynolds', results.transport?.reynoldsNumber === undefined ? '—' : results.transport.reynoldsNumber.toFixed(0));
+  setText('#kpi-friction-factor', results.transport?.frictionFactor === undefined || results.transport?.frictionFactor === null ? '—' : results.transport.frictionFactor.toFixed(5));
   setText('#kpi-dp', pressureDrop === undefined ? '—' : `${(pressureDrop / 1000).toFixed(2)} kPa`);
   setText('#kpi-dp-note', pressureDrop === undefined ? 'requiere modelo hidráulico aplicable' : results.transport?.calculationMode ?? 'modelo activo');
-  setText('#kpi-regime', REGIME_LABELS[results.transport?.flowRegime] ?? '—');
+  setText('#kpi-regime-note', REGIME_LABELS[results.transport?.flowRegime] ?? 'régimen pendiente');
   setText('#kpi-head', results.transport?.totalHeadM === undefined ? '—' : `${results.transport.totalHeadM.toFixed(2)} m`);
   setText('#kpi-power', results.energy?.electricalPowerW === undefined ? '—' : `${(results.energy.electricalPowerW / 1000).toFixed(2)} kW`);
-  setText('#kpi-recovery', results.recovery?.overallRecovery === undefined ? '—' : `${(results.recovery.overallRecovery * 100).toFixed(2)} %`);
+  setText('#kpi-npsh', results.pump?.npshAvailableM === undefined ? '—' : `${results.pump.npshAvailableM.toFixed(2)} m`);
+  setText('#kpi-npsh-note', results.pump?.npsh
+    ? `margen ${(results.pump.npsh.marginM ?? 0).toFixed(2)} m`
+    : results.pump?.npshAvailableM !== undefined ? 'NPSH-A calculado; falta NPSH-R' : 'requiere evaluación de bomba');
   setText('#result-model', results.rheology ? MODEL_LABELS[results.rheology.model] : 'Pendiente de parámetros');
+  setText('#equation-active-model', results.rheology ? MODEL_LABELS[results.rheology.model] : 'pendiente');
+  setText('#result-regime', REGIME_LABELS[results.transport?.flowRegime] ?? '—');
+  setText('#result-density', density === undefined ? '—' : `${density.toFixed(1)} kg/m³`);
+  setText('#result-phi', phi === undefined ? '—' : `${(phi * 100).toFixed(2)} %`);
   setText('#result-wall-stress', wallStress === undefined ? '—' : `${wallStress.toFixed(3)} Pa`);
   setText('#result-pressure-gradient', results.transport?.pressureGradientPaM === undefined ? '—' : `${results.transport.pressureGradientPaM.toFixed(2)} Pa/m`);
   setText('#result-reynolds', results.transport?.reynoldsNumber === undefined ? '—' : results.transport.reynoldsNumber.toFixed(0));
@@ -44,9 +68,20 @@ export function renderResultsPanel(results, state) {
   setText('#result-energy', results.energy?.annualEnergyKwh === undefined ? '—' : `${results.energy.annualEnergyKwh.toFixed(1)} kWh/año`);
   setText('#result-cost', results.energy?.annualEnergyCost === undefined ? '—' : `${results.energy.annualEnergyCost.toFixed(2)} /año`);
   setText('#result-residence', results.leaching?.residenceTimeH === undefined ? '—' : `${results.leaching.residenceTimeH.toFixed(2)} h`);
-  setText('#result-leach-conversion', results.leaching?.conversion === undefined ? '—' : `${(results.leaching.conversion * 100).toFixed(2)} %`);
-  setText('#result-gold', results.recovery?.finalMetalKgH === undefined ? '—' : `${results.recovery.finalMetalKgH.toFixed(4)} kg/h`);
+  setText('#result-recovery', results.recovery?.overallRecovery === undefined ? '—' : `${(results.recovery.overallRecovery * 100).toFixed(2)} %`);
   setText('#model-status', results.transport?.modelStatus ?? 'Sin advertencias de aplicabilidad.');
+
+  const [hydraulicLabel, hydraulicState] = hydraulicValidity(results, state);
+  setValidity('#validity-hydraulic', hydraulicLabel, hydraulicState);
+  setValidity('#validity-rheology', results.rheology
+    ? `Reología · ${MODEL_LABELS[results.rheology.model] ?? results.rheology.model}`
+    : 'Reología · pendiente', results.rheology ? 'valid' : 'pending');
+  setValidity('#validity-pump', results.pump?.operatingPoint
+    ? 'Bomba · punto de operación válido'
+    : results.pump?.status === 'invalid' ? 'Bomba · no calculable' : 'Bomba · sin curva tabulada',
+  results.pump?.operatingPoint ? 'valid' : results.pump?.status === 'invalid' ? 'invalid' : 'pending');
+  const processCalculated = Boolean(results.leaching || results.recovery || results.balance);
+  setValidity('#validity-process', processCalculated ? 'Proceso · calculado por entradas' : 'Proceso · pendiente', processCalculated ? 'valid' : 'pending');
 
   const status = document.querySelector('.status-dot');
   if (status) {

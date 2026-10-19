@@ -15,7 +15,7 @@ function downloadText(filename, content, mime) {
 export function renderMemoryPanel(root, { state, results, scenarioName = 'Escenario actual' }) {
   if (!root) return;
   const memo = buildSimulationMemo({ state, results, scenarioName });
-  root.innerHTML = `<div class="memo-actions"><button id="memo-pdf" type="button">Exportar PDF</button><button id="memo-csv" type="button">Exportar CSV</button></div><div class="memo-document">${simulationMemoToHtml(memo)}</div>`;
+  root.innerHTML = `<div class="memo-toolbar"><div><span>EXPORTACIÓN TÉCNICA</span><strong>Entradas · ecuaciones · supuestos · resultados</strong></div><div class="memo-actions"><button id="memo-pdf" type="button">Imprimir / guardar PDF</button><button id="memo-csv" type="button">Exportar tabla CSV</button></div></div><div class="memo-document">${simulationMemoToHtml(memo)}</div>`;
   root.querySelector('#memo-csv')?.addEventListener('click', () => downloadText('pulpa-lab-memoria.csv', simulationMemoToCsv(memo), 'text/csv;charset=utf-8'));
   root.querySelector('#memo-pdf')?.addEventListener('click', () => {
     const win = window.open('', '_blank', 'noopener,noreferrer');
