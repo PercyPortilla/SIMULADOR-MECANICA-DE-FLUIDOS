@@ -20,3 +20,8 @@ Thumbs.db
 v31-*.png
 babylon-preview-*.png
 babylon-preview-dom.html
+
+# V56 release assets are stored losslessly compressed in Git.
+# scripts/prepare-v56-assets.mjs recreates the runtime GLB before dev/build/test.
+public/models/pulpa-v56/PULPA_LAB_V56_FULL_SITE.glb
+blender/PULPA_LAB_BLENDER_MASTER_V56.blend

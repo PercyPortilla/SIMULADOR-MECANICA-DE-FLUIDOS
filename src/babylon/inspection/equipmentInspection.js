@@ -11,7 +11,7 @@ import {
   getInspectionCircuitContext,
   getInspectionTargetLabel,
 } from '../../scene/inspection/inspectionContracts.js';
-import { V55_INSPECTION_NODE_ALIASES } from '../../scene/integration/v55Layout.js';
+import { V56_INSPECTION_NODE_ALIASES } from '../../scene/integration/v56Layout.js';
 
 function nodeMetadata(node) {
   return node?.metadata ?? {};
@@ -19,7 +19,9 @@ function nodeMetadata(node) {
 
 function isAuthoritativeBlenderVisual(node) {
   const metadata = nodeMetadata(node);
-  return metadata.v55AuthoritativeVisual === true || metadata.v50AuthoritativeVisual === true;
+  return metadata.v56AuthoritativeVisual === true
+    || metadata.v55AuthoritativeVisual === true
+    || metadata.v50AuthoritativeVisual === true;
 }
 
 function inferImportedRole(mesh) {
@@ -66,7 +68,7 @@ function findTarget(scene, id, aliasRoot = null) {
   const exactV50 = candidates.find(isAuthoritativeBlenderVisual);
   if (exactV50) return exactV50;
 
-  const alias = V55_INSPECTION_NODE_ALIASES[id];
+  const alias = V56_INSPECTION_NODE_ALIASES[id];
   if (alias && aliasRoot) {
     const sources = resolveV50AliasSources(scene, alias);
     const hasV50Scene = sources.length > 0 || allSceneNodes(scene).some(
@@ -83,7 +85,7 @@ function findTarget(scene, id, aliasRoot = null) {
         inspectionAliasBounds: alias.bounds ?? null,
         semanticOnly: alias.semanticOnly === true,
         proxySemantics: alias.proxySemantics ?? null,
-        siteRevision: 'V55',
+        siteRevision: 'V56',
       };
       return proxy;
     }

@@ -1038,7 +1038,7 @@ async function initializeEnvironment(canvas) {
     });
 
     const sceneLoading = document.querySelector('#scene-loading');
-    const siteVisual = environment.v55SiteVisual ?? environment.v50SiteVisual;
+    const siteVisual = environment.v56SiteVisual ?? environment.v55SiteVisual ?? environment.v50SiteVisual;
     if (siteVisual?.ready) {
       await siteVisual.ready;
       if (!siteVisual.loaded) {
@@ -1051,11 +1051,11 @@ async function initializeEnvironment(canvas) {
       if (sceneLoading) {
         const v55Ready = siteVisual.loaded;
         sceneLoading.querySelector('strong').textContent = v55Ready
-          ? 'Entorno Blender V55 listo'
+          ? 'Entorno Blender V56 listo'
           : 'Entorno de respaldo listo';
         sceneLoading.querySelector('span').textContent = v55Ready
-          ? 'Planta V55 y tajo abierto cargados correctamente.'
-          : 'No se pudo cargar V55; se activó el entorno de respaldo.';
+          ? 'Planta V56 limpia y tajo abierto cargados correctamente.'
+          : 'No se pudo cargar V56; se activó el entorno de respaldo.';
         window.setTimeout(() => sceneLoading.classList.add('is-ready'), v55Ready ? 120 : 650);
       }
       if (geotechToggle) {

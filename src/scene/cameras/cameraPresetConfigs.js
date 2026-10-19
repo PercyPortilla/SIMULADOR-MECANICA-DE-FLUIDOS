@@ -1,5 +1,6 @@
 import { V50_SITE_BOUNDS, V50_ZONE_ANCHORS } from '../integration/v50Layout.js';
 import { V55_SITE_BOUNDS, V55_ZONE_ANCHORS } from '../integration/v55Layout.js';
+import { V56_SITE_BOUNDS, V56_ZONE_ANCHORS } from '../integration/v56Layout.js';
 import { getPlantLayoutBounds, getPlantZone } from '../layout/plantLayout.js';
 import { getTerrainHeight } from '../environment/terrainHeight.js';
 import { getSiteOverviewBounds, PIT_DESIGN } from '../config/siteDesign.js';
@@ -46,6 +47,12 @@ function anchor(zoneId) {
 function v55Anchor(zoneId) {
   const point = V55_ZONE_ANCHORS[zoneId];
   if (!point) throw new RangeError(`Ancla V55 desconocida: ${zoneId}.`);
+  return vector(point.x, point.y, point.z);
+}
+
+function v56Anchor(zoneId) {
+  const point = V56_ZONE_ANCHORS[zoneId];
+  if (!point) throw new RangeError(`Ancla V56 desconocida: ${zoneId}.`);
   return vector(point.x, point.y, point.z);
 }
 
@@ -150,6 +157,32 @@ export function createV55CameraPresetConfigs() {
   });
 }
 
+/**
+ * V56 is a visual-cleanup release of the V55 authored site. Camera framing
+ * remains intentionally stable so presentation views do not jump between
+ * releases; bounds/anchors come from the V56 contract.
+ */
+export function createV56CameraPresetConfigs() {
+  const siteCenter = vector(
+    (V56_SITE_BOUNDS.minX + V56_SITE_BOUNDS.maxX) / 2,
+    2.0,
+    (V56_SITE_BOUNDS.minZ + V56_SITE_BOUNDS.maxZ) / 2,
+  );
+  const leaching = v56Anchor('Z6');
+  const recovery = v56Anchor('Z8');
+  return Object.freeze({
+    general: preset(vector(300, 118, 255), vector(255, 0.5, 32), 42),
+    top: preset(vector(siteCenter[0], 520, siteCenter[2]), siteCenter, 40),
+    oblique: preset(vector(440, 105, 235), vector(330, -5.0, 72), 44),
+    reception: preset(vector(190, 23, 46), vector(205, 2.8, -1), 42),
+    crushing: preset(vector(214, 24, 42), vector(228, 3.2, -3), 40),
+    grinding: preset(vector(300, 33, 48), vector(305, 4.2, -18), 42),
+    leaching: preset(vector(260, 30, 48), vector(leaching[0], leaching[1] - 0.5, leaching[2]), 42),
+    recovery: preset(vector(225, 26, 46), vector(recovery[0], recovery[1] - 0.5, recovery[2]), 42),
+    inspection: preset(vector(338, 18, -12), vector(320, 4.0, -35), 50),
+  });
+}
+
 export function createV30CameraPresetConfigs() {
   const plantBounds = getPlantLayoutBounds();
   const siteBounds = getSiteOverviewBounds();
@@ -200,8 +233,9 @@ export function createV30CameraPresetConfigs() {
   });
 }
 
-export function createCameraPresetConfigs({ revision = 'V55' } = {}) {
+export function createCameraPresetConfigs({ revision = 'V56' } = {}) {
   if (revision === 'V30') return createV30CameraPresetConfigs();
   if (revision === 'V50') return createV50CameraPresetConfigs();
-  return createV55CameraPresetConfigs();
+  if (revision === 'V55') return createV55CameraPresetConfigs();
+  return createV56CameraPresetConfigs();
 }

@@ -5,6 +5,7 @@ import {
   createV30CameraPresetConfigs,
   createV50CameraPresetConfigs,
   createV55CameraPresetConfigs,
+  createV56CameraPresetConfigs,
 } from '../../src/scene/cameras/cameraPresetConfigs.js';
 import {
   BABYLON_CAMERA_FAR,
@@ -16,15 +17,16 @@ import {
 } from '../../src/babylon/cameras/cameraPresets.js';
 
 describe('Babylon camera preset parity', () => {
-  it('uses the nine authoritative V55 preset configs by default', () => {
+  it('uses the nine authoritative V56 preset configs by default', () => {
     expect(CAMERA_PRESET_ORDER).toHaveLength(9);
     expect(createBabylonCameraPresetConfigs()).toEqual(createCameraPresetConfigs());
-    expect(createCameraPresetConfigs()).toEqual(createV55CameraPresetConfigs());
-    expect(createV55CameraPresetConfigs().general).toMatchObject({
+    expect(createCameraPresetConfigs()).toEqual(createV56CameraPresetConfigs());
+    expect(createV56CameraPresetConfigs().general).toMatchObject({
       position: [300, 118, 255],
       target: [255, 0.5, 32],
       fov: 42,
     });
+    expect(createV55CameraPresetConfigs().general.position).toEqual([300, 118, 255]);
     expect(createV50CameraPresetConfigs().general.position).toEqual([260, 64, 138]);
   });
 
