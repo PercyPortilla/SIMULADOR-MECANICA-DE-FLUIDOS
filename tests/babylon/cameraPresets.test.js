@@ -1,18 +1,39 @@
 import { describe, expect, it } from 'vitest';
 import { ArcRotateCamera, FreeCamera, NullEngine, Scene, Vector3 } from '@babylonjs/core';
-import { createCameraPresetConfigs } from '../../src/scene/cameras/cameraPresetConfigs.js';
+import {
+  createCameraPresetConfigs,
+  createV30CameraPresetConfigs,
+  createV49CameraPresetConfigs,
+} from '../../src/scene/cameras/cameraPresetConfigs.js';
 import {
   BABYLON_CAMERA_FAR,
   BABYLON_CAMERA_NEAR,
   CAMERA_PRESET_ORDER,
+  applyBabylonCameraPresetRevision,
   createBabylonCameraPresetConfigs,
   createBabylonPresetCameras,
 } from '../../src/babylon/cameras/cameraPresets.js';
 
 describe('Babylon camera preset parity', () => {
-  it('reuses the nine authoritative V30 preset configs unchanged', () => {
+  it('uses the nine authoritative V49 preset configs by default', () => {
     expect(CAMERA_PRESET_ORDER).toHaveLength(9);
     expect(createBabylonCameraPresetConfigs()).toEqual(createCameraPresetConfigs());
+    expect(createCameraPresetConfigs()).toEqual(createV49CameraPresetConfigs());
+  });
+
+  it('can switch the existing camera rig back to the V30 fallback contract', () => {
+    const engine = new NullEngine({ renderWidth: 1096, renderHeight: 520 });
+    const scene = new Scene(engine);
+    scene.useRightHandedSystem = true;
+    const cameras = createBabylonPresetCameras(scene);
+    const v30 = createV30CameraPresetConfigs();
+    applyBabylonCameraPresetRevision(cameras, 'V30');
+    CAMERA_PRESET_ORDER.forEach((id) => {
+      expect(cameras[id].metadata.presetPosition).toEqual(v30[id].position);
+      expect(cameras[id].metadata.presetTarget).toEqual(v30[id].target);
+      expect(Vector3.Distance(cameras[id].position, Vector3.FromArray(v30[id].position))).toBeLessThan(1e-6);
+    });
+    engine.dispose();
   });
 
   it('creates eight fixed cameras and one ArcRotate Inspection camera', () => {

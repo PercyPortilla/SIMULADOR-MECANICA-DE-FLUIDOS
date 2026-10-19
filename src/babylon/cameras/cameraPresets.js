@@ -80,6 +80,28 @@ export function createBabylonCameraPresetConfigs() {
   return createCameraPresetConfigs();
 }
 
+export function applyBabylonCameraPresetRevision(cameras, revision = 'V49') {
+  if (!cameras) throw new TypeError('Babylon camera revision switch requires camera handles.');
+  const configs = createCameraPresetConfigs({ revision });
+  CAMERA_PRESET_ORDER.forEach((id) => {
+    const camera = cameras[id];
+    const config = configs[id];
+    if (!camera || !config) return;
+    const position = toVector3(config.position);
+    const target = toVector3(config.target);
+    if (camera instanceof ArcRotateCamera) {
+      camera.setPosition(position);
+      camera.setTarget(target);
+    } else {
+      camera.position.copyFrom(position);
+      camera.setTarget(target);
+      camera.position.copyFrom(position);
+    }
+    applySharedCameraConfig(camera, id, config);
+  });
+  return configs;
+}
+
 export function createBabylonPresetCameras(scene) {
   if (!scene) throw new TypeError('Babylon preset cameras require a Scene.');
   const configs = createBabylonCameraPresetConfigs();

@@ -11,6 +11,7 @@ import {
   getInspectionCircuitContext,
   getInspectionTargetLabel,
 } from '../../scene/inspection/inspectionContracts.js';
+import { V49_INSPECTION_NODE_ALIASES } from '../../scene/integration/v49Layout.js';
 
 function nodeMetadata(node) {
   return node?.metadata ?? {};
@@ -35,11 +36,60 @@ function isShell(mesh) {
   return /shell|body|casing|hopper|tank|cell|hood|cover|lid|volute|chute|feeder|bed/i.test(mesh?.name || '');
 }
 
-function findTarget(scene, id) {
-  return scene.getTransformNodeByName(id) ?? scene.getMeshByName(id) ?? null;
+function allSceneNodes(scene) {
+  return [...(scene.transformNodes ?? []), ...(scene.meshes ?? [])];
 }
 
-function getBounds(node) {
+function resolveV49AliasSources(scene, alias) {
+  if (!alias) return [];
+  const names = new Set(alias.names ?? []);
+  const prefixes = alias.prefixes ?? [];
+  const seen = new Set();
+  return allSceneNodes(scene).filter((node) => {
+    if (nodeMetadata(node).v49AuthoritativeVisual !== true) return false;
+    const match = names.has(node.name) || prefixes.some((prefix) => node.name?.startsWith(prefix));
+    if (!match || seen.has(node)) return false;
+    seen.add(node);
+    return true;
+  });
+}
+
+function findTarget(scene, id, aliasRoot = null) {
+  const transformMatches = (scene.transformNodes ?? []).filter((node) => node.name === id);
+  const meshMatches = (scene.meshes ?? []).filter((node) => node.name === id);
+  const candidates = [...transformMatches, ...meshMatches];
+  const exactV49 = candidates.find((node) => nodeMetadata(node).v49AuthoritativeVisual === true);
+  if (exactV49) return exactV49;
+
+  const alias = V49_INSPECTION_NODE_ALIASES[id];
+  if (alias && aliasRoot) {
+    const sources = resolveV49AliasSources(scene, alias);
+    const hasV49Scene = sources.length > 0 || allSceneNodes(scene).some(
+      (node) => nodeMetadata(node).v49AuthoritativeVisual === true,
+    );
+    if (sources.length || (alias.semanticOnly && hasV49Scene)) {
+      const proxy = new TransformNode(`inspection-v49-alias-${id}`, scene);
+      proxy.parent = aliasRoot;
+      proxy.metadata = {
+        v49InspectionAlias: true,
+        inspectionCanonicalId: id,
+        inspectionAliasSources: sources,
+        inspectionAliasBounds: alias.bounds ?? null,
+        semanticOnly: alias.semanticOnly === true,
+        proxySemantics: alias.proxySemantics ?? null,
+        siteRevision: 'V49',
+      };
+      return proxy;
+    }
+  }
+
+  return candidates[0]
+    ?? scene.getTransformNodeByName(id)
+    ?? scene.getMeshByName(id)
+    ?? null;
+}
+
+function directBounds(node) {
   if (!node) return null;
   node.computeWorldMatrix?.(true);
   const bounds = node.getHierarchyBoundingVectors?.(true);
@@ -54,6 +104,56 @@ function getBounds(node) {
     center: Vector3.Center(bounds.min, bounds.max),
     size,
   };
+}
+
+function getBounds(node) {
+  if (!node) return null;
+  const metadata = nodeMetadata(node);
+  const explicit = metadata.inspectionAliasBounds;
+  if (explicit?.center?.length === 3 && explicit?.size?.length === 3) {
+    const center = Vector3.FromArray(explicit.center);
+    const size = Vector3.FromArray(explicit.size);
+    return {
+      min: center.subtract(size.scale(0.5)),
+      max: center.add(size.scale(0.5)),
+      center,
+      size,
+    };
+  }
+  const sources = metadata.inspectionAliasSources;
+  if (Array.isArray(sources) && sources.length) {
+    const sourceBounds = sources.map(directBounds).filter(Boolean);
+    if (sourceBounds.length) {
+      const min = sourceBounds[0].min.clone();
+      const max = sourceBounds[0].max.clone();
+      sourceBounds.slice(1).forEach((bounds) => {
+        min.minimizeInPlace(bounds.min);
+        max.maximizeInPlace(bounds.max);
+      });
+      return { min, max, center: Vector3.Center(min, max), size: max.subtract(min) };
+    }
+  }
+  return directBounds(node);
+}
+
+function collectInspectableMeshes(target) {
+  if (!target) return [];
+  const sources = nodeMetadata(target).inspectionAliasSources;
+  if (!Array.isArray(sources)) return target.getChildMeshes?.(false) ?? [];
+  const meshes = [];
+  const seen = new Set();
+  sources.forEach((source) => {
+    const candidates = [
+      ...(source?.getBoundingInfo && 'material' in source ? [source] : []),
+      ...(source?.getChildMeshes?.(false) ?? []),
+    ];
+    candidates.forEach((mesh) => {
+      if (seen.has(mesh)) return;
+      seen.add(mesh);
+      meshes.push(mesh);
+    });
+  });
+  return meshes;
 }
 
 function pointAlongPolyline(points, fraction) {
@@ -146,14 +246,17 @@ export function createBabylonEquipmentInspectionSystem({ scene } = {}) {
   const targets = new Map();
   const contextOverlay = new TransformNode('inspection-circuit-context', scene);
   contextOverlay.metadata = { inspectionOverlay: true };
+  const aliasRoot = new TransformNode('inspection-v49-aliases', scene);
+  aliasRoot.metadata = { inspectionAliasRoot: true, visualOnly: true };
   let currentTargetId = null;
   let currentMode = 'normal';
   let activeSnapshot = null;
 
   function rebuildTargets() {
     targets.clear();
+    aliasRoot.getChildren?.().forEach((node) => node.dispose?.());
     INSPECTION_CIRCUIT_ORDER.forEach((id) => {
-      const target = findTarget(scene, id);
+      const target = findTarget(scene, id, aliasRoot);
       if (target) targets.set(id, target);
     });
   }
@@ -195,7 +298,7 @@ export function createBabylonEquipmentInspectionSystem({ scene } = {}) {
     restore();
     target.metadata = { ...nodeMetadata(target), inspectionMode: mode };
     if (mode === 'normal') return;
-    const meshes = target.getChildMeshes?.(false) ?? [];
+    const meshes = collectInspectableMeshes(target);
     const entries = meshes.map((mesh) => ({
       mesh,
       material: mesh.material,
@@ -249,6 +352,7 @@ export function createBabylonEquipmentInspectionSystem({ scene } = {}) {
       const target = targets.get(id);
       const context = getInspectionCircuitContext(id);
       const metadata = nodeMetadata(target);
+      const inspectableMeshes = collectInspectableMeshes(target);
       return {
         id,
         label: getInspectionTargetLabel(id, {
@@ -256,6 +360,9 @@ export function createBabylonEquipmentInspectionSystem({ scene } = {}) {
           connection: Boolean(metadata.connectionId) || id.startsWith('P-') || id.startsWith('MT-'),
         }),
         kind: metadata.inspectionKind || metadata.type || 'equipment',
+        supportsModes: metadata.semanticOnly !== true && inspectableMeshes.length > 0,
+        semanticOnly: metadata.semanticOnly === true,
+        proxySemantics: metadata.proxySemantics ?? null,
         circuitOrder: context.index,
         previousId: context.previousId,
         nextId: context.nextId,
@@ -304,7 +411,17 @@ export function createBabylonEquipmentInspectionSystem({ scene } = {}) {
       restore();
       return;
     }
-    applyMode(targets.get(currentTargetId), mode);
+    const target = targets.get(currentTargetId);
+    const metadata = nodeMetadata(target);
+    const supportsModes = metadata.semanticOnly !== true && collectInspectableMeshes(target).length > 0;
+    if (mode !== 'normal' && !supportsModes) {
+      currentMode = 'normal';
+      restore();
+      target.metadata = { ...metadata, inspectionMode: 'normal' };
+      return 'normal';
+    }
+    applyMode(target, mode);
+    return mode;
   }
 
   rebuildTargets();
@@ -324,6 +441,7 @@ export function createBabylonEquipmentInspectionSystem({ scene } = {}) {
       restore();
       clearContextOverlay();
       contextOverlay.dispose();
+      aliasRoot.dispose();
       targets.clear();
     },
   };

@@ -15,10 +15,13 @@ import { Scene } from '@babylonjs/core/scene.js';
 import {
   CAMERA_PRESET_ORDER,
   INSPECTION_CAMERA_ID,
+  applyBabylonCameraPresetRevision,
   createBabylonPresetCameras,
   setInspectionControlsAttached,
 } from '../cameras/cameraPresets.js';
 import { attachBabylonReceptionEarthwork } from '../assets/receptionEarthwork.js';
+import { attachBabylonV49SiteVisual } from '../assets/v49SiteVisual.js';
+import { loadBabylonAssetContainer } from '../assets/gltfLoader.js';
 import { createBabylonMaterialTransportSystem } from '../conveying/materialTransportSystem.js';
 import { createBabylonProcessEquipmentSystem } from '../equipment/processEquipmentSystem.js';
 import { createBabylonCivilInfrastructure } from '../environment/civilInfrastructure.js';
@@ -42,6 +45,20 @@ import { getState, subscribe as subscribeState } from '../../state/simulationSta
 
 export const BABYLON_WORLD_UNITS_PER_METER = 1;
 export const BABYLON_VIEW_DECORATION_REFRESH_INTERVAL_MS = 125;
+
+function isSceneDisposed(scene) {
+  if (!scene) return true;
+  return typeof scene.isDisposed === 'function' ? scene.isDisposed() : Boolean(scene.isDisposed);
+}
+
+function emptyAssetContainer() {
+  return {
+    rootNodes: [],
+    animationGroups: [],
+    addAllToScene() {},
+    dispose() {},
+  };
+}
 
 export function computeBabylonInspectionCameraDistance(size, fovRadians, aspect = 1, padding = 1.70) {
   const safeSize = size instanceof Vector3 ? size : Vector3.FromArray(size ?? [1, 1, 1]);
@@ -266,11 +283,28 @@ export function createBabylonBaseScene(engine, { pipe1State = null } = {}) {
   const industrialInfrastructure = createBabylonIndustrialInfrastructure({ scene });
   const technicalGrid = createBabylonTechnicalGrid({ scene });
   const industrialSafety = createBabylonIndustrialSafety({ scene });
+  const v49SiteVisual = typeof window !== 'undefined'
+    ? attachBabylonV49SiteVisual({ scene })
+    : null;
+  const deferredLegacyLoader = v49SiteVisual
+    ? async (url, targetScene) => {
+      await v49SiteVisual.ready;
+      if (isSceneDisposed(targetScene)) return emptyAssetContainer();
+      if (!v49SiteVisual.loaded) return loadBabylonAssetContainer(url, targetScene);
+      return emptyAssetContainer();
+    }
+    : null;
   const receptionEarthworkOverlay = typeof window !== 'undefined'
-    ? attachBabylonReceptionEarthwork({ scene })
+    ? attachBabylonReceptionEarthwork({
+      scene,
+      ...(deferredLegacyLoader ? { loadContainer: deferredLegacyLoader } : {}),
+    })
     : null;
   const processEquipmentSystem = typeof window !== 'undefined'
-    ? createBabylonProcessEquipmentSystem({ scene })
+    ? createBabylonProcessEquipmentSystem({
+      scene,
+      ...(deferredLegacyLoader ? { loadContainer: deferredLegacyLoader } : {}),
+    })
     : null;
   const processInstrumentation = processEquipmentSystem
     ? createBabylonProcessInstrumentation({ scene, equipmentSystem: processEquipmentSystem })
@@ -282,7 +316,10 @@ export function createBabylonBaseScene(engine, { pipe1State = null } = {}) {
     ? createBabylonMaterialTransportSystem({ scene, equipmentSystem: processEquipmentSystem })
     : null;
   const mobileEquipmentSystem = typeof window !== 'undefined'
-    ? createBabylonMobileEquipmentSystem({ scene })
+    ? createBabylonMobileEquipmentSystem({
+      scene,
+      ...(deferredLegacyLoader ? { loadContainer: deferredLegacyLoader } : {}),
+    })
     : null;
   const equipmentInspection = typeof window !== 'undefined'
     ? createBabylonEquipmentInspectionSystem({ scene })
@@ -319,6 +356,7 @@ export function createBabylonBaseScene(engine, { pipe1State = null } = {}) {
     industrialInfrastructure,
     technicalGrid,
     industrialSafety,
+    v49SiteVisual,
     receptionEarthworkOverlay,
     processEquipmentSystem,
     processInstrumentation,
@@ -369,6 +407,35 @@ export function createBabylonRuntime({
     initialState.transport?.pipe1?.accessories?.valvesCount,
   ]);
 
+  function setLegacyVisualsEnabled(enabled) {
+    const nodes = [
+      base.terrain,
+      base.roadNetwork?.root,
+      base.industrialPads?.root,
+      base.plantFoundations?.root,
+      base.civilInfrastructure?.root,
+      base.mineProps?.root,
+      base.operationalSurfaceDetails?.root,
+      base.industrialInfrastructure?.root,
+      base.technicalGrid?.root,
+      base.industrialSafety?.root,
+      base.receptionEarthworkOverlay?.host,
+      base.processEquipmentSystem?.fixed?.root,
+      base.processEquipmentSystem?.support?.root,
+      base.processInstrumentation?.root,
+      base.pipingSystem?.root,
+      base.materialTransportSystem?.root,
+      base.mobileEquipmentSystem?.root,
+    ];
+    nodes.forEach((node) => node?.setEnabled?.(Boolean(enabled)));
+    base.scene.metadata.legacyVisualsEnabled = Boolean(enabled);
+  }
+
+  if (base.v49SiteVisual) {
+    setLegacyVisualsEnabled(false);
+    base.scene.metadata.activeVisualRevision = 'V49-loading';
+  }
+
   function registerShadowCasters(root) {
     root?.getChildMeshes?.(false)?.forEach((mesh) => {
       if (!mesh.isEnabled?.() || mesh.isVisible === false) return;
@@ -377,6 +444,32 @@ export function createBabylonRuntime({
       base.shadowGenerator.addShadowCaster(mesh, false);
       mesh.receiveShadows = true;
     });
+  }
+
+  function registerV49ShadowCasters(root) {
+    const meshes = root?.getChildMeshes?.(false) ?? [];
+    const secondary = /(?:GROUND|ROAD|PAD|TERRACE|BENCH|BERM|SHOULDER|DRAIN|CULVERT|PIPE|FLANGE|VALVE|BOLT|RUNG|RAIL|ORE|SLURRY|SURFACE|SWIRL|TRACK|LINE|LABEL|SIGN)/i;
+    const primary = /(?:TRUCK|EXCAVATOR|LOADER|ROM|FEEDER|CRUSHER|STOCKPILE|MILL|SUMP|PUMP|CLASS|CYCLONE|R-0[1-4]|CIP|ELUTION|EW|SMELTING|CONVEYOR|CV0[1-3]|BUILDING|HOUSE|TOWER|FRAME|SHELL|BODY|TANK|COLUMN|MOTOR|FURNACE)/i;
+    const candidates = meshes
+      .filter((mesh) => mesh?.isEnabled?.() && mesh.isVisible !== false)
+      .filter((mesh) => !SECONDARY_SHADOW_DETAIL.test(String(mesh.name || '')))
+      .filter((mesh) => primary.test(String(mesh.name || '')) && !secondary.test(String(mesh.name || '')))
+      .map((mesh) => {
+        mesh.computeWorldMatrix?.(true);
+        const extend = mesh.getBoundingInfo?.()?.boundingBox?.extendSizeWorld;
+        return { mesh, span: extend?.length?.() ?? 0 };
+      })
+      .filter((entry) => entry.span >= 0.45)
+      .sort((a, b) => b.span - a.span)
+      .slice(0, 180);
+    candidates.forEach(({ mesh }) => {
+      base.shadowGenerator.addShadowCaster(mesh, false);
+      mesh.receiveShadows = true;
+    });
+    if (base.v49SiteVisual?.host?.metadata) {
+      base.v49SiteVisual.host.metadata.shadowCasterCount = candidates.length;
+    }
+    return candidates.length;
   }
 
   [
@@ -419,11 +512,41 @@ export function createBabylonRuntime({
     canvas.addEventListener?.(type, handler, { passive: type === 'wheel' });
   });
   base.receptionEarthworkOverlay?.ready?.finally?.(() => {
+    if (disposed) return;
     registerShadowCasters(base.receptionEarthworkOverlay?.host);
     invalidateRender(180);
   });
+  base.v49SiteVisual?.ready?.then?.(() => {
+    if (disposed) return;
+    if (!base.v49SiteVisual?.loaded) {
+      setLegacyVisualsEnabled(true);
+      base.processEquipmentSystem?.setAnimationsEnabled?.(animationsEnabled);
+      base.materialTransportSystem?.setAnimationsEnabled?.(animationsEnabled);
+      base.mobileEquipmentSystem?.setEnabled?.(animationsEnabled);
+      base.scene.metadata.activeVisualRevision = 'V30-fallback';
+      applyBabylonCameraPresetRevision(base.cameras, 'V30');
+      base.plantLabels?.updatePositions?.();
+      invalidateRender(300);
+      return;
+    }
+    setLegacyVisualsEnabled(false);
+    base.processEquipmentSystem?.setAnimationsEnabled?.(false);
+    base.materialTransportSystem?.setAnimationsEnabled?.(false);
+    base.mobileEquipmentSystem?.setEnabled?.(false);
+    base.v49SiteVisual.setAnimationsEnabled(animationsEnabled);
+    base.scene.metadata.activeVisualRevision = 'V49';
+    applyBabylonCameraPresetRevision(base.cameras, 'V49');
+    base.geotechnicalSystem?.setVisible?.(false);
+    base.scene.metadata.v49ImportedRootCount = base.v49SiteVisual.host.metadata?.importedRootCount ?? 0;
+    base.scene.metadata.v49ImportedMeshCount = base.v49SiteVisual.host.metadata?.importedMeshCount ?? 0;
+    base.scene.metadata.v49ShadowCasterCount = registerV49ShadowCasters(base.v49SiteVisual.host);
+    base.equipmentInspection?.refreshTargets?.();
+    base.plantLabels?.updatePositions?.();
+    invalidateRender(300);
+  });
   base.processEquipmentSystem?.ready?.then?.(() => {
-    base.processEquipmentSystem.setAnimationsEnabled(animationsEnabled);
+    if (disposed) return;
+    base.processEquipmentSystem.setAnimationsEnabled(base.v49SiteVisual?.loaded ? false : animationsEnabled);
     base.processEquipmentSystem.allVisuals().forEach((visual) => registerShadowCasters(visual.host));
     registerShadowCasters(base.pipingSystem?.root);
     base.scene.metadata.processEquipmentVisualsLoaded = base.processEquipmentSystem.loadedVisualCount;
@@ -435,12 +558,13 @@ export function createBabylonRuntime({
     invalidateRender(240);
   });
   base.mobileEquipmentSystem?.ready?.then?.(() => {
-    base.mobileEquipmentSystem.setEnabled(animationsEnabled);
+    if (disposed) return;
+    base.mobileEquipmentSystem.setEnabled(base.v49SiteVisual?.loaded ? false : animationsEnabled);
     registerShadowCasters(base.mobileEquipmentSystem.root);
     base.equipmentInspection?.refreshTargets?.();
     invalidateRender(240);
   });
-  base.materialTransportSystem?.setAnimationsEnabled?.(animationsEnabled);
+  base.materialTransportSystem?.setAnimationsEnabled?.(base.v49SiteVisual?.loaded ? false : animationsEnabled);
   const unsubscribeState = subscribeState((state) => {
     const nextPipeRenderKey = JSON.stringify([
       state.transport?.pipe1?.innerDiameterM,
@@ -548,7 +672,7 @@ export function createBabylonRuntime({
     if (animationsEnabled) {
       const deltaSeconds = previousFrameMs === null ? 0 : Math.min(0.1, Math.max(0, (now - previousFrameMs) / 1000));
       previousFrameMs = now;
-      if (deltaSeconds > 0) {
+      if (deltaSeconds > 0 && !base.v49SiteVisual?.loaded) {
         base.materialTransportSystem?.update?.(deltaSeconds);
         base.mobileEquipmentSystem?.update?.(deltaSeconds);
         base.pipingSystem?.updateFlow?.(deltaSeconds);
@@ -563,9 +687,11 @@ export function createBabylonRuntime({
   function setAnimationsEnabled(enabled) {
     animationsEnabled = Boolean(enabled);
     previousFrameMs = null;
-    base.processEquipmentSystem?.setAnimationsEnabled?.(animationsEnabled);
-    base.materialTransportSystem?.setAnimationsEnabled?.(animationsEnabled);
-    base.mobileEquipmentSystem?.setEnabled?.(animationsEnabled);
+    const v49Active = Boolean(base.v49SiteVisual?.loaded);
+    base.v49SiteVisual?.setAnimationsEnabled?.(animationsEnabled);
+    base.processEquipmentSystem?.setAnimationsEnabled?.(v49Active ? false : animationsEnabled);
+    base.materialTransportSystem?.setAnimationsEnabled?.(v49Active ? false : animationsEnabled);
+    base.mobileEquipmentSystem?.setEnabled?.(v49Active ? false : animationsEnabled);
     invalidateRender(180);
     return animationsEnabled;
   }
@@ -589,8 +715,10 @@ export function createBabylonRuntime({
   }
 
   function setGeotechnicsVisible(visible) {
-    base.geotechnicalSystem?.setVisible?.(visible);
-    if (visible) base.geotechnicalSystem?.updateForCamera?.(base.cameras[activeCamera]);
+    const allowed = !base.v49SiteVisual || base.scene.metadata.activeVisualRevision === 'V30-fallback';
+    const nextVisible = Boolean(visible) && allowed;
+    base.geotechnicalSystem?.setVisible?.(nextVisible);
+    if (nextVisible) base.geotechnicalSystem?.updateForCamera?.(base.cameras[activeCamera]);
     refreshViewDecorations(true);
     invalidateRender(180);
     return Boolean(base.geotechnicalSystem?.visible);
@@ -694,6 +822,7 @@ export function createBabylonRuntime({
       inspectionControlsAttached = false;
     }
     base.receptionEarthworkOverlay?.dispose?.();
+    base.v49SiteVisual?.dispose?.();
     unsubscribeState?.();
     base.geotechnicalSystem?.dispose?.();
     base.plantLabels?.dispose?.();

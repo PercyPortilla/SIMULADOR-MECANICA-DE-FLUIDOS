@@ -6,6 +6,7 @@ import { CreatePlane } from '@babylonjs/core/Meshes/Builders/planeBuilder.js';
 import { Mesh } from '@babylonjs/core/Meshes/mesh.js';
 import { TransformNode } from '@babylonjs/core/Meshes/transformNode.js';
 import { PLANT_ZONE_ORDER, getPlantZone } from '../../scene/layout/plantLayout.js';
+import { V49_ZONE_ANCHORS } from '../../scene/integration/v49Layout.js';
 import {
   EQUIPMENT_LABEL_DEFINITIONS,
   LABEL_ASPECT,
@@ -104,7 +105,7 @@ function createPlaneLabel(scene, root, {
     aspect,
     presentationScale: 1,
     presentationVisible: true,
-    maxDistance: metadata?.labelKind === 'zone'
+    baseMaxDistance: metadata?.labelKind === 'zone'
       ? 980
       : metadata?.labelKind === 'inspection'
         ? Infinity
@@ -112,6 +113,7 @@ function createPlaneLabel(scene, root, {
           ? 40
           : 720,
   };
+  plane.metadata.maxDistance = plane.metadata.baseMaxDistance;
   return plane;
 }
 
@@ -121,6 +123,14 @@ function hierarchyBounds(target) {
   const size = bounds.max.subtract(bounds.min);
   if (![size.x, size.y, size.z].every(Number.isFinite) || size.lengthSquared() <= 1e-12) return null;
   return { min: bounds.min.clone(), max: bounds.max.clone(), size, center: Vector3.Center(bounds.min, bounds.max) };
+}
+
+function findV49VisualTarget(scene, id) {
+  const candidates = [
+    ...(scene.transformNodes ?? []).filter((node) => node.name === id),
+    ...(scene.meshes ?? []).filter((node) => node.name === id),
+  ];
+  return candidates.find((node) => node?.metadata?.v49AuthoritativeVisual === true) ?? null;
 }
 
 function componentLabelText(mesh) {
@@ -155,7 +165,12 @@ export function createBabylonPlantLabels({ scene, equipmentSystem } = {}) {
         textureSize: { width: 768, height: 144 },
       });
       if (label) {
-        label.position.set(zone.position.x, zone.elevation + 6.0, zone.position.z);
+        const anchor = V49_ZONE_ANCHORS[zone.id];
+        label.position.set(
+          anchor?.x ?? zone.position.x,
+          (anchor?.y ?? zone.elevation) + 6.0,
+          anchor?.z ?? zone.position.z,
+        );
         labels.push(label);
       }
     });
@@ -185,7 +200,26 @@ export function createBabylonPlantLabels({ scene, equipmentSystem } = {}) {
   function updatePositions() {
     labels.forEach((label) => {
       const metadata = label.metadata ?? {};
+      if (metadata.labelKind === 'zone' && metadata.zoneId) {
+        const zone = getPlantZone(metadata.zoneId);
+        const useV49 = scene.metadata?.activeVisualRevision === 'V49'
+          || scene.metadata?.activeVisualRevision === 'V49-loading';
+        const anchor = useV49 ? V49_ZONE_ANCHORS[metadata.zoneId] : null;
+        label.position.set(
+          anchor?.x ?? zone.position.x,
+          (anchor?.y ?? zone.elevation) + 6.0,
+          anchor?.z ?? zone.position.z,
+        );
+        return;
+      }
       if (metadata.dynamicPipe1) {
+        const v49Pipe = findV49VisualTarget(scene, 'V39_PIPE_R01_TO_R02');
+        const v49Bounds = hierarchyBounds(v49Pipe);
+        if (v49Bounds) {
+          label.position.copyFrom(v49Bounds.center);
+          label.position.y = v49Bounds.max.y + (metadata.lift ?? 1.25);
+          return;
+        }
         try {
           const start = equipmentSystem?.getPortWorldPosition('R-01', 'outlet');
           const end = equipmentSystem?.getPortWorldPosition('R-02', 'inlet');
@@ -197,6 +231,13 @@ export function createBabylonPlantLabels({ scene, equipmentSystem } = {}) {
         return;
       }
       if (metadata.labelKind !== 'equipment' || !metadata.equipmentId) return;
+      const v49Target = findV49VisualTarget(scene, metadata.equipmentId);
+      const v49Bounds = hierarchyBounds(v49Target);
+      if (v49Bounds) {
+        label.position.copyFrom(v49Bounds.center);
+        label.position.y = v49Bounds.max.y + (metadata.lift ?? 1.6);
+        return;
+      }
       try {
         const equipment = equipmentSystem?.getEquipment(metadata.equipmentId);
         const position = equipment?.root?.getAbsolutePosition?.() ?? equipment?.group3D?.getAbsolutePosition?.();
@@ -219,7 +260,9 @@ export function createBabylonPlantLabels({ scene, equipmentSystem } = {}) {
       const priority = metadata.labelKind === 'inspection' || metadata.labelKind === 'component';
       const allowed = root.metadata.labelsVisible !== false || (root.metadata.presentationMode === true && priority);
       label.isVisible = profile.visible && allowed;
-      metadata.maxDistance = cameraId === 'inspection' && metadata.labelKind === 'equipment' ? 36 : metadata.maxDistance;
+      metadata.maxDistance = cameraId === 'inspection' && metadata.labelKind === 'equipment'
+        ? 36
+        : (metadata.baseMaxDistance ?? metadata.maxDistance);
     });
   }
 

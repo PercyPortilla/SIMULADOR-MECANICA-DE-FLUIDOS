@@ -86,4 +86,43 @@ describe('Babylon Inspection parity', () => {
     expect(roles).toEqual(['downstream', 'selected', 'upstream']);
     system.dispose(); scene.dispose(); engine.dispose();
   });
+
+  it('resolves canonical conveyor Inspection to V49 alias geometry instead of hidden V30 roots', () => {
+    const { engine, scene } = makeScene();
+    const legacy = target(scene, 'CV-02-CRUSHER-TO-STOCKPILE', [-60, 2, 0], [30, 2, 3]);
+    const v49A = CreateBox('V49_CV02_BELT_01', { width: 18, height: 0.4, depth: 2 }, scene);
+    const v49B = CreateBox('V49_CV02_BELT_02', { width: 18, height: 0.4, depth: 2 }, scene);
+    v49A.position.set(210, 4, 0);
+    v49B.position.set(226, 5, 0);
+    v49A.metadata = { v49AuthoritativeVisual: true };
+    v49B.metadata = { v49AuthoritativeVisual: true };
+    v49A.material = new StandardMaterial('v49-cv02-a', scene);
+    v49B.material = new StandardMaterial('v49-cv02-b', scene);
+    const originalV49Material = v49A.material;
+    const originalLegacyMaterial = legacy.shell.material;
+    const system = createBabylonEquipmentInspectionSystem({ scene });
+    const selected = system.setTarget('CV-02-CRUSHER-TO-STOCKPILE');
+    const framing = system.getFraming('CV-02-CRUSHER-TO-STOCKPILE');
+    expect(selected.metadata.v49InspectionAlias).toBe(true);
+    expect(framing.center.x).toBeGreaterThan(190);
+    system.setMode('transparent');
+    expect(v49A.material).not.toBe(originalV49Material);
+    expect(legacy.shell.material).toBe(originalLegacyMaterial);
+    system.setMode('normal');
+    expect(v49A.material).toBe(originalV49Material);
+    system.dispose(); scene.dispose(); engine.dispose();
+  });
+
+  it('marks semantic-only V49 inspection routes as non-cutaway and keeps their mode normal', () => {
+    const { engine, scene } = makeScene();
+    const v49Marker = CreateBox('V49_SITE_MARKER', { size: 1 }, scene);
+    v49Marker.metadata = { v49AuthoritativeVisual: true };
+    const system = createBabylonEquipmentInspectionSystem({ scene });
+    const route = system.getTargets().find((item) => item.id === 'P-CYCLONE-UNDERFLOW-RETURN');
+    expect(route).toMatchObject({ supportsModes: false, semanticOnly: true });
+    system.setTarget(route.id);
+    expect(system.setMode('cutaway')).toBe('normal');
+    expect(system.mode).toBe('normal');
+    system.dispose(); scene.dispose(); engine.dispose();
+  });
 });
