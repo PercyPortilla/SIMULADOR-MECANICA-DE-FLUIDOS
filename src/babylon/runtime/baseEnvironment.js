@@ -995,7 +995,7 @@ export function createBabylonRuntime({
     if (animationsEnabled) {
       const deltaSeconds = previousFrameMs === null ? 0 : Math.min(0.1, Math.max(0, (now - previousFrameMs) / 1000));
       previousFrameMs = now;
-      void deltaSeconds;
+      base.v57SiteVisual?.update?.(deltaSeconds);
     } else {
       previousFrameMs = null;
     }
@@ -1042,13 +1042,46 @@ export function createBabylonRuntime({
     return Boolean(base.geotechnicalSystem?.visible);
   }
 
-  function setProcessMetrics({ flowRateM3s = 0, pressurePa = 0 } = {}) {
+  function setProcessMetrics({
+    flowRateM3s = 0,
+    imposedFlowRateM3s = flowRateM3s,
+    pressurePa = 0,
+    velocityMps = 0,
+    solidsMassFraction = 0,
+    solidVolumeFraction = 0,
+    densityKgM3 = 0,
+    feedGoldKgH = 0,
+    basis = 'transport-imposed-flow',
+  } = {}) {
     const normalizedFlow = Number.isFinite(flowRateM3s) && flowRateM3s > 0 ? flowRateM3s : 0;
+    const normalizedImposedFlow = Number.isFinite(imposedFlowRateM3s) && imposedFlowRateM3s > 0
+      ? imposedFlowRateM3s
+      : 0;
     const normalizedPressure = Number.isFinite(pressurePa) ? pressurePa : 0;
+    const normalizedVelocity = Number.isFinite(velocityMps) ? velocityMps : 0;
+    const normalizedSolids = Number.isFinite(solidsMassFraction)
+      ? Math.max(0, Math.min(1, solidsMassFraction))
+      : 0;
+    const normalizedSolidVolume = Number.isFinite(solidVolumeFraction)
+      ? Math.max(0, Math.min(1, solidVolumeFraction))
+      : 0;
+    const normalizedDensity = Number.isFinite(densityKgM3) && densityKgM3 > 0 ? densityKgM3 : 0;
+    const normalizedGold = Number.isFinite(feedGoldKgH) && feedGoldKgH > 0 ? feedGoldKgH : 0;
     processFlowScale = normalizedFlow === 0
       ? 0
       : Math.max(0.25, Math.min(3, normalizedFlow / 0.03));
-    processMetrics = Object.freeze({ flowRateM3s: normalizedFlow, pressurePa: normalizedPressure });
+    processMetrics = Object.freeze({
+      flowRateM3s: normalizedFlow,
+      imposedFlowRateM3s: normalizedImposedFlow,
+      pressurePa: normalizedPressure,
+      velocityMps: normalizedVelocity,
+      solidsMassFraction: normalizedSolids,
+      solidVolumeFraction: normalizedSolidVolume,
+      densityKgM3: normalizedDensity,
+      feedGoldKgH: normalizedGold,
+      basis: String(basis || 'transport-imposed-flow'),
+    });
+    base.v57SiteVisual?.setProcessMetrics?.(processMetrics);
     if (base.pipingSystem?.root) {
       base.pipingSystem.root.metadata = {
         ...(base.pipingSystem.root.metadata ?? {}),
