@@ -47,6 +47,15 @@ function createB64TerrainTexture(scene) {
   return texture;
 }
 
+function materialHasEmbeddedTerrainTexture(material) {
+  if (!material) return false;
+  const subMaterials = Array.isArray(material.subMaterials)
+    ? material.subMaterials.filter(Boolean)
+    : [];
+  if (subMaterials.length) return subMaterials.every(materialHasEmbeddedTerrainTexture);
+  return Boolean(material.albedoTexture || material.diffuseTexture);
+}
+
 function applyB64TerrainMaterial({ rootNodes, scene, host }) {
   const terrainMeshes = [];
   rootNodes.forEach((root) => {
@@ -59,6 +68,19 @@ function applyB64TerrainMaterial({ rootNodes, scene, host }) {
 
   if (!terrainMeshes.length) {
     host.metadata.terrainMaterialStatus = 'B64-terrain-mesh-not-found';
+    return null;
+  }
+
+  if (terrainMeshes.every((mesh) => materialHasEmbeddedTerrainTexture(mesh.material))) {
+    terrainMeshes.forEach((mesh) => {
+      mesh.receiveShadows = true;
+      mesh.metadata = {
+        ...(mesh.metadata ?? {}),
+        terrainMaterialBuild: 'B64-embedded',
+      };
+    });
+    host.metadata.terrainMaterialStatus = 'B64-embedded-texture';
+    host.metadata.terrainMaterialMeshCount = terrainMeshes.length;
     return null;
   }
 

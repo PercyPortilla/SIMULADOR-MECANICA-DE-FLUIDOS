@@ -12,9 +12,9 @@ const v57Asset = path.join(
   'pulpa-v57',
   'PULPA_LAB_V57_FULL_SITE_FINAL.glb',
 );
-const expectedSha256 = 'F9E6597DC2A837734717E185E1D640B687D4C62E79323534A2CBE46F1D874B2C';
-const packedDir = path.join(root, 'blender', 'web-assets', 'b63');
-const packedPrefix = 'PULPA_LAB_V57_B63_FULL_SITE_FINAL.glb.gz.part';
+const expectedSha256 = '73826D5CB777ED08CD9F20A9DD3171C1964F1F8DE8C570EDFB9F4A802538E306';
+const packedDir = path.join(root, 'blender', 'web-assets', 'b64');
+const packedPrefix = 'PULPA_LAB_V57_B64_FULL_SITE_FINAL.glb.gz.part';
 const legacyRuntimeFiles = [
   path.join(root, 'public', 'models', 'pulpa-v56', 'PULPA_LAB_V56_FULL_SITE.glb'),
   path.join(root, 'public', 'models', 'pulpa-v56', 'PULPA_LAB_V56_FULL_SITE_PRE_FINAL.glb'),
@@ -31,18 +31,18 @@ if (!assetBuffer || sha256(assetBuffer) !== expectedSha256) {
     .filter((name) => name.startsWith(packedPrefix))
     .sort();
   if (!parts.length) {
-    throw new Error('B63 production guard: packed V57/B63 asset parts are missing.');
+    throw new Error('B64 production guard: packed V57/B64 asset parts are missing.');
   }
   const packed = Buffer.concat(parts.map((name) => readFileSync(path.join(packedDir, name))));
   assetBuffer = gunzipSync(packed);
   mkdirSync(path.dirname(v57Asset), { recursive: true });
   writeFileSync(v57Asset, assetBuffer);
-  console.log(`B63 production guard: reconstructed V57/B63 from ${parts.length} packed parts`);
+  console.log(`B64 production guard: reconstructed V57/B64 from ${parts.length} packed parts`);
 }
 
 const digest = sha256(assetBuffer);
 if (digest !== expectedSha256) {
-  throw new Error(`B63 production guard: V57/B63 SHA-256 mismatch (${digest})`);
+  throw new Error(`B64 production guard: V57/B64 SHA-256 mismatch (${digest})`);
 }
 
 // Tests can restore the old uncompressed runtime GLB. Production/dev builds
@@ -62,14 +62,14 @@ if (process.argv.includes('--prune-dist')) {
     'PULPA_LAB_V57_FULL_SITE_FINAL.glb',
   );
   if (!existsSync(distV57Asset)) {
-    throw new Error(`B63 production guard: dist is missing authoritative V57/B63 asset: ${distV57Asset}`);
+    throw new Error(`B64 production guard: dist is missing authoritative V57/B64 asset: ${distV57Asset}`);
   }
   const distDigest = sha256(readFileSync(distV57Asset));
   if (distDigest !== expectedSha256) {
-    throw new Error(`B63 production guard: dist V57/B63 SHA-256 mismatch (${distDigest})`);
+    throw new Error(`B64 production guard: dist V57/B64 SHA-256 mismatch (${distDigest})`);
   }
-  console.log(`B63 production guard: pruned legacy dist model dirs (${legacyProductionDirs.join(', ')})`);
+  console.log(`B64 production guard: pruned legacy dist model dirs (${legacyProductionDirs.join(', ')})`);
 }
 
-console.log(`B63 production guard: V57/B63 authoritative asset verified (${digest})`);
-console.log('B63 production guard: uncompressed V56 runtime removed');
+console.log(`B64 production guard: V57/B64 authoritative asset verified (${digest})`);
+console.log('B64 production guard: uncompressed V56 runtime removed');

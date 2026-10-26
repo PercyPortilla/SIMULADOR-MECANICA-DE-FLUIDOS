@@ -52,6 +52,21 @@ describe('Blender V57 final production asset contract', () => {
     ].forEach((name) => expect(names.has(name), `${name} must remain in V57`).toBe(true));
   });
 
+  it('embeds the B64 terrain texture in the optimized production GLB', () => {
+    const { gltf } = readGlbJson(ASSET_PATH);
+    const terrainNode = gltf.nodes.find((node) => node.name === 'V57_TERRAIN_INTEGRATED');
+    expect(terrainNode?.mesh).toBeTypeOf('number');
+    const terrainMesh = gltf.meshes[terrainNode.mesh];
+    expect(terrainMesh.primitives).toHaveLength(1);
+    const terrainMaterial = gltf.materials[terrainMesh.primitives[0].material];
+    expect(terrainMaterial.name).toBe('MAT_B64_TERRAIN_EARTH_EMBEDDED');
+    const baseColorTexture = terrainMaterial.pbrMetallicRoughness?.baseColorTexture;
+    expect(baseColorTexture?.index).toBeTypeOf('number');
+    expect(baseColorTexture?.extensions?.KHR_texture_transform?.scale).toEqual([32, 32]);
+    const texture = gltf.textures[baseColorTexture.index];
+    expect(gltf.images[texture.source]?.mimeType).toBe('image/jpeg');
+  });
+
   it('retains every critical 720-frame animation family', () => {
     const { gltf } = readGlbJson(ASSET_PATH);
     const names = animatedNodeNames(gltf);
