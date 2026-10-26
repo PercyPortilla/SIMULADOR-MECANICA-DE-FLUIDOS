@@ -25,7 +25,6 @@ export const B73_SUPERSEDED_CONTINUOUS_FOUNDATIONS = Object.freeze([
   'CIV_ELUTION_BASE',
   'CIV_EW_BASE',
   'CIV_SMELTING_BASE',
-  'PUMP-01_FOUNDATION',
 ]);
 
 export const B73_FOUNDATION_SPECS = Object.freeze([
@@ -129,6 +128,18 @@ export const B73_FOUNDATION_SPECS = Object.freeze([
     marginM: 0.75,
     thicknessM: 0.40,
     revealM: 0.06,
+  }),
+  Object.freeze({
+    id: 'PUMP-01',
+    shape: 'box',
+    reuseFoundationName: 'PUMP-01_FOUNDATION',
+    minWidthM: 4.4,
+    minDepthM: 7.1,
+    maxWidthM: 6.0,
+    maxDepthM: 9.0,
+    marginM: 0.35,
+    thicknessM: 0.36,
+    revealM: 0.05,
   }),
   Object.freeze({
     id: 'SMELTING-FURNACE',

@@ -45,6 +45,17 @@ export const B74_FLOW_SPECS = Object.freeze([
     velocityBasis: 'main-throughput-proxy-no-branch-balance',
   }),
   Object.freeze({
+    id: 'class-underflow-to-mill',
+    connectionId: 'P-CYCLONE-UNDERFLOW-RETURN',
+    sourceEquipmentId: 'CLASS-01',
+    targetEquipmentId: 'MILL-01',
+    diameterM: 0.26,
+    sourceAnchor: Object.freeze([232.0, 26.2, -105.0]),
+    targetAnchor: Object.freeze([140.75, 25.53, -94.5]),
+    maxGapM: 34,
+    velocityBasis: 'underflow-visual-proxy-no-branch-balance',
+  }),
+  Object.freeze({
     id: 'r01-to-r02',
     connectionId: 'P-LEACH-R01-R02',
     sourceEquipmentId: 'R-01',
@@ -78,15 +89,25 @@ export const B74_FLOW_SPECS = Object.freeze([
     velocityBasis: 'main-throughput-proxy-no-branch-balance',
   }),
   Object.freeze({
-    id: 'r04-to-cip',
-    connectionId: 'P-PUMP-01-TO-CIP',
-    inspectionIds: Object.freeze(['P-LEACHING-TO-PUMP-01', 'PUMP-01', 'P-PUMP-01-TO-CIP']),
+    id: 'r04-to-pump01',
+    connectionId: 'P-LEACHING-TO-PUMP-01',
     sourceEquipmentId: 'R-04',
+    targetEquipmentId: 'PUMP-01',
+    diameterM: 0.25,
+    sourceAnchor: Object.freeze([332.0, 29.69, -122.0]),
+    targetAnchor: Object.freeze([344.0, 24.20, -96.0]),
+    maxGapM: 18,
+    velocityBasis: 'main-throughput-proxy-no-branch-balance',
+  }),
+  Object.freeze({
+    id: 'pump01-to-cip',
+    connectionId: 'P-PUMP-01-TO-CIP',
+    sourceEquipmentId: 'PUMP-01',
     targetEquipmentId: 'CIP-ADSORPTION',
     diameterM: 0.22,
-    sourceAnchor: Object.freeze([332.0, 29.69, -122.0]),
+    sourceAnchor: Object.freeze([344.0, 24.20, -96.0]),
     targetAnchor: Object.freeze([392.0, 29.15, -104.0]),
-    maxGapM: 32,
+    maxGapM: 22,
     velocityBasis: 'main-throughput-proxy-no-branch-balance',
   }),
 ]);
@@ -148,14 +169,31 @@ function matchesSpec(name, specId) {
     return name.startsWith('CLASS-01_OVERFLOW_TO_LEACH_')
       || name === 'V52_PIPE_CLASS_OVERFLOW_TO_R01';
   }
+  if (specId === 'class-underflow-to-mill') {
+    return name === 'CLASS-01_UNDERFLOW_LAUNDER'
+      || name.startsWith('CLASS-01_UNDERFLOW_RETURN_')
+      || name === 'V52_PIPE_CLASS_UNDERFLOW_TO_MILL';
+  }
   if (specId === 'r01-to-r02') return name.startsWith('LEACH_TRANSFER_1') || name === 'V39_PIPE_R01_TO_R02';
-  if (specId === 'r02-to-r03') return name.startsWith('LEACH_TRANSFER_2') || name === 'V39_PIPE_R02_TO_R03';
+  if (specId === 'r02-to-r03') {
+    return name.startsWith('LEACH_TRANSFER_2')
+      || name.startsWith('B81_LEACH2-TO-R03_')
+      || name === 'V39_PIPE_R02_TO_R03';
+  }
   if (specId === 'r03-to-r04') return name.startsWith('LEACH_TRANSFER_3') || name === 'V39_PIPE_R03_TO_R04';
-  if (specId === 'r04-to-cip') {
-    return name.startsWith('LEACH_TO_CIP')
-      || name.startsWith('B52_R04_TO_PUMP_')
-      || name.startsWith('B52_PUMP_TO_CIP_')
-      || name === 'V37_PIPE_R04_TO_PUMP'
+  if (specId === 'r04-to-pump01') {
+    return name.startsWith('B52_R04_TO_PUMP_')
+      || name.startsWith('B81_R04-TO-LEACH-TRANSFER_')
+      || name.startsWith('B81_R04-TRANSFER-TO-PUMP01_')
+      || name === 'PUMP-01_SUCTION_FLUID'
+      || name === 'PUMP-01_VOLUTE_FLUID'
+      || name === 'V37_PIPE_R04_TO_PUMP';
+  }
+  if (specId === 'pump01-to-cip') {
+    return name.startsWith('B52_PUMP_TO_CIP_')
+      || name.startsWith('B81_LEACH-TRANSFER-TO-CIP01_')
+      || name === 'PUMP-01_VOLUTE_FLUID'
+      || name === 'PUMP-01_DISCHARGE_FLUID'
       || name === 'V52_PIPE_PUMP_TO_CIP';
   }
   return false;

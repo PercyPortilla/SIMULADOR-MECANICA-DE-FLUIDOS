@@ -32,7 +32,6 @@ describe('B73 local equipment foundations', () => {
       'CIV_ELUTION_BASE',
       'CIV_EW_BASE',
       'CIV_SMELTING_BASE',
-      'PUMP-01_FOUNDATION',
     ]);
   });
 
@@ -51,9 +50,9 @@ describe('B73 local equipment foundations', () => {
       'CIP-ADSORPTION',
       'ELUTION-SKID',
       'EW-CELLS',
+      'PUMP-01',
       'SMELTING-FURNACE',
     ]));
-    expect(ids).not.toContain('PUMP-01');
   });
 
   it('keeps dynamic pads bounded instead of recreating a plant-wide slab', () => {
@@ -143,6 +142,7 @@ describe('B73 local equipment foundations', () => {
       addSupport(`CIP-${String(index + 1).padStart(2, '0')}_BOTTOM`, [x, 1, z], [9.66, 0.36, 9.66]);
     });
     const authoredSmelting = addSupport('SMELTING-FOUNDATION-V57', [482, 0.25, -205], [22, 0.24, 16]);
+    const authoredPump = addSupport('PUMP-01_FOUNDATION', [344, 0.25, -96], [4.4, 0.3, 7.1]);
 
     const visual = applyB73FoundationVisual({ scene, rootNodes: [imported], host });
     expect(visual.foundations.get('ELUTION-SKID').position.x).toBeCloseTo(430, 6);
@@ -156,6 +156,8 @@ describe('B73 local equipment foundations', () => {
       expect(foundation.metadata.diameterM).toBeCloseTo(9.66 + 1.4, 6);
     });
     expect([...visual.foundations.keys()].filter((key) => key.startsWith('CIP-ADSORPTION-'))).toHaveLength(6);
+    expect(visual.foundations.get('PUMP-01')).toBe(authoredPump);
+    expect(authoredPump.metadata.b73ReusedAuthoredFoundation).toBe(true);
     expect(visual.foundations.get('SMELTING-FURNACE')).toBe(authoredSmelting);
     expect(authoredSmelting.metadata.b73ReusedAuthoredFoundation).toBe(true);
 

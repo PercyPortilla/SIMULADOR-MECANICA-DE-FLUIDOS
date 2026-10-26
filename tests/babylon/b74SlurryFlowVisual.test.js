@@ -22,10 +22,12 @@ describe('B74 slurry flow visualization', () => {
       'P-MILL-TO-SUMP',
       'P-SUMP-TO-PUMP',
       'P-PUMP-TO-CYCLONES',
+      'P-CYCLONE-UNDERFLOW-RETURN',
       'P-CLASSIFICATION-TO-LEACH',
       'P-LEACH-R01-R02',
       'P-LEACH-R02-R03',
       'P-LEACH-R03-R04',
+      'P-LEACHING-TO-PUMP-01',
       'P-PUMP-01-TO-CIP',
     ]));
     expect(B76_SLURRY_DIAMETER_RATIO).toBeGreaterThanOrEqual(0.8);
@@ -119,10 +121,14 @@ describe('B74 slurry flow visualization', () => {
     scene.useRightHandedSystem = true;
     const host = new TransformNode('PULPA-LAB-V57-SITE', scene);
     const root = new TransformNode('V57_DOWNSTREAM_FIXTURE', scene);
-    addBox(scene, root, 'B52_R04_TO_PUMP_SEG00', [344, 29.7, -122], [22, 0.8, 0.8]);
+    addBox(scene, root, 'B52_R04_TO_PUMP_SEG00', [341, 30.5, -122], [6, 0.56, 0.56]);
+    addBox(scene, root, 'B52_R04_TO_PUMP_SEG01', [344, 30.5, -114.25], [0.56, 0.56, 15.5]);
+    addBox(scene, root, 'B52_R04_TO_PUMP_SEG02', [344, 27.35, -102.25], [0.56, 6.3, 12.5]);
+    addBox(scene, root, 'PUMP-01_SUCTION_FLUID', [344, 24.2, -97.225], [0.56, 1.2, 1.45]);
+    addBox(scene, root, 'PUMP-01_VOLUTE_FLUID', [344, 24.2, -96], [1.2, 2.0, 2.0]);
 
     const visual = applyB74SlurryFlowVisual({ scene, rootNodes: [root], host });
-    const downstream = visual.paths.find((path) => path.spec.id === 'r04-to-cip');
+    const downstream = visual.paths.find((path) => path.spec.id === 'r04-to-pump01');
     expect(downstream.skipped).toBe(false);
     expect(downstream.totalLengthM).toBeGreaterThan(18);
     expect(downstream.fluidSegments.length).toBeGreaterThan(0);

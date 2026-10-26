@@ -9,6 +9,7 @@ import { applyB73FoundationVisual } from './b73FoundationVisual.js';
 import { applyB74SlurryFlowVisual } from './b74SlurryFlowVisual.js';
 import { applyB75EquipmentSlurryVisual } from './b75EquipmentSlurryVisual.js';
 import { applyB80TerrainCivilVisual } from './b80TerrainCivilVisual.js';
+import { applyB81ProcessContinuityVisual } from './b81ProcessContinuityVisual.js';
 import { applyB78BernoulliEulerLabVisual } from '../lab/bernoulliEulerLabVisual.js';
 
 function visitHierarchy(root, callback) {
@@ -157,6 +158,7 @@ export function attachBabylonV57SiteVisual({
   let b74SlurryFlowVisual = null;
   let b75EquipmentSlurryVisual = null;
   let b80TerrainCivilVisual = null;
+  let b81ProcessContinuityVisual = null;
   let b78BernoulliEulerLabVisual = null;
   let processMetrics = Object.freeze({});
   let inspectionState = Object.freeze({ targetId: null, mode: 'normal' });
@@ -190,7 +192,12 @@ export function attachBabylonV57SiteVisual({
       b71HydraulicStudyVisual = applyB71HydraulicStudyVisual({ scene, rootNodes, host });
       b73FoundationVisual = applyB73FoundationVisual({ scene, rootNodes, host });
       b80TerrainCivilVisual = applyB80TerrainCivilVisual({ scene, rootNodes, host });
-      b74SlurryFlowVisual = applyB74SlurryFlowVisual({ scene, rootNodes, host });
+      b81ProcessContinuityVisual = applyB81ProcessContinuityVisual({ scene, rootNodes, host });
+      b74SlurryFlowVisual = applyB74SlurryFlowVisual({
+        scene,
+        rootNodes: [...rootNodes, b81ProcessContinuityVisual.root],
+        host,
+      });
       b74SlurryFlowVisual.setMetrics(processMetrics);
       b74SlurryFlowVisual.setAnimationsEnabled(animationsEnabled);
       b74SlurryFlowVisual.setInspectionState(inspectionState);
@@ -291,6 +298,8 @@ export function attachBabylonV57SiteVisual({
       b73FoundationVisual = null;
       b80TerrainCivilVisual?.dispose?.();
       b80TerrainCivilVisual = null;
+      b81ProcessContinuityVisual?.dispose?.();
+      b81ProcessContinuityVisual = null;
       b71HydraulicStudyVisual?.dispose?.();
       b71HydraulicStudyVisual = null;
       container?.dispose?.();

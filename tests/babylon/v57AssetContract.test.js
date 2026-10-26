@@ -3,6 +3,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { B73_FOUNDATION_SPECS } from '../../src/babylon/assets/b73FoundationVisual.js';
 import { B80_CIVIL_MATERIAL_PROFILES } from '../../src/babylon/assets/b80TerrainCivilVisual.js';
+import { B81_CONTINUITY_SPECS } from '../../src/babylon/assets/b81ProcessContinuityVisual.js';
 import { INSPECTION_FOCUS_PROFILES } from '../../src/scene/inspection/inspectionContracts.js';
 
 const ASSET_PATH = path.resolve('public/models/pulpa-v57/PULPA_LAB_V57_FULL_SITE_FINAL.glb');
@@ -48,7 +49,7 @@ describe('Blender V57 final production asset contract', () => {
       'EXCAVATOR-01', 'TRUCK-01', 'TRUCK-02', 'TRUCK-03', 'STOCKPILE-LOADER-01',
       'ROM-HOPPER_ROOT', 'APRON-FEEDER_ROOT', 'PRIMARY-CRUSHER_ROOT.001',
       'MILL-01_ROOT', 'SUMP-01_ROOT', 'SLURRY-PUMP-01_ROOT', 'PIPE-1_ROOT',
-      'CLASS-01_ROOT', 'R-01_ROOT', 'R-02_ROOT', 'R-03_ROOT', 'R-04_ROOT',
+      'CLASS-01_ROOT', 'R-01_ROOT', 'R-02_ROOT', 'R-03_ROOT', 'R-04_ROOT', 'PUMP-01_ROOT',
       'CIP-ADSORPTION_ROOT', 'ELUTION-SKID_ROOT', 'EW-CELLS_ROOT',
       'SMELTING-FURNACE_ROOT', 'DETOX_ROOT', 'TAILINGS-THICKENER_ROOT',
       'TAILINGS-PUMP_ROOT', 'TSF-CONCEPT_ROOT', 'V57_TERRAIN_INTEGRATED',
@@ -146,6 +147,28 @@ describe('Blender V57 final production asset contract', () => {
     expect(materialNamesForNode('CIV_GRINDING_PAD').has('MAT_V57_CIVIL_COMPACTED_FILL')).toBe(true);
     expect(materialNamesForNode('CIV_CRUSHER_FOUNDATION').has('MAT_V57_CIVIL_CONCRETE')).toBe(true);
     expect(materialNamesForNode('V57_ROM_ENGINEERED_MANEUVER_PAD').has('MAT_V57_HAUL_ROAD_PBR')).toBe(true);
+  });
+
+  it('retains every V57 authored endpoint used by the B81 process continuity closure', () => {
+    const { gltf } = readGlbJson(ASSET_PATH);
+    const names = new Set(gltf.nodes.map((node) => node.name ?? ''));
+    B81_CONTINUITY_SPECS.forEach((spec) => {
+      expect(names.has(spec.sourceName), `${spec.id} source ${spec.sourceName} must remain in V57`).toBe(true);
+      expect(names.has(spec.targetName), `${spec.id} target ${spec.targetName} must remain in V57`).toBe(true);
+    });
+  });
+
+  it('keeps legacy dry-route duplicates out of the production V57 asset', () => {
+    const { gltf } = readGlbJson(ASSET_PATH);
+    const names = gltf.nodes.map((node) => node.name ?? '');
+    [
+      'V49_APRON_TO_CRUSHER_',
+      'V49_CV02_',
+      'V49_CV03_',
+      'V51_ROM_TO_APRON_CHUTE_BOTTOM',
+    ].forEach((prefix) => {
+      expect(names.some((name) => name.startsWith(prefix)), `${prefix} must stay absent from production V57`).toBe(false);
+    });
   });
 
   it('does not revive the superseded V57 carbon or layout helpers', () => {
