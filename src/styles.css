@@ -319,23 +319,38 @@ h2 { margin: 8px 0 8px; font-size: clamp(25px, 3vw, 36px); font-weight: 530; let
 .inspection-toolbar select:disabled { opacity: .45; cursor: not-allowed; }
 
 .bernoulli-lab-toggle {
-  min-height: 30px;
-  padding: 5px 10px;
-  border: 1px solid color-mix(in srgb, #47d7ff 46%, var(--ui-border));
-  border-radius: 999px;
-  background: color-mix(in srgb, #47d7ff 8%, var(--ui-panel-soft));
-  color: #bcefff;
+  min-height: 32px;
+  padding: 6px 12px !important;
+  border: 1px solid #52dfff !important;
+  border-radius: 6px !important;
+  background: linear-gradient(135deg, rgba(22, 121, 153, .34), rgba(6, 28, 38, .94)) !important;
+  color: #e8fbff !important;
   cursor: pointer;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .02em;
+  font-size: 10.5px !important;
+  font-weight: 800 !important;
+  letter-spacing: .025em;
+  box-shadow: 0 0 0 1px rgba(82, 223, 255, .09), 0 5px 16px rgba(0, 0, 0, .22);
+}
+.bernoulli-lab-toggle > span {
+  display: inline-block;
+  margin-right: 2px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  background: #52dfff;
+  color: #06212a;
+  font-size: 8px;
+  letter-spacing: .08em;
 }
 .bernoulli-lab-toggle:hover:not(:disabled), .bernoulli-lab-toggle.active {
-  border-color: #65e2ff;
-  background: color-mix(in srgb, #47d7ff 18%, var(--ui-panel-soft));
-  color: #effcff;
+  border-color: #a3f1ff !important;
+  background: linear-gradient(135deg, rgba(31, 160, 197, .48), rgba(6, 34, 46, .96)) !important;
+  color: #fff !important;
+  transform: translateY(-1px);
 }
-.bernoulli-lab-toggle:disabled { opacity: .4; cursor: not-allowed; }
+.bernoulli-lab-toggle.active {
+  box-shadow: 0 0 0 1px rgba(82, 223, 255, .22), 0 0 18px rgba(82, 223, 255, .24);
+}
+.bernoulli-lab-toggle:disabled { opacity: .68; cursor: wait; }
 
 .bernoulli-lab-panel {
   position: absolute;
