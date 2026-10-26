@@ -637,7 +637,7 @@ export function applyB74SlurryFlowVisual({ scene, rootNodes = [], host } = {}) {
       }
       const fluidVisibility = reveal
         ? (relevant ? 1 : 0.025)
-        : (relevant ? 0.10 : 0.015);
+        : (relevant ? 0.08 : 0);
       path.fluidSegments.forEach((segment) => {
         segment.visibility = fluidVisibility;
       });

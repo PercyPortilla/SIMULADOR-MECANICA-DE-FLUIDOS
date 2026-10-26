@@ -228,6 +228,7 @@ function collectInspectableMeshes(target) {
   const seen = new Set();
   candidates.forEach((mesh) => {
     if (!mesh || seen.has(mesh)) return;
+    if (nodeMetadata(mesh).inspectionExcluded === true) return;
     seen.add(mesh);
     meshes.push(mesh);
   });
