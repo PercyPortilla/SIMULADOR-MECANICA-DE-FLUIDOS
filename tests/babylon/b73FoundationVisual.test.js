@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
+  CreateBox,
+  CreateGround,
+  NullEngine,
+  Scene,
+  TransformNode,
+} from '@babylonjs/core';
+import {
+  applyB73FoundationVisual,
   B73_FOUNDATION_SPECS,
   B73_SUPERSEDED_CONTINUOUS_FOUNDATIONS,
   computeB73FoundationThickness,
@@ -50,10 +58,17 @@ describe('B73 local equipment foundations', () => {
 
   it('keeps dynamic pads bounded instead of recreating a plant-wide slab', () => {
     const spec = B73_FOUNDATION_SPECS.find((entry) => entry.id === 'MILL-01');
-    const dimensions = resolveB73FoundationDimensions(spec, { x: 28, z: 20 });
-    expect(dimensions.widthM).toBe(spec.maxWidthM);
-    expect(dimensions.depthM).toBe(spec.maxDepthM);
+    const dimensions = resolveB73FoundationDimensions(spec, { x: 10.7, z: 5.0 });
+    expect(dimensions.widthM).toBeCloseTo(12.4, 6);
+    expect(dimensions.depthM).toBe(spec.minDepthM);
     expect(dimensions.widthM * dimensions.depthM).toBeLessThan(250);
+  });
+
+  it('never clamps a foundation smaller than its actual support footprint plus margin', () => {
+    const spec = B73_FOUNDATION_SPECS.find((entry) => entry.id === 'MILL-01');
+    const dimensions = resolveB73FoundationDimensions(spec, { x: 28, z: 20 });
+    expect(dimensions.widthM).toBeGreaterThanOrEqual(28 + spec.marginM * 2);
+    expect(dimensions.depthM).toBeGreaterThanOrEqual(20 + spec.marginM * 2);
   });
 
   it('uses circular local foundations for the leach reactors', () => {
@@ -92,5 +107,83 @@ describe('B73 local equipment foundations', () => {
     expect(flat).toBeCloseTo(0.40, 6);
     expect(sloped).toBeGreaterThan(flat);
     expect(sloped).toBeLessThanOrEqual(0.90);
+  });
+
+  it('centers B80 foundations on load-bearing V57 meshes and creates six local CIP bases', () => {
+    const engine = new NullEngine();
+    const scene = new Scene(engine);
+    scene.useRightHandedSystem = true;
+    const host = new TransformNode('site-host', scene);
+    const imported = new TransformNode('imported-root', scene);
+    imported.parent = host;
+    const terrain = CreateGround('V57_TERRAIN_INTEGRATED', { width: 1200, height: 800, subdivisions: 2 }, scene);
+    terrain.position.y = 0;
+    terrain.parent = imported;
+
+    const addSupport = (name, position, size) => {
+      const mesh = CreateBox(name, { width: size[0], height: size[1], depth: size[2] }, scene);
+      mesh.position.set(...position);
+      mesh.parent = imported;
+      mesh.metadata = { v57AuthoritativeVisual: true };
+      return mesh;
+    };
+
+    addSupport('ELUTION-SKID_FRAME', [430, 2, -162], [15, 0.55, 8]);
+    [
+      [474.8, -159.5], [479.6, -159.5], [484.4, -159.5], [489.2, -159.5],
+      [474.8, -164.5], [479.6, -164.5], [484.4, -164.5], [489.2, -164.5],
+    ].forEach(([x, z], index) => {
+      addSupport(`EW-CELL-${String(index + 1).padStart(2, '0')}-TANK`, [x, 2, z], [3.8, 1.8, 1.9]);
+    });
+    const cipCenters = [
+      [365, -88], [392, -88], [419, -88],
+      [419, -120], [392, -120], [365, -120],
+    ];
+    cipCenters.forEach(([x, z], index) => {
+      addSupport(`CIP-${String(index + 1).padStart(2, '0')}_BOTTOM`, [x, 1, z], [9.66, 0.36, 9.66]);
+    });
+    const authoredSmelting = addSupport('SMELTING-FOUNDATION-V57', [482, 0.25, -205], [22, 0.24, 16]);
+
+    const visual = applyB73FoundationVisual({ scene, rootNodes: [imported], host });
+    expect(visual.foundations.get('ELUTION-SKID').position.x).toBeCloseTo(430, 6);
+    expect(visual.foundations.get('EW-CELLS').position.x).toBeCloseTo(482, 6);
+    cipCenters.forEach(([x, z], index) => {
+      const key = `CIP-ADSORPTION-${String(index + 1).padStart(2, '0')}`;
+      const foundation = visual.foundations.get(key);
+      expect(foundation).toBeTruthy();
+      expect(foundation.position.x).toBeCloseTo(x, 6);
+      expect(foundation.position.z).toBeCloseTo(z, 6);
+      expect(foundation.metadata.diameterM).toBeCloseTo(9.66 + 1.4, 6);
+    });
+    expect([...visual.foundations.keys()].filter((key) => key.startsWith('CIP-ADSORPTION-'))).toHaveLength(6);
+    expect(visual.foundations.get('SMELTING-FURNACE')).toBe(authoredSmelting);
+    expect(authoredSmelting.metadata.b73ReusedAuthoredFoundation).toBe(true);
+
+    visual.dispose();
+    scene.dispose();
+    engine.dispose();
+  });
+
+  it('fails closed when a focused support selector is missing instead of falling back to huge equipment bounds', () => {
+    const engine = new NullEngine();
+    const scene = new Scene(engine);
+    scene.useRightHandedSystem = true;
+    const host = new TransformNode('site-host', scene);
+    const imported = new TransformNode('imported-root', scene);
+    imported.parent = host;
+    CreateGround('V57_TERRAIN_INTEGRATED', { width: 1200, height: 800, subdivisions: 2 }, scene).parent = imported;
+
+    const hugeMill = CreateBox('MILL-01_ROOT', { width: 180, height: 30, depth: 110 }, scene);
+    hugeMill.position.set(150, 18, -90);
+    hugeMill.parent = imported;
+    hugeMill.metadata = { v57AuthoritativeVisual: true };
+
+    const visual = applyB73FoundationVisual({ scene, rootNodes: [imported], host });
+    expect(visual.foundations.has('MILL-01')).toBe(false);
+    expect(visual.skipped).toContain('MILL-01');
+
+    visual.dispose();
+    scene.dispose();
+    engine.dispose();
   });
 });

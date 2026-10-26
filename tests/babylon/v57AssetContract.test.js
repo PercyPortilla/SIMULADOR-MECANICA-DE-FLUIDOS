@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { B73_FOUNDATION_SPECS } from '../../src/babylon/assets/b73FoundationVisual.js';
+import { B80_CIVIL_MATERIAL_PROFILES } from '../../src/babylon/assets/b80TerrainCivilVisual.js';
 import { INSPECTION_FOCUS_PROFILES } from '../../src/scene/inspection/inspectionContracts.js';
 
 const ASSET_PATH = path.resolve('public/models/pulpa-v57/PULPA_LAB_V57_FULL_SITE_FINAL.glb');
@@ -99,6 +101,51 @@ describe('Blender V57 final production asset contract', () => {
         expect(names.some((name) => name.startsWith(prefix)), `${id} focus prefix ${prefix} must remain in V57`).toBe(true);
       });
     });
+  });
+
+  it('retains every B80 load-bearing focus/reuse selector used for local foundations', () => {
+    const { gltf } = readGlbJson(ASSET_PATH);
+    const names = gltf.nodes.map((node) => node.name ?? '');
+    B73_FOUNDATION_SPECS.forEach((spec) => {
+      (spec.focusNames ?? []).forEach((name) => {
+        expect(names.includes(name), `${spec.id} B80 foundation focus ${name} must remain in V57`).toBe(true);
+      });
+      (spec.focusPrefixes ?? []).forEach((prefix) => {
+        expect(names.some((name) => name.startsWith(prefix)), `${spec.id} B80 foundation prefix ${prefix} must remain in V57`).toBe(true);
+      });
+      (spec.instances ?? []).forEach((instance) => {
+        (instance.focusNames ?? []).forEach((name) => {
+          expect(names.includes(name), `${spec.id}/${instance.key} B80 foundation focus ${name} must remain in V57`).toBe(true);
+        });
+        (instance.focusPrefixes ?? []).forEach((prefix) => {
+          expect(names.some((name) => name.startsWith(prefix)), `${spec.id}/${instance.key} B80 foundation prefix ${prefix} must remain in V57`).toBe(true);
+        });
+      });
+      if (spec.reuseFoundationName) {
+        expect(names.includes(spec.reuseFoundationName), `${spec.id} authored foundation ${spec.reuseFoundationName} must remain in V57`).toBe(true);
+      }
+    });
+  });
+
+  it('retains the B80 civil material names and representative authored pad bindings', () => {
+    const { gltf } = readGlbJson(ASSET_PATH);
+    const materialNames = new Set(gltf.materials.map((material) => material.name ?? ''));
+    Object.keys(B80_CIVIL_MATERIAL_PROFILES).forEach((name) => {
+      expect(materialNames.has(name), `${name} must remain available for B80 runtime repair`).toBe(true);
+    });
+
+    const materialNamesForNode = (nodeName) => {
+      const node = gltf.nodes.find((entry) => entry.name === nodeName);
+      expect(node?.mesh, `${nodeName} must remain a mesh node`).toBeTypeOf('number');
+      return new Set(
+        gltf.meshes[node.mesh].primitives
+          .map((primitive) => gltf.materials[primitive.material]?.name)
+          .filter(Boolean),
+      );
+    };
+    expect(materialNamesForNode('CIV_GRINDING_PAD').has('MAT_V57_CIVIL_COMPACTED_FILL')).toBe(true);
+    expect(materialNamesForNode('CIV_CRUSHER_FOUNDATION').has('MAT_V57_CIVIL_CONCRETE')).toBe(true);
+    expect(materialNamesForNode('V57_ROM_ENGINEERED_MANEUVER_PAD').has('MAT_V57_HAUL_ROAD_PBR')).toBe(true);
   });
 
   it('does not revive the superseded V57 carbon or layout helpers', () => {

@@ -8,6 +8,7 @@ import { applyB71HydraulicStudyVisual } from './b71HydraulicStudyVisual.js';
 import { applyB73FoundationVisual } from './b73FoundationVisual.js';
 import { applyB74SlurryFlowVisual } from './b74SlurryFlowVisual.js';
 import { applyB75EquipmentSlurryVisual } from './b75EquipmentSlurryVisual.js';
+import { applyB80TerrainCivilVisual } from './b80TerrainCivilVisual.js';
 import { applyB78BernoulliEulerLabVisual } from '../lab/bernoulliEulerLabVisual.js';
 
 function visitHierarchy(root, callback) {
@@ -155,6 +156,7 @@ export function attachBabylonV57SiteVisual({
   let b73FoundationVisual = null;
   let b74SlurryFlowVisual = null;
   let b75EquipmentSlurryVisual = null;
+  let b80TerrainCivilVisual = null;
   let b78BernoulliEulerLabVisual = null;
   let processMetrics = Object.freeze({});
   let inspectionState = Object.freeze({ targetId: null, mode: 'normal' });
@@ -187,6 +189,7 @@ export function attachBabylonV57SiteVisual({
       b64TerrainMaterial = applyB64TerrainMaterial({ rootNodes, scene, host });
       b71HydraulicStudyVisual = applyB71HydraulicStudyVisual({ scene, rootNodes, host });
       b73FoundationVisual = applyB73FoundationVisual({ scene, rootNodes, host });
+      b80TerrainCivilVisual = applyB80TerrainCivilVisual({ scene, rootNodes, host });
       b74SlurryFlowVisual = applyB74SlurryFlowVisual({ scene, rootNodes, host });
       b74SlurryFlowVisual.setMetrics(processMetrics);
       b74SlurryFlowVisual.setAnimationsEnabled(animationsEnabled);
@@ -286,6 +289,8 @@ export function attachBabylonV57SiteVisual({
       b74SlurryFlowVisual = null;
       b73FoundationVisual?.dispose?.();
       b73FoundationVisual = null;
+      b80TerrainCivilVisual?.dispose?.();
+      b80TerrainCivilVisual = null;
       b71HydraulicStudyVisual?.dispose?.();
       b71HydraulicStudyVisual = null;
       container?.dispose?.();
