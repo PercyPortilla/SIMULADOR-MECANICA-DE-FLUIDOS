@@ -3,9 +3,17 @@ import {
   activateBabylonInspectionPick,
   createBabylonInspectionHoverPayload,
   resolveBabylonInspectionPick,
+  shouldSuppressBabylonInspectionHoverDuringDrag,
 } from '../../src/babylon/runtime/baseEnvironment.js';
 
 describe('B67 clickable Inspection flow', () => {
+  it('suppresses hover ray-picking during RMB/middle-button camera drags', () => {
+    expect(shouldSuppressBabylonInspectionHoverDuringDrag({ buttons: 2, pointerActive: false })).toBe(true);
+    expect(shouldSuppressBabylonInspectionHoverDuringDrag({ buttons: 4, pointerActive: false })).toBe(true);
+    expect(shouldSuppressBabylonInspectionHoverDuringDrag({ buttons: 0, pointerActive: false })).toBe(false);
+    expect(shouldSuppressBabylonInspectionHoverDuringDrag({ buttons: 1, pointerActive: true })).toBe(false);
+  });
+
   it('resolves a valid mesh click and activates Inspection with smooth framing', () => {
     const equipmentMesh = { name: 'MILL-01_SHELL' };
     const inspectionSystem = {

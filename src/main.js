@@ -1083,10 +1083,25 @@ async function initializeEnvironment(canvas) {
     const environment = createBaseEnvironment({ canvas });
     environmentHandle = environment;
     environment.setScenePalette(paletteHexToNumbers(activeScenePalette));
-    const applyProcessMetrics = (results) => environment.setProcessMetrics({
-      flowRateM3s: results.transport?.flowRateM3s ?? 0,
-      pressurePa: results.transport?.requiredPressurePa ?? 0,
-    });
+    const applyProcessMetrics = (results) => {
+      const state = getState();
+      const imposedFlowRateM3s = results.transport?.flowRateM3s ?? 0;
+      const operatingFlowRateM3s = results.pump?.operatingFlowRateM3s;
+      const useOperatingPoint = Number.isFinite(operatingFlowRateM3s) && operatingFlowRateM3s >= 0;
+      return environment.setProcessMetrics({
+        flowRateM3s: useOperatingPoint ? operatingFlowRateM3s : imposedFlowRateM3s,
+        imposedFlowRateM3s,
+        pressurePa: results.pump?.operatingRequiredPressurePa
+          ?? results.transport?.requiredPressurePa
+          ?? 0,
+        velocityMps: state.transport?.pipe1?.velocityMps ?? 0,
+        solidsMassFraction: state.slurry?.solidsMassFraction ?? 0,
+        solidVolumeFraction: results.slurry?.solidVolumeFraction ?? 0,
+        densityKgM3: results.slurry?.densityKgM3 ?? 0,
+        feedGoldKgH: state.recovery?.feedGoldKgH ?? 0,
+        basis: useOperatingPoint ? 'pump-operating-point' : 'transport-imposed-flow',
+      });
+    };
     applyProcessMetrics(getResults());
     unsubscribeProcessMetrics = subscribeResults(applyProcessMetrics);
     const labelsToggle = document.querySelector('#labels-toggle');

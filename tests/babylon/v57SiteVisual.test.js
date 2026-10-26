@@ -39,6 +39,11 @@ describe('Babylon V57 authoritative site visual', () => {
     expect(root.metadata.v57AuthoritativeVisual).toBe(true);
     expect(mesh.metadata.v57AuthoritativeVisual).toBe(true);
     expect(visual.host.metadata.b71HydraulicStudy).toBeTruthy();
+    expect(visual.setInspectionState({ targetId: 'MILL-01', mode: 'transparent' })).toEqual({
+      targetId: 'MILL-01',
+      mode: 'transparent',
+    });
+    expect(visual.inspectionState).toEqual({ targetId: 'MILL-01', mode: 'transparent' });
     expect(animation.start).toHaveBeenCalled();
     visual.setAnimationsEnabled(false);
     expect(animation.pause).toHaveBeenCalled();
