@@ -74,6 +74,17 @@ describe('Babylon camera preset parity', () => {
       else expect(camera).toBeInstanceOf(FreeCamera);
     });
 
+    const inspection = cameras.inspection;
+    expect(inspection.inertia).toBe(0.56);
+    expect(inspection.panningInertia).toBe(0.56);
+    expect(inspection.angularSensibilityX).toBe(800);
+    expect(inspection.angularSensibilityY).toBe(800);
+    expect(inspection.wheelPrecision).toBe(20);
+    expect(inspection.panningSensibility).toBe(1000);
+    expect(inspection.pinchPrecision).toBe(85);
+    expect(inspection.lowerRadiusLimit).toBe(0.8);
+    expect(inspection.upperRadiusLimit).toBe(1200);
+
     engine.dispose();
   });
 });

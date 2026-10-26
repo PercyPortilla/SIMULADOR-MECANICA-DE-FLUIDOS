@@ -75,15 +75,20 @@ describe('Babylon Inspection parity', () => {
     system.dispose(); scene.dispose(); engine.dispose();
   });
 
-  it('draws selected/upstream/downstream context boxes', () => {
+  it('draws compact selected/upstream/downstream markers without wireframe boxes', () => {
     const { engine, scene } = makeScene();
     target(scene, 'EXCAVATOR-01', [-10, 0, 0]);
     target(scene, 'TRUCK-01', [-4, 0, 0]);
     target(scene, 'ROM-HOPPER', [2, 0, 0]);
     const system = createBabylonEquipmentInspectionSystem({ scene });
     system.setTarget('TRUCK-01');
-    const roles = system.contextOverlay.getChildMeshes(false).map((mesh) => mesh.metadata.role).sort();
+    const markers = system.contextOverlay.getChildMeshes(false);
+    const roles = markers.map((mesh) => mesh.metadata.role).sort();
     expect(roles).toEqual(['downstream', 'selected', 'upstream']);
+    expect(markers.find((mesh) => mesh.metadata.role === 'selected')?.metadata.markerKind).toBe('floor-halo');
+    expect(markers.filter((mesh) => mesh.metadata.role !== 'selected').every((mesh) => mesh.metadata.markerKind === 'compact-marker')).toBe(true);
+    expect(markers.every((mesh) => mesh.isPickable === false)).toBe(true);
+    expect(markers.every((mesh) => mesh.material?.wireframe !== true)).toBe(true);
     system.dispose(); scene.dispose(); engine.dispose();
   });
 
