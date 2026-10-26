@@ -88,6 +88,7 @@ describe('B74 slurry flow visualization', () => {
 
     const firstPath = visual.paths[0];
     const firstTracer = firstPath.tracers[0];
+    const positionRef = firstTracer.position;
     expect(firstPath.fluidSegments[0].visibility).toBeLessThan(0.2);
     expect(firstTracer.visibility).toBeLessThan(0.2);
     visual.setInspectionState({ targetId: 'P-MILL-TO-SUMP', mode: 'transparent' });
@@ -96,6 +97,7 @@ describe('B74 slurry flow visualization', () => {
     const before = firstTracer.position.clone();
     expect(firstPath.velocityMps).toBeGreaterThan(0);
     expect(visual.update(0.1)).toBe(true);
+    expect(firstTracer.position).toBe(positionRef);
     expect(firstTracer.position.equalsWithEpsilon(before, 1e-7)).toBe(false);
     expect(firstPath.tracers.some((mesh) => mesh.metadata?.mineral === 'gold')).toBe(true);
     expect(firstPath.tracers.every((mesh) => mesh.metadata?.concentrationNotToScale === true)).toBe(true);

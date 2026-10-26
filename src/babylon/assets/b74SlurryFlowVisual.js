@@ -263,23 +263,60 @@ function contiguousRoute(points, maxGapM = 18) {
 }
 
 function routeLength(points) {
-  return points.slice(0, -1)
-    .reduce((sum, point, index) => sum + Vector3.Distance(point, points[index + 1]), 0);
+  let total = 0;
+  for (let index = 0; index < points.length - 1; index += 1) {
+    total += Vector3.Distance(points[index], points[index + 1]);
+  }
+  return total;
 }
 
-function pointAtDistance(points, distanceM) {
-  if (points.length < 2) return points[0]?.clone?.() ?? Vector3.Zero();
-  const total = routeLength(points);
-  if (total <= 1e-8) return points[0].clone();
-  let remaining = ((distanceM % total) + total) % total;
+function createRouteMetrics(points) {
+  const segmentLengths = [];
+  let totalLengthM = 0;
   for (let index = 0; index < points.length - 1; index += 1) {
     const length = Vector3.Distance(points[index], points[index + 1]);
+    segmentLengths.push(length);
+    totalLengthM += length;
+  }
+  return Object.freeze({
+    segmentLengths: Object.freeze(segmentLengths),
+    totalLengthM,
+  });
+}
+
+function pointAtDistanceToRef(points, routeMetrics, distanceM, target) {
+  if (!target) return null;
+  if (points.length < 2) {
+    if (points[0]) target.copyFrom(points[0]);
+    else target.set(0, 0, 0);
+    return target;
+  }
+  const total = routeMetrics?.totalLengthM ?? 0;
+  if (total <= 1e-8) {
+    target.copyFrom(points[0]);
+    return target;
+  }
+  let remaining = ((distanceM % total) + total) % total;
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const length = routeMetrics.segmentLengths[index] ?? 0;
     if (remaining <= length || index === points.length - 2) {
-      return Vector3.Lerp(points[index], points[index + 1], length > 1e-8 ? remaining / length : 0);
+      Vector3.LerpToRef(
+        points[index],
+        points[index + 1],
+        length > 1e-8 ? remaining / length : 0,
+        target,
+      );
+      return target;
     }
     remaining -= length;
   }
-  return points.at(-1).clone();
+  target.copyFrom(points.at(-1));
+  return target;
+}
+
+function pointAtDistance(points, distanceM) {
+  const routeMetrics = createRouteMetrics(points);
+  return pointAtDistanceToRef(points, routeMetrics, distanceM, Vector3.Zero());
 }
 
 function alignCylinder(mesh, start, end) {
@@ -362,8 +399,8 @@ function tracerKind(index) {
   return 'quartz';
 }
 
-function createTracers(scene, root, spec, points, materials) {
-  const totalLengthM = Math.max(0.1, routeLength(points));
+function createTracers(scene, root, spec, points, routeMetrics, materials) {
+  const totalLengthM = Math.max(0.1, routeMetrics.totalLengthM);
   // B76 prefers fewer, larger tracers over hundreds of tiny meshes.
   const count = clamp(Math.round(totalLengthM * 1.15), 10, 20);
   const tracers = [];
@@ -379,7 +416,7 @@ function createTracers(scene, root, spec, points, materials) {
       segments: kind === 'gold' ? 6 : 4,
     }, scene);
     tracer.parent = root;
-    tracer.position.copyFrom(pointAtDistance(points, totalLengthM * index / count));
+    pointAtDistanceToRef(points, routeMetrics, totalLengthM * index / count, tracer.position);
     tracer.material = materials[kind];
     tracer.isPickable = false;
     tracer.renderingGroupId = 3;
@@ -406,7 +443,8 @@ function buildPath(scene, root, meshes, spec, materials) {
   const candidatePoints = matching.flatMap(worldCenterAndAxisPoints);
   const ordered = orderB74RoutePoints(candidatePoints, spec.sourceAnchor, spec.targetAnchor);
   const points = contiguousRoute(ordered, spec.maxGapM ?? 18);
-  if (points.length < 2 || routeLength(points) < 0.25) {
+  const routeMetrics = createRouteMetrics(points);
+  if (points.length < 2 || routeMetrics.totalLengthM < 0.25) {
     return {
       spec,
       points,
@@ -414,12 +452,13 @@ function buildPath(scene, root, meshes, spec, materials) {
       fluidSegments: [],
       tracers: [],
       totalLengthM: 0,
+      routeMetrics,
       velocityMps: 0,
       skipped: true,
     };
   }
   const fluidSegments = createFluidBody(scene, root, spec, points, materials.slurry);
-  const tracerResult = createTracers(scene, root, spec, points, materials);
+  const tracerResult = createTracers(scene, root, spec, points, routeMetrics, materials);
   return {
     spec,
     points,
@@ -427,6 +466,7 @@ function buildPath(scene, root, meshes, spec, materials) {
     fluidSegments,
     tracers: tracerResult.tracers,
     totalLengthM: tracerResult.totalLengthM,
+    routeMetrics,
     velocityMps: 0,
     skipped: false,
   };
@@ -575,7 +615,7 @@ export function applyB74SlurryFlowVisual({ scene, rootNodes = [], host } = {}) {
         const nextPhase = finite(tracer.metadata?.phaseM) + path.velocityMps * dt;
         const wrapped = ((nextPhase % path.totalLengthM) + path.totalLengthM) % path.totalLengthM;
         tracer.metadata.phaseM = wrapped;
-        tracer.position.copyFrom(pointAtDistance(path.points, wrapped));
+        pointAtDistanceToRef(path.points, path.routeMetrics, wrapped, tracer.position);
       });
       moved = true;
     });

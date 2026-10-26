@@ -187,6 +187,13 @@ export function resolveBabylonInspectionPick({
   }
 }
 
+export function shouldSuppressBabylonInspectionHoverDuringDrag({
+  buttons = 0,
+  pointerActive = false,
+} = {}) {
+  return !pointerActive && Number(buttons) !== 0;
+}
+
 export function activateBabylonInspectionPick({
   id,
   setTarget,
@@ -767,6 +774,16 @@ export function createBabylonRuntime({
   function moveInspectionPointer(event) {
     if (activeCamera === INSPECTION_CAMERA_ID) invalidateRender(180);
     const pointer = inspectionPointerDown;
+    // B77: ArcRotateCamera owns RMB/middle-button drag. Do not ray-pick hover
+    // targets while any non-selection drag is in progress; that raycast made
+    // fast panning feel sticky even after increasing panning sensitivity.
+    if (shouldSuppressBabylonInspectionHoverDuringDrag({
+      buttons: event?.buttons ?? 0,
+      pointerActive: Boolean(pointer),
+    })) {
+      clearInspectionHover();
+      return;
+    }
     if (pointer) {
       if (pointer.pointerId !== null && event?.pointerId !== undefined && event.pointerId !== pointer.pointerId) return;
       const point = pointerCoordinates(event);

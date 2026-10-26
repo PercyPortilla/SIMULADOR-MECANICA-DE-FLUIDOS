@@ -85,6 +85,8 @@ describe('B75 equipment slurry visualization', () => {
     const pumpParticle = visual.motions.find((motion) => motion.equipmentId === 'SLURRY-PUMP-01').mesh;
     const cycloneParticle = visual.motions.find((motion) => motion.mode === 'cyclone').mesh;
     const reactorParticle = visual.motions.find((motion) => motion.equipmentId === 'R-01').mesh;
+    const goldParticle = visual.motions.find((motion) => motion.mesh.metadata?.mineral === 'gold').mesh;
+    const goldMetadataRef = goldParticle.metadata;
     expect(pumpParticle.visibility).toBe(0);
     visual.setInspectionState({ targetId: 'SLURRY-PUMP-01', mode: 'cutaway' });
     expect(pumpParticle.visibility).toBeGreaterThan(0.5);
@@ -94,15 +96,18 @@ describe('B75 equipment slurry visualization', () => {
     const reactorBefore = reactorParticle.position.clone();
 
     expect(visual.update(0.1)).toBe(true);
+    expect(goldParticle.metadata).toBe(goldMetadataRef);
     expect(pumpParticle.position.equalsWithEpsilon(pumpBefore, 1e-7)).toBe(false);
-    expect(cycloneParticle.position.equalsWithEpsilon(cycloneBefore, 1e-7)).toBe(false);
-    expect(reactorParticle.position.equalsWithEpsilon(reactorBefore, 1e-7)).toBe(false);
+    expect(cycloneParticle.position.equalsWithEpsilon(cycloneBefore, 1e-7)).toBe(true);
+    expect(reactorParticle.position.equalsWithEpsilon(reactorBefore, 1e-7)).toBe(true);
     expect(visual.motions.some((motion) => motion.mesh.metadata?.mineral === 'gold')).toBe(true);
     expect(visual.motions.every((motion) => motion.mesh.metadata?.concentrationNotToScale === true)).toBe(true);
 
     visual.setInspectionState({ targetId: 'R-01', mode: 'interior' });
     expect(reactorParticle.visibility).toBeGreaterThan(0.5);
     expect(pumpParticle.visibility).toBe(0);
+    expect(visual.update(0.1)).toBe(true);
+    expect(reactorParticle.position.equalsWithEpsilon(reactorBefore, 1e-7)).toBe(false);
 
     visual.setAnimationsEnabled(false);
     const stopped = pumpParticle.position.clone();

@@ -473,6 +473,11 @@ export function applyB75EquipmentSlurryVisual({ scene, rootNodes = [], host } = 
       densityKgM3: metrics.densityKgM3,
       feedGoldKgH: metrics.feedGoldKgH,
     };
+    motions.forEach((motion) => {
+      if (motion.mesh?.metadata?.mineral !== 'gold') return;
+      motion.mesh.metadata.feedGoldKgH = metrics.feedGoldKgH;
+      motion.mesh.metadata.illustrativeWhenGradeUnavailable = metrics.feedGoldKgH <= 0;
+    });
     applyInspectionVisibility();
     return metrics;
   }
@@ -524,6 +529,7 @@ export function applyB75EquipmentSlurryVisual({ scene, rootNodes = [], host } = 
     let moved = false;
 
     motions.forEach((motion) => {
+      if (!(motion.mesh?.visibility > 0)) return;
       let speed = 0;
       if (motion.mode === 'mill') speed = solidsVisible > 0 ? 0.72 + flowStrength * 0.10 : 0;
       else if (motion.mode === 'reactor') speed = solidsVisible > 0 ? 0.58 + flowStrength * 0.22 : 0;
@@ -533,16 +539,8 @@ export function applyB75EquipmentSlurryVisual({ scene, rootNodes = [], host } = 
       else if (motion.mode === 'cyclone') speed = flowStrength * 3.10;
       positionMotion(motion, elapsedSeconds, speed);
       if (speed > 0 && solidsVisible > 0) moved = true;
-      if (motion.mesh?.metadata?.mineral === 'gold') {
-        motion.mesh.metadata = {
-          ...(motion.mesh.metadata ?? {}),
-          feedGoldKgH: metrics.feedGoldKgH,
-          illustrativeWhenGradeUnavailable: metrics.feedGoldKgH <= 0,
-        };
-      }
     });
 
-    applyInspectionVisibility();
     return moved;
   }
 

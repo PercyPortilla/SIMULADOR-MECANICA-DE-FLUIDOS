@@ -19,6 +19,12 @@ describe('B73 local equipment foundations', () => {
       'CIV_SUMP_FOUNDATION',
       'CIV_PUMP_FOUNDATION',
       'CIV_CYCLONE_TOWER_FOUNDATION',
+      'CIV_LEACH_BASE',
+      'CIV_CIP_BASE',
+      'CIV_ELUTION_BASE',
+      'CIV_EW_BASE',
+      'CIV_SMELTING_BASE',
+      'PUMP-01_FOUNDATION',
     ]);
   });
 
