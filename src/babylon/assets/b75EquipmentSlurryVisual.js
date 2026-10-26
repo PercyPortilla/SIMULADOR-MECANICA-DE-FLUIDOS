@@ -6,16 +6,18 @@ import { TransformNode } from '@babylonjs/core/Meshes/transformNode.js';
 import { V57_INSPECTION_NODE_ALIASES } from '../../scene/integration/v57Layout.js';
 
 export const B75_EQUIPMENT_SPECS = Object.freeze([
-  Object.freeze({ id: 'MILL-01', mode: 'mill', particles: 14 }),
-  Object.freeze({ id: 'SUMP-01', mode: 'sump', particles: 12 }),
-  Object.freeze({ id: 'SLURRY-PUMP-01', mode: 'pump', particles: 10 }),
-  Object.freeze({ id: 'CLASS-01', mode: 'cyclones', particlesPerCyclone: 3 }),
-  Object.freeze({ id: 'R-01', mode: 'reactor', particles: 6 }),
-  Object.freeze({ id: 'R-02', mode: 'reactor', particles: 6 }),
-  Object.freeze({ id: 'R-03', mode: 'reactor', particles: 6 }),
-  Object.freeze({ id: 'R-04', mode: 'reactor', particles: 6 }),
-  Object.freeze({ id: 'CIP-ADSORPTION', mode: 'cip', particlesPerTank: 4 }),
+  Object.freeze({ id: 'MILL-01', mode: 'mill', particles: 18 }),
+  Object.freeze({ id: 'SUMP-01', mode: 'sump', particles: 16 }),
+  Object.freeze({ id: 'SLURRY-PUMP-01', mode: 'pump', particles: 14 }),
+  Object.freeze({ id: 'CLASS-01', mode: 'cyclones', particlesPerCyclone: 4 }),
+  Object.freeze({ id: 'R-01', mode: 'reactor', particles: 8 }),
+  Object.freeze({ id: 'R-02', mode: 'reactor', particles: 8 }),
+  Object.freeze({ id: 'R-03', mode: 'reactor', particles: 8 }),
+  Object.freeze({ id: 'R-04', mode: 'reactor', particles: 8 }),
+  Object.freeze({ id: 'CIP-ADSORPTION', mode: 'cip', particlesPerTank: 5 }),
 ]);
+
+const INSPECTION_REVEAL_MODES = new Set(['transparent', 'cutaway', 'interior']);
 
 function finite(value, fallback = 0) {
   const next = Number(value);
@@ -112,10 +114,11 @@ function findNamedMesh(root, matcher) {
 
 function createMaterials(scene) {
   const slurry = new StandardMaterial('b75-equipment-slurry', scene);
-  slurry.diffuseColor = new Color3(0.31, 0.22, 0.14);
+  slurry.diffuseColor = new Color3(0.34, 0.235, 0.14);
   slurry.ambientColor = new Color3(0.06, 0.042, 0.026);
   slurry.specularColor = new Color3(0.05, 0.04, 0.03);
-  slurry.alpha = 0.78;
+  slurry.emissiveColor = new Color3(0.045, 0.026, 0.012);
+  slurry.alpha = 0.88;
   slurry.backFaceCulling = false;
 
   const quartz = new StandardMaterial('b75-quartz', scene);
@@ -143,8 +146,8 @@ function particleKind(index, total) {
 }
 
 function particleDiameter(kind, span) {
-  const base = kind === 'gold' ? 0.035 : kind === 'pyrite' ? 0.048 : 0.060;
-  return clamp(Math.min(base, span * 0.035), 0.018, base);
+  const base = kind === 'gold' ? 0.052 : kind === 'pyrite' ? 0.070 : 0.086;
+  return clamp(Math.min(base, span * 0.050), 0.026, base);
 }
 
 function addParticle(scene, root, materials, descriptor) {
@@ -335,11 +338,9 @@ function seedCip(scene, root, materials, equipmentRoot, spec, motions) {
   });
 }
 
-function positionMotion(motion, timeSeconds, speed, solidsVisible) {
+function positionMotion(motion, timeSeconds, speed) {
   const mesh = motion.mesh;
   if (!mesh) return;
-  mesh.visibility = solidsVisible;
-  if (solidsVisible <= 0) return;
   const phase = motion.phase + timeSeconds * speed;
 
   if (motion.mode === 'mill') {
@@ -438,6 +439,7 @@ export function applyB75EquipmentSlurryVisual({ scene, rootNodes = [], host } = 
 
   let animationsEnabled = true;
   let elapsedSeconds = 0;
+  let inspectionState = Object.freeze({ targetId: null, mode: 'normal' });
   let metrics = Object.freeze({
     flowRateM3s: 0,
     solidsMassFraction: 0,
@@ -461,7 +463,7 @@ export function applyB75EquipmentSlurryVisual({ scene, rootNodes = [], host } = 
       0.245 - darkness * 0.70,
       0.155 - darkness * 0.46,
     );
-    materials.slurry.alpha = 0.64 + metrics.solidVolumeFraction * 0.24;
+    materials.slurry.alpha = clamp(0.82 + metrics.solidVolumeFraction * 0.18, 0.82, 0.96);
 
     root.metadata = {
       ...(root.metadata ?? {}),
@@ -471,7 +473,42 @@ export function applyB75EquipmentSlurryVisual({ scene, rootNodes = [], host } = 
       densityKgM3: metrics.densityKgM3,
       feedGoldKgH: metrics.feedGoldKgH,
     };
+    applyInspectionVisibility();
     return metrics;
+  }
+
+  function metricParticleVisibility(motion) {
+    if (metrics.solidsMassFraction > 0) {
+      return clamp(0.52 + metrics.solidsMassFraction * 1.2, 0.52, 1);
+    }
+    if (motion.mesh?.metadata?.mineral === 'gold' && metrics.feedGoldKgH > 0) return 1;
+    return 0;
+  }
+
+  function applyInspectionVisibility() {
+    const reveal = INSPECTION_REVEAL_MODES.has(inspectionState.mode);
+    motions.forEach((motion) => {
+      const metricVisibility = metricParticleVisibility(motion);
+      const selected = motion.equipmentId === inspectionState.targetId;
+      const openSumpHint = !reveal && motion.equipmentId === 'SUMP-01';
+      motion.mesh.visibility = reveal && selected
+        ? metricVisibility
+        : (openSumpHint ? metricVisibility * 0.12 : 0);
+    });
+    root.metadata = {
+      ...(root.metadata ?? {}),
+      inspectionTargetId: inspectionState.targetId,
+      inspectionMode: inspectionState.mode,
+    };
+  }
+
+  function setInspectionState({ targetId = null, mode = 'normal' } = {}) {
+    inspectionState = Object.freeze({
+      targetId: targetId ? String(targetId) : null,
+      mode: INSPECTION_REVEAL_MODES.has(mode) ? mode : 'normal',
+    });
+    applyInspectionVisibility();
+    return inspectionState;
   }
 
   function update(deltaSeconds) {
@@ -494,7 +531,7 @@ export function applyB75EquipmentSlurryVisual({ scene, rootNodes = [], host } = 
       else if (motion.mode === 'sump') speed = flowStrength * 1.10;
       else if (motion.mode === 'pump') speed = flowStrength * 2.35;
       else if (motion.mode === 'cyclone') speed = flowStrength * 3.10;
-      positionMotion(motion, elapsedSeconds, speed, solidsVisible);
+      positionMotion(motion, elapsedSeconds, speed);
       if (speed > 0 && solidsVisible > 0) moved = true;
       if (motion.mesh?.metadata?.mineral === 'gold') {
         motion.mesh.metadata = {
@@ -505,6 +542,7 @@ export function applyB75EquipmentSlurryVisual({ scene, rootNodes = [], host } = 
       }
     });
 
+    applyInspectionVisibility();
     return moved;
   }
 
@@ -513,6 +551,8 @@ export function applyB75EquipmentSlurryVisual({ scene, rootNodes = [], host } = 
     root.metadata = { ...(root.metadata ?? {}), animationsEnabled };
     return animationsEnabled;
   }
+
+  applyInspectionVisibility();
 
   host.metadata = {
     ...(host.metadata ?? {}),
@@ -532,9 +572,11 @@ export function applyB75EquipmentSlurryVisual({ scene, rootNodes = [], host } = 
     motions,
     materials,
     setMetrics,
+    setInspectionState,
     update,
     setAnimationsEnabled,
     get metrics() { return metrics; },
+    get inspectionState() { return inspectionState; },
     dispose() {
       materialSnapshots.forEach((material, mesh) => {
         if (!mesh?.isDisposed?.()) mesh.material = material;

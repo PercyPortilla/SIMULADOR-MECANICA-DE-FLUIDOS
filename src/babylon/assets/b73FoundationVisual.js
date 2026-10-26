@@ -16,6 +16,10 @@ export const B73_SUPERSEDED_CONTINUOUS_FOUNDATIONS = Object.freeze([
   'V49_PAD_CLASS_PUMP',
   'V49_PAD_SUMP',
   'V49_PAD_MILL',
+  'CIV_SAG_FOUNDATION',
+  'CIV_SUMP_FOUNDATION',
+  'CIV_PUMP_FOUNDATION',
+  'CIV_CYCLONE_TOWER_FOUNDATION',
 ]);
 
 export const B73_FOUNDATION_SPECS = Object.freeze([
@@ -181,10 +185,12 @@ function sampleTerrain(scene, centerX, centerZ, widthM, depthM) {
 
 function createConcreteMaterial(scene) {
   const material = new StandardMaterial('b73-local-foundation-concrete', scene);
-  material.diffuseColor = new Color3(0.47, 0.49, 0.48);
-  material.ambientColor = new Color3(0.16, 0.16, 0.15);
-  material.specularColor = new Color3(0.055, 0.055, 0.05);
-  material.specularPower = 7;
+  // B76: local foundations must read as industrial concrete, not as bright
+  // white slabs under ACES exposure.
+  material.diffuseColor = new Color3(0.36, 0.38, 0.37);
+  material.ambientColor = new Color3(0.11, 0.11, 0.105);
+  material.specularColor = new Color3(0.024, 0.024, 0.022);
+  material.specularPower = 3;
   material.metadata = {
     visualOnly: true,
     b73LocalFoundationMaterial: true,
@@ -265,7 +271,7 @@ function createFoundationMesh(scene, root, material, spec, bounds) {
   mesh.metadata = {
     visualOnly: true,
     siteRevision: 'V57',
-    visualBuild: 'B73',
+    visualBuild: 'B73/B76',
     v57AuthoritativeVisual: true,
     b73LocalFoundation: true,
     equipmentId: spec.id,
@@ -292,7 +298,7 @@ export function applyB73FoundationVisual({ scene, rootNodes, host } = {}) {
   root.metadata = {
     visualOnly: true,
     siteRevision: 'V57',
-    visualBuild: 'B73',
+    visualBuild: 'B73/B76',
     v57AuthoritativeVisual: true,
     purpose: 'replace oversized continuous process slabs with local equipment foundations',
   };

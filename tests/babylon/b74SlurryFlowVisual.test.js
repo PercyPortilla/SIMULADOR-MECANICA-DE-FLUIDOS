@@ -1,6 +1,8 @@
 import { CreateBox, NullEngine, Scene, TransformNode, Vector3 } from '@babylonjs/core';
 import { describe, expect, it } from 'vitest';
 import {
+  B74_FLOW_SPECS,
+  B76_SLURRY_DIAMETER_RATIO,
   applyB74SlurryFlowVisual,
   calculateB74PathVelocityMps,
   orderB74RoutePoints,
@@ -15,6 +17,21 @@ function addBox(scene, parent, name, position, size) {
 }
 
 describe('B74 slurry flow visualization', () => {
+  it('extends the B76 wet-flow visual through leach and into CIP', () => {
+    expect(B74_FLOW_SPECS.map((spec) => spec.connectionId)).toEqual(expect.arrayContaining([
+      'P-MILL-TO-SUMP',
+      'P-SUMP-TO-PUMP',
+      'P-PUMP-TO-CYCLONES',
+      'P-CLASSIFICATION-TO-LEACH',
+      'P-LEACH-R01-R02',
+      'P-LEACH-R02-R03',
+      'P-LEACH-R03-R04',
+      'P-PUMP-01-TO-CIP',
+    ]));
+    expect(B76_SLURRY_DIAMETER_RATIO).toBeGreaterThanOrEqual(0.8);
+    expect(B76_SLURRY_DIAMETER_RATIO).toBeLessThan(1);
+  });
+
   it('derives physical line velocity from Q/A', () => {
     const q = 0.05;
     const d = 0.25;
@@ -54,9 +71,10 @@ describe('B74 slurry flow visualization', () => {
     addBox(scene, root, 'CLASS-01_FEED_LINE_SEG02', [220.0, 26.8, -101.0], [8.0, 1.0, 1.0]);
 
     const visual = applyB74SlurryFlowVisual({ scene, rootNodes: [root], host });
-    expect(visual.paths.filter((path) => !path.skipped)).toHaveLength(3);
-    expect(visual.paths.every((path) => path.fluidSegments.length > 0)).toBe(true);
-    expect(visual.paths.every((path) => path.tracers.length >= 12)).toBe(true);
+    const availablePaths = visual.paths.filter((path) => !path.skipped);
+    expect(availablePaths).toHaveLength(3);
+    expect(availablePaths.every((path) => path.fluidSegments.length > 0)).toBe(true);
+    expect(availablePaths.every((path) => path.tracers.length >= 10)).toBe(true);
 
     visual.setMetrics({
       flowRateM3s: 0.035,
@@ -70,6 +88,11 @@ describe('B74 slurry flow visualization', () => {
 
     const firstPath = visual.paths[0];
     const firstTracer = firstPath.tracers[0];
+    expect(firstPath.fluidSegments[0].visibility).toBeLessThan(0.2);
+    expect(firstTracer.visibility).toBeLessThan(0.2);
+    visual.setInspectionState({ targetId: 'P-MILL-TO-SUMP', mode: 'transparent' });
+    expect(firstPath.fluidSegments[0].visibility).toBe(1);
+    expect(firstTracer.visibility).toBeGreaterThan(0.5);
     const before = firstTracer.position.clone();
     expect(firstPath.velocityMps).toBeGreaterThan(0);
     expect(visual.update(0.1)).toBe(true);

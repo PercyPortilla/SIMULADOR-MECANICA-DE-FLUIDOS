@@ -1120,6 +1120,7 @@ export function createBabylonRuntime({
   function setInspectionTarget(id, { smooth = false } = {}) {
     if (!base.equipmentInspection) return null;
     const target = base.equipmentInspection.setTarget(id);
+    base.v57SiteVisual?.setInspectionState?.({ targetId: id || null, mode: 'normal' });
     base.equipmentInspection.contextOverlay?.setEnabled?.(
       activeCamera === INSPECTION_CAMERA_ID && Boolean(target),
     );
@@ -1162,11 +1163,15 @@ export function createBabylonRuntime({
 
   function setInspectionMode(mode) {
     if (!base.equipmentInspection) return null;
-    base.equipmentInspection.setMode(mode);
+    const appliedMode = base.equipmentInspection.setMode(mode) ?? mode;
+    base.v57SiteVisual?.setInspectionState?.({
+      targetId: base.equipmentInspection?.targetId ?? null,
+      mode: appliedMode,
+    });
     base.plantLabels?.refreshInspectionComponents?.();
     refreshViewDecorations(true);
     invalidateRender(180);
-    return mode;
+    return appliedMode;
   }
 
   function startRenderLoop() {

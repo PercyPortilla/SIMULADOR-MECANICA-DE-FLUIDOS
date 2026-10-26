@@ -8,13 +8,17 @@ import {
 } from '../../src/babylon/assets/b73FoundationVisual.js';
 
 describe('B73 local equipment foundations', () => {
-  it('retires the five continuous V49 process slabs that can cross equipment and piping', () => {
+  it('retires the oversized V49 and legacy CIV process slabs replaced by local B73/B76 foundations', () => {
     expect(B73_SUPERSEDED_CONTINUOUS_FOUNDATIONS).toEqual([
       'V49_PAD_RECOVERY',
       'V49_PAD_LEACH_CIP',
       'V49_PAD_CLASS_PUMP',
       'V49_PAD_SUMP',
       'V49_PAD_MILL',
+      'CIV_SAG_FOUNDATION',
+      'CIV_SUMP_FOUNDATION',
+      'CIV_PUMP_FOUNDATION',
+      'CIV_CYCLONE_TOWER_FOUNDATION',
     ]);
   });
 

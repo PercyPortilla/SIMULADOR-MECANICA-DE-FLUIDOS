@@ -33,7 +33,66 @@ export const B74_FLOW_SPECS = Object.freeze([
     sourceAnchor: Object.freeze([206.97, 23.62, -90.00]),
     targetAnchor: Object.freeze([228.41, 26.84, -103.06]),
   }),
+  Object.freeze({
+    id: 'class-to-r01',
+    connectionId: 'P-CLASSIFICATION-TO-LEACH',
+    sourceEquipmentId: 'CLASS-01',
+    targetEquipmentId: 'R-01',
+    diameterM: 0.22,
+    sourceAnchor: Object.freeze([228.41, 26.84, -103.06]),
+    targetAnchor: Object.freeze([268.0, 29.78, -88.0]),
+    maxGapM: 28,
+    velocityBasis: 'main-throughput-proxy-no-branch-balance',
+  }),
+  Object.freeze({
+    id: 'r01-to-r02',
+    connectionId: 'P-LEACH-R01-R02',
+    sourceEquipmentId: 'R-01',
+    targetEquipmentId: 'R-02',
+    diameterM: 0.25,
+    sourceAnchor: Object.freeze([268.0, 29.78, -88.0]),
+    targetAnchor: Object.freeze([300.0, 29.75, -88.0]),
+    maxGapM: 24,
+    velocityBasis: 'main-throughput-proxy-no-branch-balance',
+  }),
+  Object.freeze({
+    id: 'r02-to-r03',
+    connectionId: 'P-LEACH-R02-R03',
+    sourceEquipmentId: 'R-02',
+    targetEquipmentId: 'R-03',
+    diameterM: 0.25,
+    sourceAnchor: Object.freeze([300.0, 29.75, -88.0]),
+    targetAnchor: Object.freeze([300.0, 29.72, -122.0]),
+    maxGapM: 24,
+    velocityBasis: 'main-throughput-proxy-no-branch-balance',
+  }),
+  Object.freeze({
+    id: 'r03-to-r04',
+    connectionId: 'P-LEACH-R03-R04',
+    sourceEquipmentId: 'R-03',
+    targetEquipmentId: 'R-04',
+    diameterM: 0.25,
+    sourceAnchor: Object.freeze([300.0, 29.72, -122.0]),
+    targetAnchor: Object.freeze([332.0, 29.69, -122.0]),
+    maxGapM: 24,
+    velocityBasis: 'main-throughput-proxy-no-branch-balance',
+  }),
+  Object.freeze({
+    id: 'r04-to-cip',
+    connectionId: 'P-PUMP-01-TO-CIP',
+    inspectionIds: Object.freeze(['P-LEACHING-TO-PUMP-01', 'PUMP-01', 'P-PUMP-01-TO-CIP']),
+    sourceEquipmentId: 'R-04',
+    targetEquipmentId: 'CIP-ADSORPTION',
+    diameterM: 0.22,
+    sourceAnchor: Object.freeze([332.0, 29.69, -122.0]),
+    targetAnchor: Object.freeze([392.0, 29.15, -104.0]),
+    maxGapM: 32,
+    velocityBasis: 'main-throughput-proxy-no-branch-balance',
+  }),
 ]);
+
+export const B76_SLURRY_DIAMETER_RATIO = 0.82;
+const INSPECTION_REVEAL_MODES = new Set(['transparent', 'cutaway', 'interior']);
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -84,6 +143,20 @@ function matchesSpec(name, specId) {
   if (specId === 'pump-to-class') {
     return name === 'SLURRY-PUMP-01_DISCHARGE_PIPE'
       || /^CLASS-01_FEED_LINE_(?:SEG\d+|ELBOW_\d+|FLUID)/.test(name);
+  }
+  if (specId === 'class-to-r01') {
+    return name.startsWith('CLASS-01_OVERFLOW_TO_LEACH_')
+      || name === 'V52_PIPE_CLASS_OVERFLOW_TO_R01';
+  }
+  if (specId === 'r01-to-r02') return name.startsWith('LEACH_TRANSFER_1') || name === 'V39_PIPE_R01_TO_R02';
+  if (specId === 'r02-to-r03') return name.startsWith('LEACH_TRANSFER_2') || name === 'V39_PIPE_R02_TO_R03';
+  if (specId === 'r03-to-r04') return name.startsWith('LEACH_TRANSFER_3') || name === 'V39_PIPE_R03_TO_R04';
+  if (specId === 'r04-to-cip') {
+    return name.startsWith('LEACH_TO_CIP')
+      || name.startsWith('B52_R04_TO_PUMP_')
+      || name.startsWith('B52_PUMP_TO_CIP_')
+      || name === 'V37_PIPE_R04_TO_PUMP'
+      || name === 'V52_PIPE_PUMP_TO_CIP';
   }
   return false;
 }
@@ -222,10 +295,10 @@ function alignCylinder(mesh, start, end) {
 
 function createMaterials(scene) {
   const slurry = new StandardMaterial('b74-slurry-body', scene);
-  slurry.diffuseColor = new Color3(0.31, 0.22, 0.14);
-  slurry.emissiveColor = new Color3(0.035, 0.022, 0.012);
+  slurry.diffuseColor = new Color3(0.34, 0.235, 0.14);
+  slurry.emissiveColor = new Color3(0.055, 0.032, 0.016);
   slurry.specularColor = new Color3(0.055, 0.045, 0.035);
-  slurry.alpha = 0.76;
+  slurry.alpha = 0.88;
   slurry.backFaceCulling = false;
 
   const quartz = new StandardMaterial('b74-quartz-tracer', scene);
@@ -251,10 +324,10 @@ function createFluidBody(scene, root, spec, points, material) {
   points.slice(0, -1).forEach((start, index) => {
     const end = points[index + 1];
     const length = Vector3.Distance(start, end);
-    if (length <= 0.08 || length > 18) return;
+    if (length <= 0.08 || length > (spec.maxGapM ?? 18)) return;
     const segment = CreateCylinder('B74_' + spec.id + '_SLURRY_' + String(index + 1).padStart(2, '0'), {
       height: length,
-      diameter: spec.diameterM * 0.54,
+      diameter: spec.diameterM * B76_SLURRY_DIAMETER_RATIO,
       tessellation: 14,
       cap: 3,
     }, scene);
@@ -275,6 +348,7 @@ function createFluidBody(scene, root, spec, points, material) {
       slurryFlowBody: true,
       connectionId: spec.connectionId,
       processKind: 'slurry',
+      velocityBasis: spec.velocityBasis ?? 'Q-over-A',
     };
     segments.push(segment);
   });
@@ -290,17 +364,18 @@ function tracerKind(index) {
 
 function createTracers(scene, root, spec, points, materials) {
   const totalLengthM = Math.max(0.1, routeLength(points));
-  const count = clamp(Math.round(totalLengthM * 1.35), 12, 24);
+  // B76 prefers fewer, larger tracers over hundreds of tiny meshes.
+  const count = clamp(Math.round(totalLengthM * 1.15), 10, 20);
   const tracers = [];
   for (let index = 0; index < count; index += 1) {
     const kind = tracerKind(index);
     const diameter = kind === 'gold'
-      ? Math.min(0.034, spec.diameterM * 0.095)
+      ? Math.min(0.055, spec.diameterM * 0.16)
       : kind === 'pyrite'
-        ? Math.min(0.045, spec.diameterM * 0.12)
-        : Math.min(0.055, spec.diameterM * 0.14);
+        ? Math.min(0.070, spec.diameterM * 0.20)
+        : Math.min(0.085, spec.diameterM * 0.24);
     const tracer = CreateSphere('B74_' + spec.id + '_' + kind.toUpperCase() + '_' + String(index + 1).padStart(2, '0'), {
-      diameter: Math.max(0.018, diameter),
+      diameter: Math.max(0.028, diameter),
       segments: kind === 'gold' ? 6 : 4,
     }, scene);
     tracer.parent = root;
@@ -330,7 +405,7 @@ function buildPath(scene, root, meshes, spec, materials) {
   const matching = meshes.filter((mesh) => matchesSpec(String(mesh.name ?? ''), spec.id));
   const candidatePoints = matching.flatMap(worldCenterAndAxisPoints);
   const ordered = orderB74RoutePoints(candidatePoints, spec.sourceAnchor, spec.targetAnchor);
-  const points = contiguousRoute(ordered, 18);
+  const points = contiguousRoute(ordered, spec.maxGapM ?? 18);
   if (points.length < 2 || routeLength(points) < 0.25) {
     return {
       spec,
@@ -372,6 +447,7 @@ export function applyB74SlurryFlowVisual({ scene, rootNodes = [], host } = {}) {
   const meshes = allMeshes(rootNodes);
   const paths = B74_FLOW_SPECS.map((spec) => buildPath(scene, root, meshes, spec, materials));
   let animationsEnabled = true;
+  let inspectionState = Object.freeze({ targetId: null, mode: 'normal' });
   let metrics = Object.freeze({
     flowRateM3s: 0,
     imposedFlowRateM3s: 0,
@@ -408,19 +484,22 @@ export function applyB74SlurryFlowVisual({ scene, rootNodes = [], host } = {}) {
       0.245 - darkness * 0.72,
       0.155 - darkness * 0.48,
     );
-    materials.slurry.alpha = 0.64 + solidVolumeFraction * 0.24;
+    materials.slurry.alpha = clamp(0.82 + solidVolumeFraction * 0.18, 0.82, 0.96);
 
     paths.forEach((path) => {
       path.velocityMps = calculateB74PathVelocityMps(flowRateM3s, path.spec.diameterM, fallbackVelocityMps);
       path.tracers.forEach((tracer) => {
         if (tracer.metadata?.mineral === 'gold') {
-          tracer.visibility = solidsMassFraction > 0 || feedGoldKgH > 0 ? 1 : 0.35;
           tracer.metadata = {
             ...(tracer.metadata ?? {}),
             feedGoldKgH,
             illustrativeWhenGradeUnavailable: feedGoldKgH <= 0,
           };
         }
+        tracer.metadata = {
+          ...(tracer.metadata ?? {}),
+          metricVisibility: solidsMassFraction > 0 || feedGoldKgH > 0 ? 1 : 0.28,
+        };
       });
     });
 
@@ -434,9 +513,55 @@ export function applyB74SlurryFlowVisual({ scene, rootNodes = [], host } = {}) {
       densityKgM3,
       feedGoldKgH,
       pathVelocitiesMps: Object.fromEntries(paths.map((path) => [path.spec.connectionId, path.velocityMps])),
+      pathVelocityBasis: Object.fromEntries(paths.map((path) => [
+        path.spec.connectionId,
+        path.spec.velocityBasis ?? 'Q-over-A',
+      ])),
       direction: flowRateM3s < 0 ? 'target-to-source' : 'source-to-target',
     };
+    applyInspectionVisibility();
     return metrics;
+  }
+
+  function pathMatchesInspection(path, targetId) {
+    if (!targetId) return false;
+    return targetId === path.spec.connectionId
+      || targetId === path.spec.sourceEquipmentId
+      || targetId === path.spec.targetEquipmentId
+      || path.spec.inspectionIds?.includes?.(targetId) === true;
+  }
+
+  function applyInspectionVisibility() {
+    const reveal = INSPECTION_REVEAL_MODES.has(inspectionState.mode);
+    paths.forEach((path) => {
+      const relevant = pathMatchesInspection(path, inspectionState.targetId);
+      const fluidVisibility = reveal
+        ? (relevant ? 1 : 0.025)
+        : (relevant ? 0.10 : 0.015);
+      path.fluidSegments.forEach((segment) => {
+        segment.visibility = fluidVisibility;
+      });
+      path.tracers.forEach((tracer) => {
+        const metricVisibility = finite(tracer.metadata?.metricVisibility, 0);
+        tracer.visibility = reveal && relevant
+          ? metricVisibility
+          : (!reveal && relevant ? metricVisibility * 0.08 : 0);
+      });
+    });
+    root.metadata = {
+      ...(root.metadata ?? {}),
+      inspectionTargetId: inspectionState.targetId,
+      inspectionMode: inspectionState.mode,
+    };
+  }
+
+  function setInspectionState({ targetId = null, mode = 'normal' } = {}) {
+    inspectionState = Object.freeze({
+      targetId: targetId ? String(targetId) : null,
+      mode: INSPECTION_REVEAL_MODES.has(mode) ? mode : 'normal',
+    });
+    applyInspectionVisibility();
+    return inspectionState;
   }
 
   function update(deltaSeconds) {
@@ -463,6 +588,8 @@ export function applyB74SlurryFlowVisual({ scene, rootNodes = [], host } = {}) {
     return animationsEnabled;
   }
 
+  applyInspectionVisibility();
+
   const availablePaths = paths.filter((path) => !path.skipped);
   host.metadata = {
     ...(host.metadata ?? {}),
@@ -481,9 +608,11 @@ export function applyB74SlurryFlowVisual({ scene, rootNodes = [], host } = {}) {
     paths,
     materials,
     setMetrics,
+    setInspectionState,
     update,
     setAnimationsEnabled,
     get metrics() { return metrics; },
+    get inspectionState() { return inspectionState; },
     dispose() {
       root.dispose(false, true);
       Object.values(materials).forEach((material) => material.dispose(false, true));

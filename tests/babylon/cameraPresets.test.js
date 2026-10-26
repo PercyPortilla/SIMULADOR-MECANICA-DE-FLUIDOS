@@ -81,7 +81,7 @@ describe('Babylon camera preset parity', () => {
     expect(inspection.angularSensibilityY).toBe(400);
     expect(inspection.wheelPrecision).toBe(5);
     expect(inspection.wheelDeltaPercentage).toBe(0.08);
-    expect(inspection.panningSensibility).toBe(400);
+    expect(inspection.panningSensibility).toBe(100);
     expect(inspection.pinchPrecision).toBe(35);
     expect(inspection.lowerRadiusLimit).toBe(0.8);
     expect(inspection.upperRadiusLimit).toBe(1200);

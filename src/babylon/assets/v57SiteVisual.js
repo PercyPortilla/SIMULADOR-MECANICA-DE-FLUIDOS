@@ -155,6 +155,7 @@ export function attachBabylonV57SiteVisual({
   let b74SlurryFlowVisual = null;
   let b75EquipmentSlurryVisual = null;
   let processMetrics = Object.freeze({});
+  let inspectionState = Object.freeze({ targetId: null, mode: 'normal' });
 
   function syncAnimationState() {
     animationGroups.forEach((group) => {
@@ -186,9 +187,11 @@ export function attachBabylonV57SiteVisual({
       b74SlurryFlowVisual = applyB74SlurryFlowVisual({ scene, rootNodes, host });
       b74SlurryFlowVisual.setMetrics(processMetrics);
       b74SlurryFlowVisual.setAnimationsEnabled(animationsEnabled);
+      b74SlurryFlowVisual.setInspectionState(inspectionState);
       b75EquipmentSlurryVisual = applyB75EquipmentSlurryVisual({ scene, rootNodes, host });
       b75EquipmentSlurryVisual.setMetrics(processMetrics);
       b75EquipmentSlurryVisual.setAnimationsEnabled(animationsEnabled);
+      b75EquipmentSlurryVisual.setInspectionState(inspectionState);
       host.metadata.blenderVisualStatus = 'loaded';
       host.metadata.blenderVisualLoaded = true;
       host.metadata.importedRootCount = rootNodes.length;
@@ -224,6 +227,15 @@ export function attachBabylonV57SiteVisual({
       b75EquipmentSlurryVisual?.setMetrics?.(processMetrics);
       return processMetrics;
     },
+    setInspectionState(nextState = {}) {
+      inspectionState = Object.freeze({
+        targetId: nextState.targetId ? String(nextState.targetId) : null,
+        mode: ['transparent', 'cutaway', 'interior'].includes(nextState.mode) ? nextState.mode : 'normal',
+      });
+      b74SlurryFlowVisual?.setInspectionState?.(inspectionState);
+      b75EquipmentSlurryVisual?.setInspectionState?.(inspectionState);
+      return inspectionState;
+    },
     update(deltaSeconds) {
       const pipeMoved = b74SlurryFlowVisual?.update?.(deltaSeconds) ?? false;
       const equipmentMoved = b75EquipmentSlurryVisual?.update?.(deltaSeconds) ?? false;
@@ -232,6 +244,7 @@ export function attachBabylonV57SiteVisual({
     get loaded() { return host.metadata?.blenderVisualStatus === 'loaded'; },
     get rootNodes() { return [...rootNodes]; },
     get animationGroups() { return [...animationGroups]; },
+    get inspectionState() { return inspectionState; },
     dispose() {
       if (disposed) return;
       disposed = true;
