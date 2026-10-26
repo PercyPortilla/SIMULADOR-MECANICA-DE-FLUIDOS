@@ -7,6 +7,7 @@ import { loadBabylonAssetContainer } from './gltfLoader.js';
 import { applyB71HydraulicStudyVisual } from './b71HydraulicStudyVisual.js';
 import { applyB73FoundationVisual } from './b73FoundationVisual.js';
 import { applyB74SlurryFlowVisual } from './b74SlurryFlowVisual.js';
+import { applyB75EquipmentSlurryVisual } from './b75EquipmentSlurryVisual.js';
 
 function visitHierarchy(root, callback) {
   callback(root);
@@ -152,6 +153,7 @@ export function attachBabylonV57SiteVisual({
   let b71HydraulicStudyVisual = null;
   let b73FoundationVisual = null;
   let b74SlurryFlowVisual = null;
+  let b75EquipmentSlurryVisual = null;
   let processMetrics = Object.freeze({});
 
   function syncAnimationState() {
@@ -184,6 +186,9 @@ export function attachBabylonV57SiteVisual({
       b74SlurryFlowVisual = applyB74SlurryFlowVisual({ scene, rootNodes, host });
       b74SlurryFlowVisual.setMetrics(processMetrics);
       b74SlurryFlowVisual.setAnimationsEnabled(animationsEnabled);
+      b75EquipmentSlurryVisual = applyB75EquipmentSlurryVisual({ scene, rootNodes, host });
+      b75EquipmentSlurryVisual.setMetrics(processMetrics);
+      b75EquipmentSlurryVisual.setAnimationsEnabled(animationsEnabled);
       host.metadata.blenderVisualStatus = 'loaded';
       host.metadata.blenderVisualLoaded = true;
       host.metadata.importedRootCount = rootNodes.length;
@@ -210,15 +215,19 @@ export function attachBabylonV57SiteVisual({
       animationsEnabled = Boolean(enabled);
       syncAnimationState();
       b74SlurryFlowVisual?.setAnimationsEnabled?.(animationsEnabled);
+      b75EquipmentSlurryVisual?.setAnimationsEnabled?.(animationsEnabled);
       return animationsEnabled;
     },
     setProcessMetrics(nextMetrics = {}) {
       processMetrics = Object.freeze({ ...nextMetrics });
       b74SlurryFlowVisual?.setMetrics?.(processMetrics);
+      b75EquipmentSlurryVisual?.setMetrics?.(processMetrics);
       return processMetrics;
     },
     update(deltaSeconds) {
-      return b74SlurryFlowVisual?.update?.(deltaSeconds) ?? false;
+      const pipeMoved = b74SlurryFlowVisual?.update?.(deltaSeconds) ?? false;
+      const equipmentMoved = b75EquipmentSlurryVisual?.update?.(deltaSeconds) ?? false;
+      return pipeMoved || equipmentMoved;
     },
     get loaded() { return host.metadata?.blenderVisualStatus === 'loaded'; },
     get rootNodes() { return [...rootNodes]; },
@@ -230,6 +239,8 @@ export function attachBabylonV57SiteVisual({
       animationGroups = [];
       b64TerrainMaterial?.dispose?.(false, true);
       b64TerrainMaterial = null;
+      b75EquipmentSlurryVisual?.dispose?.();
+      b75EquipmentSlurryVisual = null;
       b74SlurryFlowVisual?.dispose?.();
       b74SlurryFlowVisual = null;
       b73FoundationVisual?.dispose?.();
