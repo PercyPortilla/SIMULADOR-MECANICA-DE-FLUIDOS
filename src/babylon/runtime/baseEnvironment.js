@@ -471,6 +471,9 @@ export function createBabylonRuntime({
   let processFlowScale = 1;
   let processMetrics = Object.freeze({ flowRateM3s: 0, pressurePa: 0 });
   let activeScenePalette = Object.freeze({});
+  let inspectionPickHandler = null;
+  let inspectionPointerDown = null;
+  let inspectionCameraTransition = null;
   let pipeRenderKey = JSON.stringify([
     initialState.transport?.pipe1?.innerDiameterM,
     initialState.transport?.pipe1?.lengthM,
@@ -573,12 +576,135 @@ export function createBabylonRuntime({
     return true;
   }
 
+  function beginSmoothInspectionFraming(framing, durationMs = 460) {
+    if (!framing?.center || !framing?.size) return null;
+    const camera = base.cameras.inspection;
+    const startTarget = camera.target?.clone?.()
+      ?? (framing.center.clone?.() ?? Vector3.FromArray(framing.center));
+    const startRadius = Number(camera.radius) || 1;
+    const result = applyBabylonInspectionCameraFraming(camera, framing, { aspect: renderAspect() });
+    const endTarget = camera.target?.clone?.()
+      ?? (framing.center.clone?.() ?? Vector3.FromArray(framing.center));
+    const endRadius = Number(camera.radius) || startRadius;
+    camera.setTarget?.(startTarget);
+    camera.radius = startRadius;
+    inspectionCameraTransition = {
+      startedAtMs: nowMs(),
+      durationMs: Math.max(120, Number(durationMs) || 460),
+      startTarget,
+      endTarget,
+      startRadius,
+      endRadius,
+    };
+    invalidateRender(inspectionCameraTransition.durationMs + 120);
+    return result;
+  }
+
+  function updateInspectionCameraTransition(now) {
+    const transition = inspectionCameraTransition;
+    if (!transition) return false;
+    const progress = Math.max(0, Math.min(1, (now - transition.startedAtMs) / transition.durationMs));
+    const eased = 1 - ((1 - progress) ** 3);
+    const camera = base.cameras.inspection;
+    camera.setTarget?.(Vector3.Lerp(transition.startTarget, transition.endTarget, eased));
+    camera.radius = transition.startRadius + (transition.endRadius - transition.startRadius) * eased;
+    if (progress >= 1) inspectionCameraTransition = null;
+    return true;
+  }
+
+  function pointerCoordinates(event) {
+    const offsetX = Number(event?.offsetX);
+    const offsetY = Number(event?.offsetY);
+    if (Number.isFinite(offsetX) && Number.isFinite(offsetY)) return { x: offsetX, y: offsetY };
+    const clientX = Number(event?.clientX);
+    const clientY = Number(event?.clientY);
+    const rect = canvas.getBoundingClientRect?.();
+    if (!rect || !Number.isFinite(clientX) || !Number.isFinite(clientY)) return null;
+    return { x: clientX - rect.left, y: clientY - rect.top };
+  }
+
+  function setInspectionPickHandler(handler) {
+    if (handler !== null && handler !== undefined && typeof handler !== 'function') {
+      throw new TypeError('Inspection pick handler must be a function or null.');
+    }
+    inspectionPickHandler = handler ?? null;
+    return inspectionPickHandler;
+  }
+
+  function beginInspectionPointer(event) {
+    invalidateRender(420);
+    if (event?.button !== undefined && event.button !== 0) {
+      inspectionPointerDown = null;
+      return;
+    }
+    const point = pointerCoordinates(event);
+    if (!point) {
+      inspectionPointerDown = null;
+      return;
+    }
+    inspectionPointerDown = {
+      pointerId: event?.pointerId ?? null,
+      x: point.x,
+      y: point.y,
+      moved: false,
+    };
+  }
+
+  function moveInspectionPointer(event) {
+    if (activeCamera === INSPECTION_CAMERA_ID) invalidateRender(180);
+    const pointer = inspectionPointerDown;
+    if (!pointer) return;
+    if (pointer.pointerId !== null && event?.pointerId !== undefined && event.pointerId !== pointer.pointerId) return;
+    const point = pointerCoordinates(event);
+    if (!point) return;
+    if (Math.hypot(point.x - pointer.x, point.y - pointer.y) > 6) pointer.moved = true;
+  }
+
+  function finishInspectionPointer(event) {
+    invalidateRender(260);
+    const pointer = inspectionPointerDown;
+    inspectionPointerDown = null;
+    if (!pointer || pointer.moved) return null;
+    if (event?.button !== undefined && event.button !== 0) return null;
+    if (pointer.pointerId !== null && event?.pointerId !== undefined && event.pointerId !== pointer.pointerId) return null;
+    const point = pointerCoordinates(event);
+    if (!point || Math.hypot(point.x - pointer.x, point.y - pointer.y) > 6) return null;
+    const resolveTargetId = base.equipmentInspection?.resolvePickTargetId;
+    if (typeof resolveTargetId !== 'function') return null;
+
+    let pick = null;
+    try {
+      pick = base.scene.pick(
+        point.x,
+        point.y,
+        (mesh) => Boolean(resolveTargetId(mesh)),
+        false,
+        base.scene.activeCamera,
+      );
+    } catch {
+      return null;
+    }
+    const id = pick?.hit ? resolveTargetId(pick.pickedMesh) : null;
+    if (!id) return null;
+
+    setInspectionTarget(id, { smooth: true });
+    if (activeCamera !== INSPECTION_CAMERA_ID) setCamera(INSPECTION_CAMERA_ID);
+    try {
+      inspectionPickHandler?.(id);
+    } catch (error) {
+      console.error('[PULPA LAB B67] No se pudo sincronizar la selección Inspection.', error);
+    }
+    return id;
+  }
+
   const interactionHandlers = {
-    pointerdown: () => invalidateRender(420),
-    pointermove: () => {
-      if (activeCamera === INSPECTION_CAMERA_ID) invalidateRender(180);
+    pointerdown: beginInspectionPointer,
+    pointermove: moveInspectionPointer,
+    pointerup: finishInspectionPointer,
+    pointercancel: () => {
+      inspectionPointerDown = null;
+      invalidateRender(120);
     },
-    pointerup: () => invalidateRender(260),
     wheel: () => invalidateRender(320),
   };
   Object.entries(interactionHandlers).forEach(([type, handler]) => {
@@ -687,6 +813,7 @@ export function createBabylonRuntime({
       setInspectionControlsAttached(base.cameras.inspection, canvas, false);
       inspectionControlsAttached = false;
     }
+    if (id !== INSPECTION_CAMERA_ID) inspectionCameraTransition = null;
     activeCamera = id;
     base.scene.activeCamera = base.cameras[id];
     if (id === INSPECTION_CAMERA_ID && !inspectionControlsAttached) {
@@ -733,6 +860,7 @@ export function createBabylonRuntime({
     if (disposed) return;
     const now = nowMs();
     const inspectionCamera = base.cameras.inspection;
+    const inspectionTransitioning = updateInspectionCameraTransition(now);
     const inspectionHasInertia = activeCamera === INSPECTION_CAMERA_ID && [
       inspectionCamera?.inertialAlphaOffset,
       inspectionCamera?.inertialBetaOffset,
@@ -741,7 +869,7 @@ export function createBabylonRuntime({
       inspectionCamera?.inertialPanningY,
     ].some((value) => Math.abs(Number(value) || 0) > 1e-5);
     const interactive = activeCamera === INSPECTION_CAMERA_ID
-      && (now < interactiveUntilMs || inspectionHasInertia);
+      && (now < interactiveUntilMs || inspectionHasInertia || inspectionTransitioning);
     if (animationsEnabled) {
       const deltaSeconds = previousFrameMs === null ? 0 : Math.min(0.1, Math.max(0, (now - previousFrameMs) / 1000));
       previousFrameMs = now;
@@ -834,7 +962,7 @@ export function createBabylonRuntime({
     return result;
   }
 
-  function setInspectionTarget(id) {
+  function setInspectionTarget(id, { smooth = false } = {}) {
     if (!base.equipmentInspection) return null;
     const target = base.equipmentInspection.setTarget(id);
     base.equipmentInspection.contextOverlay?.setEnabled?.(
@@ -847,10 +975,16 @@ export function createBabylonRuntime({
     base.plantLabels?.setInspectionTarget?.(target, targetMeta?.label ?? id ?? '', framing);
     base.plantLabels?.setView?.(activeCamera);
     if (target && framing) {
-      applyBabylonInspectionCameraFraming(base.cameras.inspection, framing, { aspect: renderAspect() });
+      if (smooth) beginSmoothInspectionFraming(framing);
+      else {
+        inspectionCameraTransition = null;
+        applyBabylonInspectionCameraFraming(base.cameras.inspection, framing, { aspect: renderAspect() });
+      }
+    } else {
+      inspectionCameraTransition = null;
     }
     refreshViewDecorations(true);
-    invalidateRender(180);
+    invalidateRender(smooth ? 620 : 180);
     return target;
   }
 
@@ -882,6 +1016,9 @@ export function createBabylonRuntime({
     if (disposed) return;
     stopRenderLoop();
     disposed = true;
+    inspectionPickHandler = null;
+    inspectionPointerDown = null;
+    inspectionCameraTransition = null;
     Object.entries(interactionHandlers).forEach(([type, handler]) => {
       canvas.removeEventListener?.(type, handler);
     });
@@ -919,6 +1056,7 @@ export function createBabylonRuntime({
     setProcessMetrics,
     setScenePalette,
     getInspectionTargets: () => base.equipmentInspection?.getTargets?.() ?? [],
+    setInspectionPickHandler,
     setInspectionTarget,
     setInspectionMode,
     startRenderLoop,
@@ -936,6 +1074,7 @@ export function createBabylonRuntime({
     get scenePalette() { return activeScenePalette; },
     get inspectionTargetId() { return base.equipmentInspection?.targetId ?? null; },
     get inspectionMode() { return base.equipmentInspection?.mode ?? 'normal'; },
+    get inspectionCameraTransitionActive() { return Boolean(inspectionCameraTransition); },
     get disposed() { return disposed; },
   };
 }
