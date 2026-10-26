@@ -125,12 +125,12 @@ function hierarchyBounds(target) {
   return { min: bounds.min.clone(), max: bounds.max.clone(), size, center: Vector3.Center(bounds.min, bounds.max) };
 }
 
-function findV50VisualTarget(scene, id) {
+function findV57VisualTarget(scene, id) {
   const candidates = [
     ...(scene.transformNodes ?? []).filter((node) => node.name === id),
     ...(scene.meshes ?? []).filter((node) => node.name === id),
   ];
-  return candidates.find((node) => node?.metadata?.v50AuthoritativeVisual === true) ?? null;
+  return candidates.find((node) => node?.metadata?.v57AuthoritativeVisual === true) ?? null;
 }
 
 function componentLabelText(mesh) {
@@ -213,11 +213,11 @@ export function createBabylonPlantLabels({ scene, equipmentSystem } = {}) {
         return;
       }
       if (metadata.dynamicPipe1) {
-        const v50Pipe = findV50VisualTarget(scene, 'V39_PIPE_R01_TO_R02');
-        const v50Bounds = hierarchyBounds(v50Pipe);
-        if (v50Bounds) {
-          label.position.copyFrom(v50Bounds.center);
-          label.position.y = v50Bounds.max.y + (metadata.lift ?? 1.25);
+        const v57Pipe = findV57VisualTarget(scene, 'V39_PIPE_R01_TO_R02');
+        const v57Bounds = hierarchyBounds(v57Pipe);
+        if (v57Bounds) {
+          label.position.copyFrom(v57Bounds.center);
+          label.position.y = v57Bounds.max.y + (metadata.lift ?? 1.25);
           return;
         }
         try {
@@ -231,11 +231,11 @@ export function createBabylonPlantLabels({ scene, equipmentSystem } = {}) {
         return;
       }
       if (metadata.labelKind !== 'equipment' || !metadata.equipmentId) return;
-      const v50Target = findV50VisualTarget(scene, metadata.equipmentId);
-      const v50Bounds = hierarchyBounds(v50Target);
-      if (v50Bounds) {
-        label.position.copyFrom(v50Bounds.center);
-        label.position.y = v50Bounds.max.y + (metadata.lift ?? 1.6);
+      const v57Target = findV57VisualTarget(scene, metadata.equipmentId);
+      const v57Bounds = hierarchyBounds(v57Target);
+      if (v57Bounds) {
+        label.position.copyFrom(v57Bounds.center);
+        label.position.y = v57Bounds.max.y + (metadata.lift ?? 1.6);
         return;
       }
       try {

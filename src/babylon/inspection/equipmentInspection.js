@@ -19,10 +19,7 @@ function nodeMetadata(node) {
 
 function isAuthoritativeBlenderVisual(node) {
   const metadata = nodeMetadata(node);
-  return metadata.v57AuthoritativeVisual === true
-    || metadata.v56AuthoritativeVisual === true
-    || metadata.v55AuthoritativeVisual === true
-    || metadata.v50AuthoritativeVisual === true;
+  return metadata.v57AuthoritativeVisual === true;
 }
 
 function inferImportedRole(mesh) {
@@ -66,7 +63,7 @@ function allSceneNodes(scene) {
   return [...(scene.transformNodes ?? []), ...(scene.meshes ?? [])];
 }
 
-function resolveV50AliasSources(scene, alias) {
+function resolveV57AliasSources(scene, alias) {
   if (!alias) return [];
   const names = new Set(alias.names ?? []);
   const prefixes = alias.prefixes ?? [];
@@ -84,21 +81,20 @@ function findTarget(scene, id, aliasRoot = null) {
   const transformMatches = (scene.transformNodes ?? []).filter((node) => node.name === id);
   const meshMatches = (scene.meshes ?? []).filter((node) => node.name === id);
   const candidates = [...transformMatches, ...meshMatches];
-  const exactV50 = candidates.find(isAuthoritativeBlenderVisual);
-  if (exactV50) return exactV50;
+  const exactV57 = candidates.find(isAuthoritativeBlenderVisual);
+  if (exactV57) return exactV57;
 
   const alias = V57_INSPECTION_NODE_ALIASES[id];
   if (alias && aliasRoot) {
-    const sources = resolveV50AliasSources(scene, alias);
-    const hasV50Scene = sources.length > 0 || allSceneNodes(scene).some(
+    const sources = resolveV57AliasSources(scene, alias);
+    const hasV57Scene = sources.length > 0 || allSceneNodes(scene).some(
       (node) => isAuthoritativeBlenderVisual(node),
     );
-    if (sources.length || (alias.semanticOnly && hasV50Scene)) {
-      const proxy = new TransformNode(`inspection-v50-alias-${id}`, scene);
+    if (sources.length || (alias.semanticOnly && hasV57Scene)) {
+      const proxy = new TransformNode(`inspection-v57-alias-${id}`, scene);
       proxy.parent = aliasRoot;
       proxy.metadata = {
-        v50InspectionAlias: true,
-        v55InspectionAlias: true,
+        v57InspectionAlias: true,
         inspectionCanonicalId: id,
         inspectionAliasSources: sources,
         inspectionAliasBounds: alias.bounds ?? null,

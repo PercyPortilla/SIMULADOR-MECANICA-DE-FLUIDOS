@@ -13,11 +13,6 @@ function markV57Node(node) {
     blenderImported: true,
     siteRevision: 'V57',
     v57AuthoritativeVisual: true,
-    // Compatibility flags for code paths still named after older revisions.
-    v56AuthoritativeVisual: true,
-    v55AuthoritativeVisual: true,
-    v50AuthoritativeVisual: true,
-    v49AuthoritativeVisual: true,
     visualOnly: true,
   };
   if ('isPickable' in node) node.isPickable = false;
@@ -84,9 +79,9 @@ export function attachBabylonV57SiteVisual({
     })
     .catch((error) => {
       if (disposed) return null;
-      host.metadata.blenderVisualStatus = 'error-legacy-fallback';
+      host.metadata.blenderVisualStatus = 'error';
       host.metadata.blenderVisualError = error?.message || String(error);
-      console.warn('[PULPA LAB V57] No se pudo cargar el sitio Blender V57; se conserva el fallback procedural.', error);
+      console.error('[PULPA LAB V57] No se pudo cargar el sitio Blender V57. B62 bloquea cualquier fallback visual antiguo.', error);
       return null;
     });
 

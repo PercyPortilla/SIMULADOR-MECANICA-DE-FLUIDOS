@@ -21,7 +21,7 @@ v31-*.png
 babylon-preview-*.png
 babylon-preview-dom.html
 
-# V56 release assets are stored losslessly compressed in Git.
-# scripts/prepare-v56-assets.mjs recreates the runtime GLB before dev/build/test.
+# V56 compressed source is retained only for legacy tests. The uncompressed
+# runtime GLB is ignored and the B62 production guard removes it before dev/build.
 public/models/pulpa-v56/PULPA_LAB_V56_FULL_SITE.glb
 blender/PULPA_LAB_BLENDER_MASTER_V56.blend
