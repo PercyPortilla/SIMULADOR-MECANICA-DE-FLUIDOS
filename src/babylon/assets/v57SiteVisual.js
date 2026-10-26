@@ -4,6 +4,7 @@ import { Color3 } from '@babylonjs/core/Maths/math.color.js';
 import { TransformNode } from '@babylonjs/core/Meshes/transformNode.js';
 import { V57_SITE_VISUAL_URL } from '../../scene/integration/v57Layout.js';
 import { loadBabylonAssetContainer } from './gltfLoader.js';
+import { applyB71HydraulicStudyVisual } from './b71HydraulicStudyVisual.js';
 
 function visitHierarchy(root, callback) {
   callback(root);
@@ -146,6 +147,7 @@ export function attachBabylonV57SiteVisual({
   let animationsEnabled = true;
   let disposed = false;
   let b64TerrainMaterial = null;
+  let b71HydraulicStudyVisual = null;
 
   function syncAnimationState() {
     animationGroups.forEach((group) => {
@@ -172,6 +174,7 @@ export function attachBabylonV57SiteVisual({
         visitHierarchy(root, markV57Node);
       });
       b64TerrainMaterial = applyB64TerrainMaterial({ rootNodes, scene, host });
+      b71HydraulicStudyVisual = applyB71HydraulicStudyVisual({ scene, rootNodes, host });
       host.metadata.blenderVisualStatus = 'loaded';
       host.metadata.blenderVisualLoaded = true;
       host.metadata.importedRootCount = rootNodes.length;
@@ -209,6 +212,8 @@ export function attachBabylonV57SiteVisual({
       animationGroups = [];
       b64TerrainMaterial?.dispose?.(false, true);
       b64TerrainMaterial = null;
+      b71HydraulicStudyVisual?.dispose?.();
+      b71HydraulicStudyVisual = null;
       container?.dispose?.();
       rootNodes = [];
       host.dispose();

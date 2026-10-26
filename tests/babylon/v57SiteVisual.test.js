@@ -38,6 +38,7 @@ describe('Babylon V57 authoritative site visual', () => {
     expect(root.parent).toBe(visual.host);
     expect(root.metadata.v57AuthoritativeVisual).toBe(true);
     expect(mesh.metadata.v57AuthoritativeVisual).toBe(true);
+    expect(visual.host.metadata.b71HydraulicStudy).toBeTruthy();
     expect(animation.start).toHaveBeenCalled();
     visual.setAnimationsEnabled(false);
     expect(animation.pause).toHaveBeenCalled();
