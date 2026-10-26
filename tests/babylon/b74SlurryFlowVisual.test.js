@@ -1,4 +1,4 @@
-import { CreateBox, NullEngine, Scene, TransformNode } from '@babylonjs/core';
+import { CreateBox, NullEngine, Scene, TransformNode, Vector3 } from '@babylonjs/core';
 import { describe, expect, it } from 'vitest';
 import {
   applyB74SlurryFlowVisual,
@@ -26,16 +26,8 @@ describe('B74 slurry flow visualization', () => {
   it('orders route samples from source toward target', () => {
     const points = [
       [7, 0, 0], [3, 0, 0], [9, 0, 0], [1, 0, 0],
-    ].map((value) => new (class {
-      constructor([x, y, z]) { this.x=x; this.y=y; this.z=z; }
-      clone() { return new this.constructor([this.x,this.y,this.z]); }
-    })(value));
-    // Use Babylon Vector3 objects through the public helper's array conversion path.
-    const ordered = orderB74RoutePoints(
-      points.map((point) => ({ ...point, clone: point.clone.bind(point) })),
-      [0, 0, 0],
-      [10, 0, 0],
-    );
+    ].map((value) => new Vector3(...value));
+    const ordered = orderB74RoutePoints(points, [0, 0, 0], [10, 0, 0]);
     expect(ordered[0].x).toBeLessThan(ordered.at(-1).x);
   });
 
