@@ -209,6 +209,19 @@ export function activateBabylonInspectionPick({
   return true;
 }
 
+export function createBabylonInspectionHoverPayload({ id, target, x, y } = {}) {
+  const hoverX = Number(x);
+  const hoverY = Number(y);
+  if (!id || !target || !Number.isFinite(hoverX) || !Number.isFinite(hoverY)) return null;
+  return Object.freeze({
+    id,
+    label: target.label || id,
+    kind: target.kind || 'equipment',
+    x: hoverX,
+    y: hoverY,
+  });
+}
+
 function createSky(scene) {
   const sky = MeshBuilder.CreateSphere('babylon-sky-dome', {
     diameter: 1520,
@@ -455,6 +468,7 @@ export function createBabylonBaseScene(engine, { pipe1State = null } = {}) {
     })
     : null;
   equipmentInspection?.contextOverlay?.setEnabled?.(false);
+  equipmentInspection?.statusOverlay?.setEnabled?.(false);
   const cameras = createBabylonPresetCameras(scene);
   scene.activeCamera = cameras.general;
   scene.metadata.migrationStage = 'V31-BLOCK-2';
@@ -521,6 +535,8 @@ export function createBabylonRuntime({
   let processMetrics = Object.freeze({ flowRateM3s: 0, pressurePa: 0 });
   let activeScenePalette = Object.freeze({});
   let inspectionPickHandler = null;
+  let inspectionHoverHandler = null;
+  let inspectionHoverId = null;
   let inspectionPointerDown = null;
   let inspectionCameraTransition = null;
   let pipeRenderKey = JSON.stringify([
@@ -680,6 +696,55 @@ export function createBabylonRuntime({
     return inspectionPickHandler;
   }
 
+  function setInspectionHoverHandler(handler) {
+    if (handler !== null && handler !== undefined && typeof handler !== 'function') {
+      throw new TypeError('Inspection hover handler must be a function or null.');
+    }
+    inspectionHoverHandler = handler ?? null;
+    return inspectionHoverHandler;
+  }
+
+  function dispatchInspectionHover(id, point = null) {
+    const nextId = id || null;
+    const changed = nextId !== inspectionHoverId;
+    inspectionHoverId = nextId;
+    base.equipmentInspection?.setHoverTarget?.(nextId);
+    if (canvas.style && changed) canvas.style.cursor = nextId ? 'pointer' : '';
+    const target = nextId ? base.equipmentInspection?.getTargetInfo?.(nextId) : null;
+    const payload = createBabylonInspectionHoverPayload({
+      id: nextId,
+      target,
+      x: point?.x,
+      y: point?.y,
+    });
+    if (typeof inspectionHoverHandler === 'function' && (payload || changed)) {
+      try {
+        inspectionHoverHandler(payload);
+      } catch (error) {
+        console.error('[PULPA LAB B68] No se pudo sincronizar el hover Inspection.', error);
+      }
+    }
+    if (changed) invalidateRender(120);
+    return payload;
+  }
+
+  function clearInspectionHover() {
+    return dispatchInspectionHover(null, null);
+  }
+
+  function updateInspectionHover(event) {
+    const point = pointerCoordinates(event);
+    if (!point) return clearInspectionHover();
+    const id = resolveBabylonInspectionPick({
+      scene: base.scene,
+      inspectionSystem: base.equipmentInspection,
+      x: point.x,
+      y: point.y,
+      camera: base.scene.activeCamera,
+    });
+    return dispatchInspectionHover(id, point);
+  }
+
   function beginInspectionPointer(event) {
     invalidateRender(420);
     if (event?.button !== undefined && event.button !== 0) {
@@ -702,11 +767,17 @@ export function createBabylonRuntime({
   function moveInspectionPointer(event) {
     if (activeCamera === INSPECTION_CAMERA_ID) invalidateRender(180);
     const pointer = inspectionPointerDown;
-    if (!pointer) return;
-    if (pointer.pointerId !== null && event?.pointerId !== undefined && event.pointerId !== pointer.pointerId) return;
-    const point = pointerCoordinates(event);
-    if (!point) return;
-    if (Math.hypot(point.x - pointer.x, point.y - pointer.y) > 6) pointer.moved = true;
+    if (pointer) {
+      if (pointer.pointerId !== null && event?.pointerId !== undefined && event.pointerId !== pointer.pointerId) return;
+      const point = pointerCoordinates(event);
+      if (!point) return;
+      if (Math.hypot(point.x - pointer.x, point.y - pointer.y) > 6) pointer.moved = true;
+      if (pointer.moved) {
+        clearInspectionHover();
+        return;
+      }
+    }
+    updateInspectionHover(event);
   }
 
   function finishInspectionPointer(event) {
@@ -725,7 +796,10 @@ export function createBabylonRuntime({
       y: point.y,
       camera: base.scene.activeCamera,
     });
-    if (!id) return null;
+    if (!id) {
+      dispatchInspectionHover(null, point);
+      return null;
+    }
 
     activateBabylonInspectionPick({
       id,
@@ -734,6 +808,7 @@ export function createBabylonRuntime({
       activeCamera,
       onPick: inspectionPickHandler,
     });
+    dispatchInspectionHover(id, point);
     return id;
   }
 
@@ -743,8 +818,10 @@ export function createBabylonRuntime({
     pointerup: finishInspectionPointer,
     pointercancel: () => {
       inspectionPointerDown = null;
+      clearInspectionHover();
       invalidateRender(120);
     },
+    pointerleave: () => clearInspectionHover(),
     wheel: () => invalidateRender(320),
   };
   Object.entries(interactionHandlers).forEach(([type, handler]) => {
@@ -863,6 +940,11 @@ export function createBabylonRuntime({
     }
     base.equipmentInspection?.contextOverlay?.setEnabled?.(
       id === INSPECTION_CAMERA_ID && Boolean(base.equipmentInspection?.targetId),
+    );
+    base.equipmentInspection?.statusOverlay?.setEnabled?.(
+      id === INSPECTION_CAMERA_ID
+      && Boolean(base.equipmentInspection?.targetId)
+      && Boolean(base.equipmentInspection?.operationalStatus),
     );
     base.plantLabels?.setView?.(id);
     refreshViewDecorations(true);
@@ -1008,6 +1090,11 @@ export function createBabylonRuntime({
     base.equipmentInspection.contextOverlay?.setEnabled?.(
       activeCamera === INSPECTION_CAMERA_ID && Boolean(target),
     );
+    base.equipmentInspection.statusOverlay?.setEnabled?.(
+      activeCamera === INSPECTION_CAMERA_ID
+      && Boolean(target)
+      && Boolean(base.equipmentInspection?.operationalStatus),
+    );
     const targetMeta = id
       ? base.equipmentInspection.getTargets().find((item) => item.id === id)
       : null;
@@ -1026,6 +1113,18 @@ export function createBabylonRuntime({
     refreshViewDecorations(true);
     invalidateRender(smooth ? 620 : 180);
     return target;
+  }
+
+  function setInspectionOperationalStatus(status) {
+    if (!base.equipmentInspection) return null;
+    const normalized = base.equipmentInspection.setOperationalStatus?.(status) ?? null;
+    base.equipmentInspection.statusOverlay?.setEnabled?.(
+      activeCamera === INSPECTION_CAMERA_ID
+      && Boolean(base.equipmentInspection?.targetId)
+      && Boolean(normalized),
+    );
+    invalidateRender(140);
+    return normalized;
   }
 
   function setInspectionMode(mode) {
@@ -1057,8 +1156,12 @@ export function createBabylonRuntime({
     stopRenderLoop();
     disposed = true;
     inspectionPickHandler = null;
+    inspectionHoverHandler = null;
     inspectionPointerDown = null;
     inspectionCameraTransition = null;
+    inspectionHoverId = null;
+    base.equipmentInspection?.setHoverTarget?.(null);
+    if (canvas.style) canvas.style.cursor = '';
     Object.entries(interactionHandlers).forEach(([type, handler]) => {
       canvas.removeEventListener?.(type, handler);
     });
@@ -1097,7 +1200,9 @@ export function createBabylonRuntime({
     setScenePalette,
     getInspectionTargets: () => base.equipmentInspection?.getTargets?.() ?? [],
     setInspectionPickHandler,
+    setInspectionHoverHandler,
     setInspectionTarget,
+    setInspectionOperationalStatus,
     setInspectionMode,
     startRenderLoop,
     stopRenderLoop,
@@ -1113,6 +1218,8 @@ export function createBabylonRuntime({
     get visualFlowScale() { return processFlowScale; },
     get scenePalette() { return activeScenePalette; },
     get inspectionTargetId() { return base.equipmentInspection?.targetId ?? null; },
+    get inspectionHoverTargetId() { return inspectionHoverId; },
+    get inspectionOperationalStatus() { return base.equipmentInspection?.operationalStatus ?? null; },
     get inspectionMode() { return base.equipmentInspection?.mode ?? 'normal'; },
     get inspectionCameraTransitionActive() { return Boolean(inspectionCameraTransition); },
     get disposed() { return disposed; },

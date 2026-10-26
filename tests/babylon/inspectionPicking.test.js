@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   activateBabylonInspectionPick,
+  createBabylonInspectionHoverPayload,
   resolveBabylonInspectionPick,
 } from '../../src/babylon/runtime/baseEnvironment.js';
 
@@ -105,5 +106,27 @@ describe('B67 clickable Inspection flow', () => {
     })).toBe(false);
     expect(setTarget).not.toHaveBeenCalled();
     expect(setCamera).not.toHaveBeenCalled();
+  });
+
+  it('builds a compact hover payload from the same canonical Inspection metadata', () => {
+    expect(createBabylonInspectionHoverPayload({
+      id: 'MILL-01',
+      target: { label: 'Molino SAG', kind: 'equipment' },
+      x: 88,
+      y: 42,
+    })).toEqual({
+      id: 'MILL-01',
+      label: 'Molino SAG',
+      kind: 'equipment',
+      x: 88,
+      y: 42,
+    });
+    expect(createBabylonInspectionHoverPayload({ id: null, target: null, x: 1, y: 2 })).toBeNull();
+    expect(createBabylonInspectionHoverPayload({
+      id: 'MILL-01',
+      target: { label: 'Molino SAG' },
+      x: Number.NaN,
+      y: 2,
+    })).toBeNull();
   });
 });

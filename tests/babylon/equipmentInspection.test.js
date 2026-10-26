@@ -155,6 +155,65 @@ describe('Babylon Inspection parity', () => {
     system.dispose(); scene.dispose(); engine.dispose();
   });
 
+  it('uses a separate hover overlay and suppresses it for the selected target', () => {
+    const { engine, scene } = makeScene();
+    target(scene, 'EXCAVATOR-01', [-8, 1, 0]);
+    target(scene, 'TRUCK-01', [0, 1, 0]);
+    const system = createBabylonEquipmentInspectionSystem({ scene });
+
+    expect(system.setHoverTarget('TRUCK-01')).toBeTruthy();
+    expect(system.hoverTargetId).toBe('TRUCK-01');
+    expect(system.hoverOverlay.getChildMeshes(false)).toHaveLength(1);
+    expect(system.hoverOverlay.getChildMeshes(false)[0].metadata).toMatchObject({
+      role: 'hover',
+      targetId: 'TRUCK-01',
+    });
+
+    system.setTarget('TRUCK-01');
+    expect(system.hoverOverlay.getChildMeshes(false)).toHaveLength(0);
+    expect(system.contextOverlay.getChildMeshes(false).some((mesh) => mesh.metadata.role === 'selected')).toBe(true);
+
+    expect(system.setHoverTarget('NOT-A-TARGET')).toBeNull();
+    expect(system.hoverTargetId).toBeNull();
+    system.dispose(); scene.dispose(); engine.dispose();
+  });
+
+  it('renders a non-pickable operational status beacon above the selected target', () => {
+    const { engine, scene } = makeScene();
+    target(scene, 'MILL-01', [0, 1, 0], [6, 4, 3]);
+    target(scene, 'SUMP-01', [10, 1, 0], [4, 2, 3]);
+    const system = createBabylonEquipmentInspectionSystem({ scene });
+
+    system.setTarget('MILL-01');
+    expect(system.statusOverlay.getChildMeshes(false)).toHaveLength(0);
+    expect(system.setOperationalStatus({ tone: 'valid', label: 'Hidráulica calculada' })).toEqual({
+      tone: 'valid',
+      label: 'Hidráulica calculada',
+    });
+
+    const [validBeacon] = system.statusOverlay.getChildMeshes(false);
+    expect(validBeacon).toBeTruthy();
+    expect(validBeacon.isPickable).toBe(false);
+    expect(validBeacon.metadata).toMatchObject({
+      inspectionOperationalStatus: true,
+      targetId: 'MILL-01',
+      tone: 'valid',
+      visualOnly: true,
+    });
+    expect(validBeacon.position.y).toBeGreaterThan(1);
+
+    system.setOperationalStatus({ tone: 'invalid', label: 'Bomba no calculable' });
+    const [invalidBeacon] = system.statusOverlay.getChildMeshes(false);
+    expect(invalidBeacon.metadata.tone).toBe('invalid');
+    expect(invalidBeacon.name).toBe('inspection-status-MILL-01');
+
+    system.setTarget('SUMP-01');
+    expect(system.operationalStatus).toBeNull();
+    expect(system.statusOverlay.getChildMeshes(false)).toHaveLength(0);
+
+    system.dispose(); scene.dispose(); engine.dispose();
+  });
+
   it('marks semantic-only V57 inspection routes as non-cutaway and keeps their mode normal', () => {
     const { engine, scene } = makeScene();
     const v55Marker = CreateBox('V55_SITE_MARKER', { size: 1 }, scene);

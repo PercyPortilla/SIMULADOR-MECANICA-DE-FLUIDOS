@@ -3,6 +3,7 @@ import { Color3 } from '@babylonjs/core/Maths/math.color.js';
 import { Plane } from '@babylonjs/core/Maths/math.plane.js';
 import { Vector3 } from '@babylonjs/core/Maths/math.vector.js';
 import { CreateBox } from '@babylonjs/core/Meshes/Builders/boxBuilder.js';
+import { CreateSphere } from '@babylonjs/core/Meshes/Builders/sphereBuilder.js';
 import { TransformNode } from '@babylonjs/core/Meshes/transformNode.js';
 import {
   INSPECTION_CIRCUIT_ORDER,
@@ -246,13 +247,13 @@ export function computeBabylonInspectionFraming(target, id = target?.name) {
   };
 }
 
-function createContextBox(scene, root, target, id, role, color) {
+function createContextBox(scene, root, target, id, role, color, padding = 0.18) {
   const bounds = getBounds(target);
   if (!bounds) return null;
   const box = CreateBox(`inspection-${role}-${id}`, {
-    width: Math.max(0.05, bounds.size.x + 0.18),
-    height: Math.max(0.05, bounds.size.y + 0.18),
-    depth: Math.max(0.05, bounds.size.z + 0.18),
+    width: Math.max(0.05, bounds.size.x + padding),
+    height: Math.max(0.05, bounds.size.y + padding),
+    depth: Math.max(0.05, bounds.size.z + padding),
   }, scene);
   box.parent = root;
   box.position.copyFrom(bounds.center);
@@ -268,15 +269,57 @@ function createContextBox(scene, root, target, id, role, color) {
   return box;
 }
 
+const OPERATIONAL_STATUS_COLORS = Object.freeze({
+  valid: '#72d3a5',
+  educational: '#f0b35a',
+  limited: '#f0b35a',
+  invalid: '#df7f72',
+  pending: '#8ba0aa',
+  neutral: '#8ba0aa',
+});
+
+function createOperationalBeacon(scene, root, target, id, status) {
+  const bounds = getBounds(target);
+  if (!bounds || !status) return null;
+  const tone = OPERATIONAL_STATUS_COLORS[status.tone] ? status.tone : 'neutral';
+  const span = Math.max(bounds.size.x, bounds.size.y, bounds.size.z);
+  const diameter = Math.min(1.4, Math.max(0.55, span * 0.055));
+  const beacon = CreateSphere(`inspection-status-${id}`, { diameter, segments: 12 }, scene);
+  beacon.parent = root;
+  beacon.position.copyFrom(bounds.center);
+  beacon.position.y += bounds.size.y / 2 + diameter * 1.35;
+  const material = new StandardMaterial(`${beacon.name}-material`, scene);
+  material.emissiveColor = Color3.FromHexString(OPERATIONAL_STATUS_COLORS[tone]);
+  material.diffuseColor = Color3.Black();
+  material.disableLighting = true;
+  beacon.material = material;
+  beacon.isPickable = false;
+  beacon.renderingGroupId = 3;
+  beacon.metadata = {
+    inspectionOperationalStatus: true,
+    targetId: id,
+    tone,
+    label: status.label ?? '',
+    visualOnly: true,
+  };
+  return beacon;
+}
+
 export function createBabylonEquipmentInspectionSystem({ scene } = {}) {
   if (!scene) throw new TypeError('Babylon Inspection requiere Scene.');
   const targets = new Map();
   const contextOverlay = new TransformNode('inspection-circuit-context', scene);
   contextOverlay.metadata = { inspectionOverlay: true };
+  const hoverOverlay = new TransformNode('inspection-hover-context', scene);
+  hoverOverlay.metadata = { inspectionHoverOverlay: true };
+  const statusOverlay = new TransformNode('inspection-operational-status', scene);
+  statusOverlay.metadata = { inspectionOperationalStatusOverlay: true, visualOnly: true };
   const aliasRoot = new TransformNode('inspection-v50-aliases', scene);
   aliasRoot.metadata = { inspectionAliasRoot: true, visualOnly: true };
   let currentTargetId = null;
   let currentMode = 'normal';
+  let hoverTargetId = null;
+  let operationalStatus = null;
   let activeSnapshot = null;
   const pickTargetIds = new Map();
   const pickabilitySnapshot = new Map();
@@ -308,6 +351,9 @@ export function createBabylonEquipmentInspectionSystem({ scene } = {}) {
 
   function rebuildTargets() {
     restorePickability();
+    clearHoverOverlay();
+    clearStatusOverlay();
+    hoverTargetId = null;
     targets.clear();
     aliasRoot.getChildren?.().forEach((node) => node.dispose?.());
     INSPECTION_CIRCUIT_ORDER.forEach((id) => {
@@ -326,6 +372,44 @@ export function createBabylonEquipmentInspectionSystem({ scene } = {}) {
       mesh.material?.dispose?.(false, false);
       mesh.dispose(false, false);
     });
+  }
+
+  function clearHoverOverlay() {
+    hoverOverlay.getChildMeshes(false).forEach((mesh) => {
+      mesh.material?.dispose?.(false, false);
+      mesh.dispose(false, false);
+    });
+  }
+
+  function clearStatusOverlay() {
+    statusOverlay.getChildMeshes(false).forEach((mesh) => {
+      mesh.material?.dispose?.(false, false);
+      mesh.dispose(false, false);
+    });
+  }
+
+  function refreshStatusOverlay() {
+    clearStatusOverlay();
+    if (!currentTargetId || !operationalStatus) return null;
+    const target = targets.get(currentTargetId);
+    if (!target) return null;
+    return createOperationalBeacon(scene, statusOverlay, target, currentTargetId, operationalStatus);
+  }
+
+  function refreshHoverOverlay() {
+    clearHoverOverlay();
+    if (!hoverTargetId || hoverTargetId === currentTargetId) return null;
+    const target = targets.get(hoverTargetId);
+    if (!target) return null;
+    return createContextBox(
+      scene,
+      hoverOverlay,
+      target,
+      hoverTargetId,
+      'hover',
+      Color3.FromHexString('#fff2a8'),
+      0.30,
+    );
   }
 
   function updateContextOverlay(id) {
@@ -419,27 +503,32 @@ export function createBabylonEquipmentInspectionSystem({ scene } = {}) {
     if (id) updateContextOverlay(id);
   }
 
+  function getTargetInfo(id) {
+    const target = targets.get(id);
+    if (!target) return null;
+    const context = getInspectionCircuitContext(id);
+    const metadata = nodeMetadata(target);
+    const inspectableMeshes = collectInspectableMeshes(target);
+    const conveyor = Boolean(metadata.conveyorId) || id.startsWith('CV-');
+    const connection = Boolean(metadata.connectionId) || id.startsWith('P-') || id.startsWith('MT-');
+    return {
+      id,
+      label: getInspectionTargetLabel(id, {
+        conveyor,
+        connection,
+      }),
+      kind: metadata.inspectionKind || metadata.type || (connection ? 'connection' : conveyor ? 'conveyor' : 'equipment'),
+      supportsModes: metadata.semanticOnly !== true && inspectableMeshes.length > 0,
+      semanticOnly: metadata.semanticOnly === true,
+      proxySemantics: metadata.proxySemantics ?? null,
+      circuitOrder: context.index,
+      previousId: context.previousId,
+      nextId: context.nextId,
+    };
+  }
+
   function getTargets() {
-    return INSPECTION_CIRCUIT_ORDER.filter((id) => targets.has(id)).map((id) => {
-      const target = targets.get(id);
-      const context = getInspectionCircuitContext(id);
-      const metadata = nodeMetadata(target);
-      const inspectableMeshes = collectInspectableMeshes(target);
-      return {
-        id,
-        label: getInspectionTargetLabel(id, {
-          conveyor: Boolean(metadata.conveyorId) || id.startsWith('CV-'),
-          connection: Boolean(metadata.connectionId) || id.startsWith('P-') || id.startsWith('MT-'),
-        }),
-        kind: metadata.inspectionKind || metadata.type || 'equipment',
-        supportsModes: metadata.semanticOnly !== true && inspectableMeshes.length > 0,
-        semanticOnly: metadata.semanticOnly === true,
-        proxySemantics: metadata.proxySemantics ?? null,
-        circuitOrder: context.index,
-        previousId: context.previousId,
-        nextId: context.nextId,
-      };
-    });
+    return INSPECTION_CIRCUIT_ORDER.map((id) => getTargetInfo(id)).filter(Boolean);
   }
 
   function refreshTargets() {
@@ -452,10 +541,12 @@ export function createBabylonEquipmentInspectionSystem({ scene } = {}) {
       currentMode = previousMode;
       if (previousMode !== 'normal') applyMode(targets.get(previousTarget), previousMode);
       updateContextOverlay(previousTarget);
+      refreshStatusOverlay();
     } else if (previousTarget) {
       currentTargetId = null;
       currentMode = 'normal';
       updateContextOverlay(null);
+      refreshStatusOverlay();
     }
     return getTargets();
   }
@@ -466,14 +557,38 @@ export function createBabylonEquipmentInspectionSystem({ scene } = {}) {
       currentTargetId = null;
       currentMode = 'normal';
       updateContextOverlay(null);
+      refreshHoverOverlay();
+      refreshStatusOverlay();
       return null;
     }
     if (!targets.has(id)) rebuildTargets();
     if (!targets.has(id)) throw new RangeError(`Equipo Babylon no inspeccionable: ${id}.`);
+    if (currentTargetId !== id) operationalStatus = null;
     currentTargetId = id;
     currentMode = 'normal';
     updateContextOverlay(id);
+    refreshHoverOverlay();
+    refreshStatusOverlay();
     return targets.get(id);
+  }
+
+  function setHoverTarget(id) {
+    const nextId = id && targets.has(id) ? id : null;
+    if (nextId === hoverTargetId) return nextId ? targets.get(nextId) : null;
+    hoverTargetId = nextId;
+    refreshHoverOverlay();
+    return nextId ? targets.get(nextId) : null;
+  }
+
+  function setOperationalStatus(status) {
+    operationalStatus = status && typeof status === 'object'
+      ? Object.freeze({
+        tone: OPERATIONAL_STATUS_COLORS[status.tone] ? status.tone : 'neutral',
+        label: String(status.label ?? ''),
+      })
+      : null;
+    refreshStatusOverlay();
+    return operationalStatus;
   }
 
   function setMode(mode) {
@@ -500,9 +615,14 @@ export function createBabylonEquipmentInspectionSystem({ scene } = {}) {
   return {
     modes: INSPECTION_MODES,
     contextOverlay,
+    hoverOverlay,
+    statusOverlay,
     getTargets,
+    getTargetInfo,
     refreshTargets,
     setTarget,
+    setHoverTarget,
+    setOperationalStatus,
     setMode,
     resolvePickTargetId,
     getPickableMeshCount: () => pickTargetIds.size,
@@ -510,12 +630,18 @@ export function createBabylonEquipmentInspectionSystem({ scene } = {}) {
     getContext: (id = currentTargetId) => getInspectionCircuitContext(id),
     refreshContextOverlay,
     get targetId() { return currentTargetId; },
+    get hoverTargetId() { return hoverTargetId; },
+    get operationalStatus() { return operationalStatus; },
     get mode() { return currentMode; },
     dispose() {
       restore();
       restorePickability();
       clearContextOverlay();
+      clearHoverOverlay();
+      clearStatusOverlay();
       contextOverlay.dispose();
+      hoverOverlay.dispose();
+      statusOverlay.dispose();
       aliasRoot.dispose();
       targets.clear();
     },

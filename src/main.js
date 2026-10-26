@@ -40,6 +40,7 @@ import {
   getInspectionRelatedResult,
   getInspectionStage,
 } from './ui/inspectionGuide.js';
+import { getInspectionOperationalMetrics } from './ui/inspectionMetrics.js';
 import { ACADEMIC_CASES, getAcademicCase, loadAcademicCase } from './ui/academicCases.js';
 import { compareAcademicCases } from './ui/academicComparison.js';
 import {
@@ -59,6 +60,7 @@ let activeWorkspaceTab = 'circuit';
 let startPresentationTour = null;
 let lastAcademicLabEvaluation = null;
 let activeComparisonScenarioId = null;
+let refreshInspectionGuide = null;
 
 loadExampleSimulation(updateState);
 
@@ -972,41 +974,6 @@ function renderScientificWorkspace(tabId = activeWorkspaceTab) {
   }
 }
 
-function inspectionMetricRows(id, state, results) {
-  const t = results.transport ?? {};
-  const p = results.pump ?? {};
-  const e = results.energy ?? {};
-  const slurry = results.slurry ?? {};
-  const recovery = results.recovery ?? {};
-  const leaching = results.leaching ?? {};
-  const qM3h = t.flowRateM3s === undefined ? null : t.flowRateM3s * 3600;
-  const rows = [];
-  const add = (label, value) => { if (value !== null && value !== undefined) rows.push([label, value]); };
-  if (['SLURRY-PUMP-01', 'PUMP-01'].includes(id)) {
-    add('Q', qM3h === null ? '—' : `${qM3h.toFixed(2)} m³/h`);
-    add('ΔP requerida', t.pressureDropPa === undefined ? '—' : `${(t.pressureDropPa / 1000).toFixed(2)} kPa`);
-    add('Carga H', t.totalHeadM === undefined ? '—' : `${t.totalHeadM.toFixed(2)} m`);
-    add('Potencia', e.electricalPowerW === undefined ? '—' : `${(e.electricalPowerW / 1000).toFixed(2)} kW`);
-    add('NPSH-A', p.npshAvailableM === undefined ? '—' : `${p.npshAvailableM.toFixed(2)} m`);
-  } else if (id.startsWith('P-') || id === 'SUMP-01' || id === 'CLASS-01') {
-    add('Q', qM3h === null ? '—' : `${qM3h.toFixed(2)} m³/h`);
-    add('V', state.transport?.pipe1?.velocityMps === undefined ? '—' : `${state.transport.pipe1.velocityMps.toFixed(3)} m/s`);
-    add('Re', t.reynoldsNumber === undefined ? '—' : t.reynoldsNumber.toFixed(0));
-    add('ΔP', t.pressureDropPa === undefined ? '—' : `${(t.pressureDropPa / 1000).toFixed(2)} kPa`);
-  } else if (id === 'MILL-01') {
-    add('ρ pulpa', slurry.densityKgM3 === undefined ? '—' : `${slurry.densityKgM3.toFixed(1)} kg/m³`);
-    add('Sólidos vol.', slurry.solidVolumeFraction === undefined ? '—' : `${(slurry.solidVolumeFraction * 100).toFixed(2)} %`);
-    add('Modelo reológico', results.rheology?.model ?? '—');
-  } else if (/^R-0[1-4]$/.test(id)) {
-    add('Residencia', leaching.residenceTimeH === undefined ? '—' : `${leaching.residenceTimeH.toFixed(2)} h`);
-    add('Conversión', leaching.conversion === undefined ? '—' : `${(leaching.conversion * 100).toFixed(2)} %`);
-  } else if (['CIP-ADSORPTION', 'ELUTION-SKID', 'EW-CELLS', 'SMELTING-FURNACE'].includes(id)) {
-    add('Recuperación global', recovery.overallRecovery === undefined ? '—' : `${(recovery.overallRecovery * 100).toFixed(2)} %`);
-    add('Metal final', recovery.finalMetalKgH === undefined ? '—' : `${recovery.finalMetalKgH.toFixed(4)} kg/h`);
-  }
-  return rows;
-}
-
 function wireSceneFullscreen() {
   const sceneCard = document.querySelector('.scene-card');
   const controls = document.querySelector('.scene-controls');
@@ -1072,7 +1039,7 @@ function render() {
     <main class="workspace">
       <nav class="mobile-workspace-jump" aria-label="Navegación móvil del simulador"><button type="button" data-scroll-target="results">Resultados / 3D</button><button type="button" data-scroll-target="parameters">Parámetros</button></nav>
       <aside class="sidebar"><div id="theme-panel" class="theme-panel" hidden><div class="theme-panel-head"><strong>Paleta de interfaz</strong><button id="theme-reset" type="button">Restablecer UI</button></div><p>La apariencia se guarda en este navegador y no modifica la física.</p><div class="theme-grid"><label>Acento<input type="color" data-theme-key="accent"></label><label>Fondo<input type="color" data-theme-key="background"></label><label>Panel<input type="color" data-theme-key="panel"></label><label>Texto<input type="color" data-theme-key="text"></label></div><div class="theme-panel-head scene-theme-head"><strong>Paleta escena 3D</strong><button id="scene-palette-reset" type="button">Restablecer 3D</button></div><p>Roles visuales semánticos. No cambian densidad, rugosidad hidráulica ni ninguna propiedad física.</p><div class="theme-grid scene-theme-grid"><label>Terreno<input type="color" data-scene-role="terrain"></label><label>Caminos<input type="color" data-scene-role="road"></label><label>Concreto<input type="color" data-scene-role="concrete"></label><label>Acero<input type="color" data-scene-role="structuralSteel"></label><label>Proceso<input type="color" data-scene-role="processSteel"></label><label>Pipe acero<input type="color" data-scene-role="pipeSteel"></label><label>Pipe HDPE<input type="color" data-scene-role="pipeHdpe"></label><label>Seguridad<input type="color" data-scene-role="safetyYellow"></label><label>Mineral<input type="color" data-scene-role="mineral"></label><label>Vehículos<input type="color" data-scene-role="vehicleYellow"></label></div></div><div class="sidebar-heading"><span>PARÁMETROS</span><small>ENTRADA SI</small></div><div class="scenario-panel"><input id="scenario-name" type="text" value="Escenario" aria-label="Nombre del escenario"><select id="scenario-select" aria-label="Escenario guardado"></select><div class="scenario-controls" aria-label="Escenarios de simulación"><button id="scenario-save" type="button">Guardar / actualizar</button><button id="scenario-load" type="button">Cargar</button><button id="scenario-compare" type="button">Comparar</button><button id="scenario-delete" type="button">Eliminar</button><button id="scenario-export-json" type="button">Exportar JSON</button><button id="scenario-export-csv" type="button">Exportar CSV</button><button id="scenario-reset" type="button">Reset parámetros</button></div></div><p id="scenario-status" class="scenario-status" data-tone="muted">Los escenarios guardan entradas físicas; materiales/tema visual no se mezclan con la física.</p><section class="academic-case-panel" aria-labelledby="academic-case-title"><div class="academic-case-heading"><div><span>CASOS DE ESTUDIO</span><strong id="academic-case-title">Casos académicos</strong></div><small>V19</small></div><select id="academic-case-select" aria-label="Caso académico"><option value="">Seleccionar caso…</option></select><div class="academic-case-actions"><button id="academic-case-load" type="button">Cargar caso</button><button id="academic-case-present" type="button" disabled>Cargar + presentar</button></div><div id="academic-case-guide" class="academic-case-guide" hidden></div><p id="academic-case-status" class="academic-case-status" aria-live="polite">Valores académicos de referencia: revisar siempre el alcance del modelo.</p><small class="academic-global-scope">Sedimentación Durand: indicador orientativo histórico, no calibrado; d50/d80 se registran pero no alimentan esa correlación.</small><details id="academic-comparator" class="academic-comparator"><summary>Comparar dos casos</summary><div class="academic-comparator-body"><div class="academic-comparator-selects"><label>A<select id="academic-compare-left" aria-label="Caso A"></select></label><label>B<select id="academic-compare-right" aria-label="Caso B"></select></label></div><button id="academic-compare-run" type="button">Comparar A vs B</button><div id="academic-comparison-result" class="academic-comparison-result" hidden></div></div></details></section><div id="sections"></div><p id="validation-message" class="validation-message" aria-live="polite"></p></aside>
-      <section class="content"><div class="content-heading"><div><p class="eyebrow">SIMULADOR UNIVERSITARIO</p><h2>Mec&aacute;nica de fluidos aplicada a transporte de pulpas</h2><p class="subtitle">Entradas f&iacute;sicas &rarr; modelo reol&oacute;gico/hidr&aacute;ulico &rarr; resultados &rarr; an&aacute;lisis. Sistema SI y alcance expl&iacute;cito por modelo.</p></div><span class="status-dot">● ESPERANDO PARÁMETROS</span></div><div class="scene-card"><div class="scene-card-head"><div><p class="eyebrow">GEMELO DIGITAL 3D</p><h3 id="view-title">Planta general</h3></div><div class="scene-controls"><div class="scene-toggles"><label class="label-toggle"><input id="labels-toggle" type="checkbox" checked><span>Mostrar etiquetas</span></label><label class="label-toggle"><input id="animations-toggle" type="checkbox" checked><span>Animaciones</span></label><label class="label-toggle geotech-toggle"><input id="geotech-toggle" type="checkbox"><span>Geotecnia / subsuelo</span></label></div><div class="inspection-toolbar" aria-label="Inspección interna"><label>Equipo<select id="inspection-target"><option value="">Seleccionar…</option></select></label><div class="inspection-stepper" role="group" aria-label="Recorrer circuito"><button id="inspection-prev" type="button" disabled>← Anterior</button><button id="inspection-next" type="button" disabled>Siguiente →</button></div><label>Modo<select id="inspection-mode" disabled><option value="normal">Normal</option><option value="transparent">Transparente</option><option value="cutaway">Corte</option><option value="interior">Interior</option></select></label></div><div id="camera-switcher" class="camera-switcher" role="group" aria-label="Vista de cámara"></div></div></div><div class="scene-viewport"><canvas id="environment-canvas" aria-label="Entorno exterior industrial V57/B64"></canvas><div id="scene-loading" class="scene-loading" role="status" aria-live="polite"><strong>Cargando Blender V57 · B64</strong><span>Preparando el entorno final, materiales y animaciones…</span></div><div id="presentation-controls" class="presentation-controls" data-active="false" aria-label="Modo presentación"><button id="presentation-toggle" class="presentation-toggle" type="button" aria-pressed="false">▶ Modo presentación</button><div id="presentation-player" class="presentation-player" hidden><button id="presentation-prev" type="button" aria-label="Parada anterior">←</button><button id="presentation-play" type="button" aria-label="Reproducir presentación" aria-pressed="false">▶</button><button id="presentation-next" type="button" aria-label="Siguiente parada">→</button><span id="presentation-progress" aria-live="polite">01 / 19</span></div></div><aside id="inspection-guide" class="inspection-guide" hidden aria-live="polite" aria-label="Ficha t&eacute;cnica del equipo seleccionado"></aside><aside id="geotech-legend" class="geotech-legend" hidden aria-label="Leyenda geotécnica"><strong>SUBSUELO CONCEPTUAL</strong><span><i data-geotech-color="natural"></i>Natural: suelo / roca</span><span><i data-geotech-color="engineered"></i>Construido: relleno / cimentación</span><span><i data-geotech-color="water"></i>Hidrogeología conceptual</span><small>No representa campaña geotécnica ni modelo hidrogeológico calibrado.</small></aside><p id="scene-error" class="scene-error" hidden></p></div></div><section class="hydraulic-summary" aria-labelledby="hydraulic-summary-title"><div class="technical-section-head"><div><p class="eyebrow">RESULTADOS PRINCIPALES</p><h3 id="hydraulic-summary-title">Estado hidr&aacute;ulico del circuito</h3></div><small>Valores del escenario activo</small></div><div class="kpi-grid"><article><span>CAUDAL Q</span><strong id="kpi-flow">&mdash;</strong><small>caudal volum&eacute;trico</small></article><article><span>VELOCIDAD V</span><strong id="kpi-velocity">&mdash;</strong><small>velocidad media</small></article><article><span id="kpi-reynolds-label">REYNOLDS Re</span><strong id="kpi-reynolds">&mdash;</strong><small id="kpi-regime-note">r&eacute;gimen pendiente</small></article><article><span>FACTOR DARCY f</span><strong id="kpi-friction-factor">&mdash;</strong><small>adimensional</small></article><article><span>&Delta;P TOTAL</span><strong id="kpi-dp">&mdash;</strong><small id="kpi-dp-note">requiere modelo aplicable</small></article><article><span>CARGA H</span><strong id="kpi-head">&mdash;</strong><small>m de fluido</small></article><article><span>POTENCIA P</span><strong id="kpi-power">&mdash;</strong><small>potencia el&eacute;ctrica</small></article><article><span>NPSH DISPONIBLE</span><strong id="kpi-npsh">&mdash;</strong><small id="kpi-npsh-note">requiere curva de bomba</small></article></div></section><div class="result-panel"><div class="result-panel-heading"><div><p class="eyebrow">VALIDACI&Oacute;N Y RESULTADOS</p><h3>Reolog&iacute;a &rarr; hidr&aacute;ulica &rarr; bombeo &rarr; proceso</h3></div></div><div class="validity-strip" aria-label="Estado de aplicabilidad"><span id="validity-hydraulic" class="validity-badge" data-state="pending">Hidr&aacute;ulica &middot; pendiente</span><span id="validity-rheology" class="validity-badge" data-state="pending">Reolog&iacute;a &middot; pendiente</span><span id="validity-pump" class="validity-badge" data-state="pending">Bomba &middot; pendiente</span><span id="validity-process" class="validity-badge" data-state="pending">Proceso &middot; pendiente</span></div><section id="engineering-comparison" class="engineering-comparison" hidden></section><div class="result-metrics"><div><span>Modelo activo</span><strong id="result-model">Pendiente de par&aacute;metros</strong></div><div><span>R&eacute;gimen</span><strong id="result-regime">&mdash;</strong></div><div><span>Densidad de pulpa</span><strong id="result-density">&mdash;</strong></div><div><span>S&oacute;lidos vol.</span><strong id="result-phi">&mdash;</strong></div><div><span id="result-wall-stress-label">Esfuerzo de pared &tau;w</span><strong id="result-wall-stress">&mdash;</strong><small id="result-wall-stress-note"></small></div><div><span>Gradiente &Delta;P/L</span><strong id="result-pressure-gradient">&mdash;</strong></div><div><span>P&eacute;rdidas locales</span><strong id="result-local-loss">&mdash;</strong></div><div><span>Componente est&aacute;tica</span><strong id="result-static">&mdash;</strong></div><div><span>Energ&iacute;a anual</span><strong id="result-energy">&mdash;</strong></div><div><span>Costo anual</span><strong id="result-cost">&mdash;</strong></div><div><span>Residencia lixiviaci&oacute;n</span><strong id="result-residence">&mdash;</strong></div><div><span>Recuperaci&oacute;n global</span><strong id="result-recovery">&mdash;</strong></div></div><details class="equations-panel"><summary>Ecuaciones / Supuestos</summary><div class="equations-grid"><article><span>Continuidad</span><strong>Q = V&middot;A</strong><small>A = &pi;D<sup>2</sup>/4</small></article><article><span>Reynolds</span><strong>Re = &rho;VD/&mu;</strong><small>Newtoniano; no newtoniano usa Reynolds generalizado.</small></article><article><span>Darcy&ndash;Weisbach</span><strong>&Delta;P<sub>f</sub> = f(L/D)(&rho;V<sup>2</sup>/2)</strong><small>Factor Darcy seg&uacute;n r&eacute;gimen y rugosidad.</small></article><article><span>P&eacute;rdidas locales</span><strong>&Delta;P<sub>m</sub> = &Sigma;K(&rho;V<sup>2</sup>/2)</strong><small>Accesorios expl&iacute;citos + K adicional.</small></article><article><span>Componente est&aacute;tica</span><strong>&Delta;P<sub>z</sub> = &rho;g&Delta;z</strong><small>&Delta;z positivo cuando descarga est&aacute; m&aacute;s alta.</small></article><article><span>Carga total</span><strong>H = &Delta;P/(&rho;g)</strong><small>Conversi&oacute;n de presi&oacute;n requerida a metros de fluido.</small></article><article><span>Potencia</span><strong>P<sub>e</sub> = Q&Delta;P/(&eta;<sub>p</sub>&eta;<sub>m</sub>)</strong><small>Eficiencias de bomba y motor expl&iacute;citas.</small></article><article><span>NPSH disponible</span><strong>NPSH<sub>A</sub> = (P<sub>a</sub>-P<sub>v</sub>)/(&rho;g)+z<sub>s</sub>-h<sub>fs</sub></strong><small>Comparaci&oacute;n de margen; no predice cavitaci&oacute;n.</small></article></div><p class="equation-scope">Modelo activo: <strong id="equation-active-model">pendiente</strong>. Los resultados fuera del dominio implementado se identifican expl&iacute;citamente como estimaci&oacute;n educativa o no calculable.</p></details><div class="chart-grid"><div id="rheology-chart" class="result-chart"></div><div id="pressure-chart" class="result-chart"></div></div><p id="model-status" class="model-status">Sin advertencias de aplicabilidad.</p><p class="result-note">El bloque hidr&aacute;ulico/reol&oacute;gico es el n&uacute;cleo de Mec&aacute;nica de Fluidos. Lixiviaci&oacute;n, recuperaci&oacute;n y fundici&oacute;n permanecen como contexto del proceso minero y se reportan por separado.</p></div></section>
+      <section class="content"><div class="content-heading"><div><p class="eyebrow">SIMULADOR UNIVERSITARIO</p><h2>Mec&aacute;nica de fluidos aplicada a transporte de pulpas</h2><p class="subtitle">Entradas f&iacute;sicas &rarr; modelo reol&oacute;gico/hidr&aacute;ulico &rarr; resultados &rarr; an&aacute;lisis. Sistema SI y alcance expl&iacute;cito por modelo.</p></div><span class="status-dot">● ESPERANDO PARÁMETROS</span></div><div class="scene-card"><div class="scene-card-head"><div><p class="eyebrow">GEMELO DIGITAL 3D</p><h3 id="view-title">Planta general</h3></div><div class="scene-controls"><div class="scene-toggles"><label class="label-toggle"><input id="labels-toggle" type="checkbox" checked><span>Mostrar etiquetas</span></label><label class="label-toggle"><input id="animations-toggle" type="checkbox" checked><span>Animaciones</span></label><label class="label-toggle geotech-toggle"><input id="geotech-toggle" type="checkbox"><span>Geotecnia / subsuelo</span></label></div><div class="inspection-toolbar" aria-label="Inspección interna"><label>Equipo<select id="inspection-target"><option value="">Seleccionar…</option></select></label><div class="inspection-stepper" role="group" aria-label="Recorrer circuito"><button id="inspection-prev" type="button" disabled>← Anterior</button><button id="inspection-next" type="button" disabled>Siguiente →</button></div><label>Modo<select id="inspection-mode" disabled><option value="normal">Normal</option><option value="transparent">Transparente</option><option value="cutaway">Corte</option><option value="interior">Interior</option></select></label></div><div id="camera-switcher" class="camera-switcher" role="group" aria-label="Vista de cámara"></div></div></div><div class="scene-viewport"><canvas id="environment-canvas" aria-label="Entorno exterior industrial V57/B64"></canvas><div id="scene-loading" class="scene-loading" role="status" aria-live="polite"><strong>Cargando Blender V57 · B64</strong><span>Preparando el entorno final, materiales y animaciones…</span></div><div id="presentation-controls" class="presentation-controls" data-active="false" aria-label="Modo presentación"><button id="presentation-toggle" class="presentation-toggle" type="button" aria-pressed="false">▶ Modo presentación</button><div id="presentation-player" class="presentation-player" hidden><button id="presentation-prev" type="button" aria-label="Parada anterior">←</button><button id="presentation-play" type="button" aria-label="Reproducir presentación" aria-pressed="false">▶</button><button id="presentation-next" type="button" aria-label="Siguiente parada">→</button><span id="presentation-progress" aria-live="polite">01 / 19</span></div></div><aside id="inspection-guide" class="inspection-guide" hidden aria-live="polite" aria-label="Ficha t&eacute;cnica del equipo seleccionado"></aside><aside id="inspection-hover-tooltip" class="inspection-hover-tooltip" role="tooltip" hidden aria-hidden="true"><span id="inspection-hover-id"></span><strong id="inspection-hover-label"></strong><small id="inspection-hover-kind"></small><em id="inspection-hover-metric" hidden></em></aside><aside id="geotech-legend" class="geotech-legend" hidden aria-label="Leyenda geotécnica"><strong>SUBSUELO CONCEPTUAL</strong><span><i data-geotech-color="natural"></i>Natural: suelo / roca</span><span><i data-geotech-color="engineered"></i>Construido: relleno / cimentación</span><span><i data-geotech-color="water"></i>Hidrogeología conceptual</span><small>No representa campaña geotécnica ni modelo hidrogeológico calibrado.</small></aside><p id="scene-error" class="scene-error" hidden></p></div></div><section class="hydraulic-summary" aria-labelledby="hydraulic-summary-title"><div class="technical-section-head"><div><p class="eyebrow">RESULTADOS PRINCIPALES</p><h3 id="hydraulic-summary-title">Estado hidr&aacute;ulico del circuito</h3></div><small>Valores del escenario activo</small></div><div class="kpi-grid"><article><span>CAUDAL Q</span><strong id="kpi-flow">&mdash;</strong><small>caudal volum&eacute;trico</small></article><article><span>VELOCIDAD V</span><strong id="kpi-velocity">&mdash;</strong><small>velocidad media</small></article><article><span id="kpi-reynolds-label">REYNOLDS Re</span><strong id="kpi-reynolds">&mdash;</strong><small id="kpi-regime-note">r&eacute;gimen pendiente</small></article><article><span>FACTOR DARCY f</span><strong id="kpi-friction-factor">&mdash;</strong><small>adimensional</small></article><article><span>&Delta;P TOTAL</span><strong id="kpi-dp">&mdash;</strong><small id="kpi-dp-note">requiere modelo aplicable</small></article><article><span>CARGA H</span><strong id="kpi-head">&mdash;</strong><small>m de fluido</small></article><article><span>POTENCIA P</span><strong id="kpi-power">&mdash;</strong><small>potencia el&eacute;ctrica</small></article><article><span>NPSH DISPONIBLE</span><strong id="kpi-npsh">&mdash;</strong><small id="kpi-npsh-note">requiere curva de bomba</small></article></div></section><div class="result-panel"><div class="result-panel-heading"><div><p class="eyebrow">VALIDACI&Oacute;N Y RESULTADOS</p><h3>Reolog&iacute;a &rarr; hidr&aacute;ulica &rarr; bombeo &rarr; proceso</h3></div></div><div class="validity-strip" aria-label="Estado de aplicabilidad"><span id="validity-hydraulic" class="validity-badge" data-state="pending">Hidr&aacute;ulica &middot; pendiente</span><span id="validity-rheology" class="validity-badge" data-state="pending">Reolog&iacute;a &middot; pendiente</span><span id="validity-pump" class="validity-badge" data-state="pending">Bomba &middot; pendiente</span><span id="validity-process" class="validity-badge" data-state="pending">Proceso &middot; pendiente</span></div><section id="engineering-comparison" class="engineering-comparison" hidden></section><div class="result-metrics"><div><span>Modelo activo</span><strong id="result-model">Pendiente de par&aacute;metros</strong></div><div><span>R&eacute;gimen</span><strong id="result-regime">&mdash;</strong></div><div><span>Densidad de pulpa</span><strong id="result-density">&mdash;</strong></div><div><span>S&oacute;lidos vol.</span><strong id="result-phi">&mdash;</strong></div><div><span id="result-wall-stress-label">Esfuerzo de pared &tau;w</span><strong id="result-wall-stress">&mdash;</strong><small id="result-wall-stress-note"></small></div><div><span>Gradiente &Delta;P/L</span><strong id="result-pressure-gradient">&mdash;</strong></div><div><span>P&eacute;rdidas locales</span><strong id="result-local-loss">&mdash;</strong></div><div><span>Componente est&aacute;tica</span><strong id="result-static">&mdash;</strong></div><div><span>Energ&iacute;a anual</span><strong id="result-energy">&mdash;</strong></div><div><span>Costo anual</span><strong id="result-cost">&mdash;</strong></div><div><span>Residencia lixiviaci&oacute;n</span><strong id="result-residence">&mdash;</strong></div><div><span>Recuperaci&oacute;n global</span><strong id="result-recovery">&mdash;</strong></div></div><details class="equations-panel"><summary>Ecuaciones / Supuestos</summary><div class="equations-grid"><article><span>Continuidad</span><strong>Q = V&middot;A</strong><small>A = &pi;D<sup>2</sup>/4</small></article><article><span>Reynolds</span><strong>Re = &rho;VD/&mu;</strong><small>Newtoniano; no newtoniano usa Reynolds generalizado.</small></article><article><span>Darcy&ndash;Weisbach</span><strong>&Delta;P<sub>f</sub> = f(L/D)(&rho;V<sup>2</sup>/2)</strong><small>Factor Darcy seg&uacute;n r&eacute;gimen y rugosidad.</small></article><article><span>P&eacute;rdidas locales</span><strong>&Delta;P<sub>m</sub> = &Sigma;K(&rho;V<sup>2</sup>/2)</strong><small>Accesorios expl&iacute;citos + K adicional.</small></article><article><span>Componente est&aacute;tica</span><strong>&Delta;P<sub>z</sub> = &rho;g&Delta;z</strong><small>&Delta;z positivo cuando descarga est&aacute; m&aacute;s alta.</small></article><article><span>Carga total</span><strong>H = &Delta;P/(&rho;g)</strong><small>Conversi&oacute;n de presi&oacute;n requerida a metros de fluido.</small></article><article><span>Potencia</span><strong>P<sub>e</sub> = Q&Delta;P/(&eta;<sub>p</sub>&eta;<sub>m</sub>)</strong><small>Eficiencias de bomba y motor expl&iacute;citas.</small></article><article><span>NPSH disponible</span><strong>NPSH<sub>A</sub> = (P<sub>a</sub>-P<sub>v</sub>)/(&rho;g)+z<sub>s</sub>-h<sub>fs</sub></strong><small>Comparaci&oacute;n de margen; no predice cavitaci&oacute;n.</small></article></div><p class="equation-scope">Modelo activo: <strong id="equation-active-model">pendiente</strong>. Los resultados fuera del dominio implementado se identifican expl&iacute;citamente como estimaci&oacute;n educativa o no calculable.</p></details><div class="chart-grid"><div id="rheology-chart" class="result-chart"></div><div id="pressure-chart" class="result-chart"></div></div><p id="model-status" class="model-status">Sin advertencias de aplicabilidad.</p><p class="result-note">El bloque hidr&aacute;ulico/reol&oacute;gico es el n&uacute;cleo de Mec&aacute;nica de Fluidos. Lixiviaci&oacute;n, recuperaci&oacute;n y fundici&oacute;n permanecen como contexto del proceso minero y se reportan por separado.</p></div></section>
     </main>
   </div>`;
   app.append(shell);
@@ -1101,6 +1068,7 @@ function render() {
 render();
 const unsubscribeResultsRender = subscribeResults((results) => {
   renderResultsPanel(results, getState());
+  refreshInspectionGuide?.();
   if (activeComparisonScenarioId) {
     const scenario = loadNamedScenario(activeComparisonScenarioId);
     if (scenario) renderScenarioComparison(scenario);
@@ -1181,6 +1149,11 @@ async function initializeEnvironment(canvas) {
     const inspectionPrev = document.querySelector('#inspection-prev');
     const inspectionNext = document.querySelector('#inspection-next');
     const inspectionGuide = document.querySelector('#inspection-guide');
+    const inspectionHoverTooltip = document.querySelector('#inspection-hover-tooltip');
+    const inspectionHoverId = document.querySelector('#inspection-hover-id');
+    const inspectionHoverLabel = document.querySelector('#inspection-hover-label');
+    const inspectionHoverKind = document.querySelector('#inspection-hover-kind');
+    const inspectionHoverMetric = document.querySelector('#inspection-hover-metric');
     const inspectionTargets = environment.getInspectionTargets();
     const presentationControls = document.querySelector('#presentation-controls');
     const presentationToggle = document.querySelector('#presentation-toggle');
@@ -1330,6 +1303,7 @@ async function initializeEnvironment(canvas) {
       const presentationRank = presentationStops.findIndex((item) => item.id === id);
       const presentationView = presentationActive && presentationRank >= 0;
       if (environment.activeCamera !== 'inspection' && !presentationView) {
+        environment.setInspectionOperationalStatus?.(null);
         if (inspectionGuide) {
           inspectionGuide.hidden = true;
           inspectionGuide.classList.remove('presentation-summary');
@@ -1338,6 +1312,7 @@ async function initializeEnvironment(canvas) {
         return;
       }
       if (!inspectionGuide || !guide || !target) {
+        environment.setInspectionOperationalStatus?.(null);
         if (inspectionGuide) {
           inspectionGuide.hidden = true;
           inspectionGuide.classList.remove('presentation-summary');
@@ -1345,6 +1320,8 @@ async function initializeEnvironment(canvas) {
         }
         return;
       }
+      const operational = getInspectionOperationalMetrics(id, getState(), getResults());
+      environment.setInspectionOperationalStatus?.(operational.status);
       inspectionGuide.classList.toggle('presentation-summary', presentationView);
       if (presentationView) {
         inspectionGuide.innerHTML =
@@ -1373,9 +1350,11 @@ async function initializeEnvironment(canvas) {
       const next = inspectionTargets.find((item) => item.id === target.nextId);
       const stage = getInspectionStage(id);
       const relatedResult = getInspectionRelatedResult(id);
-      const liveMetrics = inspectionMetricRows(id, getState(), getResults());
-      const liveMetricsHtml = liveMetrics.length
-        ? `<section class="inspection-live-metrics" aria-label="Variables del equipo">${liveMetrics.map(([label, value]) => `<div><span>${label}</span><strong>${value}</strong></div>`).join('')}</section>`
+      const liveMetricsHtml = operational.rows.length
+        ? `<section class="inspection-live-metrics" aria-label="Variables operativas del equipo">${operational.rows.map(({ label, value }) => `<div><span>${label}</span><strong>${value}</strong></div>`).join('')}</section>`
+        : '';
+      const operationalStatusHtml = operational.status
+        ? `<section class="inspection-operational-status" data-tone="${operational.status.tone}"><span>ESTADO OPERATIVO</span><strong>${operational.status.label}</strong><small>${operational.status.detail}</small></section>`
         : '';
       const componentHotspots = getInspectionComponentHotspots(id);
       const componentHotspotsHtml = componentHotspots.length
@@ -1408,6 +1387,7 @@ async function initializeEnvironment(canvas) {
           <div><dt>Variable clave</dt><dd>${guide.keyVariable}</dd></div>
           <div class="inspection-guide-impact"><dt>Alcance del modelo</dt><dd>${guide.calculationImpact}</dd></div>
         </dl>
+        ${operationalStatusHtml}
         ${liveMetricsHtml}
         ${componentHotspotsHtml}
         ${proxyNote}
@@ -1420,6 +1400,7 @@ async function initializeEnvironment(canvas) {
       `;
       inspectionGuide.hidden = false;
     };
+    refreshInspectionGuide = renderInspectionGuide;
     const selectInspectionTarget = (id, { applyEnvironment = true, smoothCamera = false } = {}) => {
       const selectedId = id || '';
       if (inspectionTarget && inspectionTarget.value !== selectedId) inspectionTarget.value = selectedId;
@@ -1454,6 +1435,35 @@ async function initializeEnvironment(canvas) {
     environment.setInspectionPickHandler?.((id) => {
       if (!inspectionTarget) return;
       selectInspectionTarget(id, { applyEnvironment: false });
+    });
+    environment.setInspectionHoverHandler?.((hover) => {
+      if (!inspectionHoverTooltip) return;
+      if (!hover) {
+        inspectionHoverTooltip.hidden = true;
+        inspectionHoverTooltip.setAttribute('aria-hidden', 'true');
+        return;
+      }
+      const kindLabels = {
+        equipment: 'Equipo',
+        conveyor: 'Transportador',
+        connection: 'Tramo de proceso',
+        pipe: 'Tubería',
+      };
+      if (inspectionHoverId) inspectionHoverId.textContent = hover.id;
+      if (inspectionHoverLabel) inspectionHoverLabel.textContent = hover.label || hover.id;
+      if (inspectionHoverKind) inspectionHoverKind.textContent = kindLabels[hover.kind] || hover.kind || 'Equipo';
+      const hoverOperational = getInspectionOperationalMetrics(hover.id, getState(), getResults());
+      if (inspectionHoverMetric) {
+        inspectionHoverMetric.textContent = hoverOperational.summary || '';
+        inspectionHoverMetric.hidden = !hoverOperational.summary;
+      }
+      const viewport = inspectionHoverTooltip.parentElement;
+      const maxX = Math.max(8, (viewport?.clientWidth ?? 0) - 228);
+      const maxY = Math.max(8, (viewport?.clientHeight ?? 0) - 82);
+      inspectionHoverTooltip.style.left = `${Math.min(maxX, Math.max(8, hover.x + 14))}px`;
+      inspectionHoverTooltip.style.top = `${Math.min(maxY, Math.max(8, hover.y + 14))}px`;
+      inspectionHoverTooltip.hidden = false;
+      inspectionHoverTooltip.setAttribute('aria-hidden', 'false');
     });
     const stepInspection = (delta) => {
       const index = inspectionTargets.findIndex((item) => item.id === inspectionTarget?.value);
@@ -1501,6 +1511,7 @@ const canvas = document.querySelector('#environment-canvas');
 if (canvas) initializeEnvironment(canvas);
 
 window.addEventListener('beforeunload', () => {
+  refreshInspectionGuide = null;
   unsubscribeResultsRender?.();
   unsubscribeProcessMetrics?.();
   environmentHandle?.dispose?.();
