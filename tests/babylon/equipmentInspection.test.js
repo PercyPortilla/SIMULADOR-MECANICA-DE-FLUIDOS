@@ -139,19 +139,18 @@ describe('Babylon Inspection parity', () => {
 
   it('changes the canonical Inspection objective without leaving stale context', () => {
     const { engine, scene } = makeScene();
-    target(scene, 'MILL-01', [0, 1, 0]);
-    target(scene, 'SUMP-01', [8, 1, 0]);
-    target(scene, 'SLURRY-PUMP-01', [16, 1, 0]);
+    target(scene, 'EXCAVATOR-01', [-8, 1, 0]);
+    target(scene, 'TRUCK-01', [0, 1, 0]);
+    target(scene, 'ROM-HOPPER', [8, 1, 0]);
     const system = createBabylonEquipmentInspectionSystem({ scene });
 
-    system.setTarget('MILL-01');
-    expect(system.targetId).toBe('MILL-01');
-    system.setTarget('SUMP-01');
-    expect(system.targetId).toBe('SUMP-01');
+    system.setTarget('EXCAVATOR-01');
+    expect(system.targetId).toBe('EXCAVATOR-01');
+    system.setTarget('TRUCK-01');
+    expect(system.targetId).toBe('TRUCK-01');
     const ids = system.contextOverlay.getChildMeshes(false).map((mesh) => mesh.metadata.targetId);
-    expect(ids).toContain('SUMP-01');
-    expect(ids).toContain('MILL-01');
-    expect(ids).toContain('SLURRY-PUMP-01');
+    expect(ids).toEqual(expect.arrayContaining(['EXCAVATOR-01', 'TRUCK-01', 'ROM-HOPPER']));
+    expect(ids.filter((id) => id === 'EXCAVATOR-01')).toHaveLength(1);
 
     system.dispose(); scene.dispose(); engine.dispose();
   });
