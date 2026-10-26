@@ -22,6 +22,10 @@ describe('University fluid-mechanics UI contract', () => {
       .forEach((id) => expect(mainSource).toContain(`id="${id}"`));
     expect(resultsSource).toContain('resultado educativo');
     expect(resultsSource).toContain('no calculable');
+    expect(mainSource).toContain('id="kpi-reynolds-label"');
+    expect(resultsSource).toContain('REYNOLDS GENERALIZADO Re*');
+    expect(resultsSource).toContain('τw hidráulico');
+    expect(resultsSource).toContain('perfil laminar equivalente');
   });
 
   it('keeps equations, scenario comparison and technical exports visible in the workflow', () => {

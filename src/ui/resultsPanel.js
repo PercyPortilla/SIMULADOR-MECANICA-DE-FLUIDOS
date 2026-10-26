@@ -39,10 +39,18 @@ export function renderResultsPanel(results, state) {
   const phi = results.slurry?.solidVolumeFraction;
   const flow = results.transport?.flowRateM3s;
   const pressureDrop = results.transport?.pressureDropPa;
-  const wallStress = results.rheology?.wallStressPa;
+  const nonNewtonian = Boolean(state?.rheology?.model && state.rheology.model !== 'newtonian');
+  const generalizedReynolds = nonNewtonian && results.transport?.reynoldsKind === 'generalized-metzner-reed';
+  const equivalentWallStress = results.rheology?.equivalentLaminarWallStressPa ?? results.rheology?.wallStressPa;
+  const hydraulicWallStress = results.rheology?.hydraulicWallStressPa;
+  const outsideLaminar = nonNewtonian && ['transition', 'turbulent'].includes(results.transport?.flowRegime);
+  const displayedWallStress = outsideLaminar && hydraulicWallStress !== undefined
+    ? hydraulicWallStress
+    : equivalentWallStress;
 
   setText('#kpi-flow', flow === undefined ? '—' : `${(flow * 3600).toFixed(2)} m³/h`);
   setText('#kpi-velocity', state?.transport?.pipe1?.velocityMps === undefined ? '—' : `${state.transport.pipe1.velocityMps.toFixed(3)} m/s`);
+  setText('#kpi-reynolds-label', generalizedReynolds ? 'REYNOLDS GENERALIZADO Re*' : 'REYNOLDS Re');
   setText('#kpi-reynolds', results.transport?.reynoldsNumber === undefined ? '—' : results.transport.reynoldsNumber.toFixed(0));
   setText('#kpi-friction-factor', results.transport?.frictionFactor === undefined || results.transport?.frictionFactor === null ? '—' : results.transport.frictionFactor.toFixed(5));
   setText('#kpi-dp', pressureDrop === undefined ? '—' : `${(pressureDrop / 1000).toFixed(2)} kPa`);
@@ -59,7 +67,11 @@ export function renderResultsPanel(results, state) {
   setText('#result-regime', REGIME_LABELS[results.transport?.flowRegime] ?? '—');
   setText('#result-density', density === undefined ? '—' : `${density.toFixed(1)} kg/m³`);
   setText('#result-phi', phi === undefined ? '—' : `${(phi * 100).toFixed(2)} %`);
-  setText('#result-wall-stress', wallStress === undefined ? '—' : `${wallStress.toFixed(3)} Pa`);
+  setText('#result-wall-stress-label', outsideLaminar ? 'τw hidráulico' : 'Esfuerzo de pared τw');
+  setText('#result-wall-stress', displayedWallStress === undefined ? '—' : `${displayedWallStress.toFixed(3)} Pa`);
+  setText('#result-wall-stress-note', outsideLaminar && equivalentWallStress !== undefined
+    ? `perfil laminar equivalente: ${equivalentWallStress.toFixed(3)} Pa`
+    : nonNewtonian && displayedWallStress !== undefined ? 'perfil e hidráulica laminar coherentes' : '');
   setText('#result-pressure-gradient', results.transport?.pressureGradientPaM === undefined ? '—' : `${results.transport.pressureGradientPaM.toFixed(2)} Pa/m`);
   setText('#result-reynolds', results.transport?.reynoldsNumber === undefined ? '—' : results.transport.reynoldsNumber.toFixed(0));
   setText('#result-friction-factor', results.transport?.frictionFactor === undefined || results.transport?.frictionFactor === null ? '—' : results.transport.frictionFactor.toFixed(5));

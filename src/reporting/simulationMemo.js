@@ -58,7 +58,16 @@ export function buildSimulationMemo({ state, results, scenarioName = 'Escenario 
     equationRows.push(row('sub.reynolds', 'Sustitución Reynolds', `${num(results.slurry?.densityKgM3)}·${num(state.transport.pipe1.velocityMps)}·${num(state.transport.pipe1.innerDiameterM)}/${num(state.rheology.newtonianViscosityPaS)} = ${num(results.transport.reynoldsNumber)}`));
   }
   equationRows.push(row('eq.rheology', 'Ley constitutiva', rheologyEquation(state.rheology.model)));
-  if (results.rheology?.wallStressPa !== undefined) equationRows.push(row('sub.tauw', 'Esfuerzo de pared resuelto', `τw = ${num(results.rheology.wallStressPa)}`, 'Pa'));
+  if (results.rheology?.wallStressPa !== undefined) {
+    equationRows.push(row('sub.tauw.profile', 'τw del perfil laminar equivalente', `τw,eq = ${num(results.rheology.equivalentLaminarWallStressPa ?? results.rheology.wallStressPa)}`, 'Pa'));
+    if (results.rheology?.hydraulicWallStressPa !== undefined) {
+      equationRows.push(row('sub.tauw.hydraulic', 'τw hidráulico por Fanning', `τw,h = f_F·ρV²/2 = ${num(results.rheology.hydraulicWallStressPa)}`, 'Pa'));
+    }
+  }
+  if (state.rheology.model !== 'newtonian' && results.transport?.reynoldsNumber !== undefined) {
+    equationRows.push(row('eq.reynolds.generalized', 'Reynolds generalizado', 'Re* = Re_MR = 8ρV²/τw,eq'));
+    equationRows.push(row('sub.reynolds.generalized', 'Re* calculado', num(results.transport.reynoldsNumber)));
+  }
   if (results.transport?.pressureDropPa !== undefined) {
     equationRows.push(row('eq.darcy', 'Darcy–Weisbach', 'ΔPf = f·(L/D)·(ρV²/2)'));
     equationRows.push(row('eq.minor', 'Pérdidas locales', 'ΔPm = ΣK·(ρV²/2)'));
@@ -80,7 +89,7 @@ export function buildSimulationMemo({ state, results, scenarioName = 'Escenario 
     row('result.rho', 'Densidad mezcla', num(results.slurry?.densityKgM3), 'kg/m³'),
     row('result.q', 'Caudal', num(results.transport?.flowRateM3s), 'm³/s'),
     row('result.v', 'Velocidad media', num(state.transport.pipe1.velocityMps), 'm/s'),
-    row('result.restar', 'Re* / Reynolds', num(results.transport?.reynoldsNumber)),
+    row('result.restar', state.rheology.model === 'newtonian' ? 'Reynolds Re' : 'Reynolds generalizado Re*', num(results.transport?.reynoldsNumber)),
     row('result.f', 'Factor Darcy', num(results.transport?.frictionFactor)),
     row('result.dp.distributed', 'Pérdida distribuida', num(results.transport?.distributedPressureDropPa), 'Pa'),
     row('result.dp.minor', 'Pérdidas locales', num(results.transport?.minorLossPressurePa), 'Pa'),

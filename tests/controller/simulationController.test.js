@@ -52,10 +52,57 @@ describe('simulationController', () => {
     expect(results.rheology.profile.radiusM.length).toBe(results.rheology.profile.velocityMps.length);
     expect(results.rheology.profile.velocityMps.at(-1)).toBeCloseTo(0, 12);
     expect(results.transport.flowRegime).toBe('transition');
-    expect(results.transport.pressureDropPa).toBeGreaterThan(26666.6666666667);
+    const expectedDistributed = results.transport.frictionFactor
+      * (100 / 0.15)
+      * results.slurry.densityKgM3
+      * 1.7819878125 ** 2 / 2;
+    expect(results.transport.distributedPressureDropPa).toBeCloseTo(expectedDistributed, 8);
+    expect(results.transport.frictionFactor).toBeCloseTo(4 * results.transport.fanningFrictionFactor, 12);
+    expect(results.rheology.hydraulicWallStressPa).toBeCloseTo(
+      results.transport.fanningFrictionFactor * results.slurry.densityKgM3 * 1.7819878125 ** 2 / 2,
+      10,
+    );
+    expect(results.rheology.equivalentLaminarWallStressPa).toBeCloseTo(10, 6);
+    expect(results.rheology.hydraulicWallStressPa).not.toBeCloseTo(results.rheology.equivalentLaminarWallStressPa, 3);
     expect(results.transport.calculationMode).toBe('non-newtonian-educational-transition');
     expect(results.transport.resultQuality).toBe('educational-estimate');
     expect(results.transport.modelStatus).toContain('equivalente laminar');
+  });
+
+  it.each([
+    ['Bingham laminar', 'bingham', { yieldStressPa: 4, plasticViscosityPaS: 0.05 }, 1.0, 'laminar'],
+    ['Bingham transición', 'bingham', { yieldStressPa: 4, plasticViscosityPaS: 0.05 }, 1.5, 'transition'],
+    ['Bingham turbulento', 'bingham', { yieldStressPa: 4, plasticViscosityPaS: 0.05 }, 2.5, 'turbulent'],
+    ['HB laminar', 'hb', { yieldStressPa: 4, consistencyIndex: 0.2, flowIndex: 0.7 }, 1.0, 'laminar'],
+    ['HB transición', 'hb', { yieldStressPa: 4, consistencyIndex: 0.2, flowIndex: 0.7 }, 1.5, 'transition'],
+    ['HB turbulento', 'hb', { yieldStressPa: 4, consistencyIndex: 0.2, flowIndex: 0.7 }, 2.5, 'turbulent'],
+  ])('%s mantiene coherencia Darcy/Fanning/ΔP', (_label, model, rheology, velocityMps, expectedRegime) => {
+    updateState({
+      slurry: { solidsMassFraction: 0.35, solidDensityKgM3: 2650, liquidDensityKgM3: 1000 },
+      rheology: { model, ...rheology },
+      transport: { pipe1: { innerDiameterM: 0.15, lengthM: 100, velocityMps } },
+    });
+    const results = getResults();
+    const expectedDistributed = results.transport.frictionFactor
+      * (100 / 0.15)
+      * results.slurry.densityKgM3
+      * velocityMps ** 2 / 2;
+    const expectedHydraulicWallStress = results.transport.fanningFrictionFactor
+      * results.slurry.densityKgM3
+      * velocityMps ** 2 / 2;
+
+    expect(results.transport.flowRegime).toBe(expectedRegime);
+    expect(results.transport.reynoldsKind).toBe('generalized-metzner-reed');
+    expect(results.transport.frictionFactor).toBeCloseTo(4 * results.transport.fanningFrictionFactor, 12);
+    expect(results.transport.distributedPressureDropPa).toBeCloseTo(expectedDistributed, 8);
+    expect(results.rheology.hydraulicWallStressPa).toBeCloseTo(expectedHydraulicWallStress, 10);
+    expect(results.transport.distributedPressureDropPa).toBeCloseTo(
+      4 * results.rheology.hydraulicWallStressPa * 100 / 0.15,
+      8,
+    );
+    if (expectedRegime === 'laminar') {
+      expect(results.rheology.hydraulicWallStressPa).toBeCloseTo(results.rheology.equivalentLaminarWallStressPa, 8);
+    }
   });
 
   it('no inventa ΔP cuando faltan parámetros reológicos válidos', () => {

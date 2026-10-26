@@ -224,6 +224,7 @@ function calculateExplicitCircuitHydraulics({ state, results }) {
     let fanningFrictionFactor;
     let reynoldsNumber;
     let wallStressPa;
+    let hydraulicWallStressPa;
     let nPrime;
     let segmentMode = 'unresolved';
     if (segment.lengthM > 0 && rheology.model === 'newtonian' && rheology.newtonianViscosityPaS > 0) {
@@ -257,18 +258,19 @@ function calculateExplicitCircuitHydraulics({ state, results }) {
       });
       const friction = calculateNonNewtonianFrictionFactor({ reynoldsStar: local.reynoldsStar, nPrime: local.nPrime });
       const laminarPressure = calculateLaminarPressureDrop({ wallStressPa: local.wallStressPa, lengthM: segment.lengthM, innerDiameterM: segment.innerDiameterM });
-      const turbulentPressure = 2 * friction.fanningFrictionFactor * densityKgM3 * segment.velocityMps ** 2 * segment.lengthM / segment.innerDiameterM;
-      distributedPressureDropPa = friction.regime === 'transition'
-        ? laminarPressure + friction.transitionFraction * (Math.max(laminarPressure, turbulentPressure) - laminarPressure)
-        : friction.regime === 'turbulent' ? Math.max(laminarPressure, turbulentPressure) : laminarPressure;
+      const frictionPressure = 2 * friction.fanningFrictionFactor * densityKgM3 * segment.velocityMps ** 2 * segment.lengthM / segment.innerDiameterM;
+      // The transition correlation already interpolates f_F. Do not blend ΔP a
+      // second time: one friction factor must map to one Darcy/Fanning pressure.
+      distributedPressureDropPa = friction.regime === 'laminar' ? laminarPressure : frictionPressure;
       regime = friction.regime;
       reynoldsNumber = local.reynoldsStar;
       frictionFactor = friction.darcyFrictionFactor;
       fanningFrictionFactor = friction.fanningFrictionFactor;
       wallStressPa = local.wallStressPa;
+      hydraulicWallStressPa = friction.fanningFrictionFactor * densityKgM3 * segment.velocityMps ** 2 / 2;
       nPrime = local.nPrime;
       segmentMode = regime === 'laminar' ? 'laminar-rheology' : regime === 'transition' ? 'non-newtonian-educational-transition' : 'non-newtonian-dodge-metzner-estimate';
-      if (!firstNonNewtonian) firstNonNewtonian = { local, friction };
+      if (!firstNonNewtonian) firstNonNewtonian = { local, friction, hydraulicWallStressPa };
       if (regime !== 'laminar') educational = true;
     }
     if (regime === 'turbulent' || (regime === 'transition' && worstRegime !== 'turbulent')) worstRegime = regime;
@@ -291,7 +293,10 @@ function calculateExplicitCircuitHydraulics({ state, results }) {
       frictionFactor,
       fanningFrictionFactor,
       wallStressPa,
+      equivalentLaminarWallStressPa: wallStressPa,
+      hydraulicWallStressPa,
       nPrime,
+      reynoldsKind: rheology.model === 'newtonian' ? 'newtonian' : 'generalized-metzner-reed',
       calculationMode: segmentMode,
     });
   }
@@ -301,14 +306,18 @@ function calculateExplicitCircuitHydraulics({ state, results }) {
     results.rheology = {
       model: rheology.model,
       wallStressPa: firstNonNewtonian.local.wallStressPa,
+      equivalentLaminarWallStressPa: firstNonNewtonian.local.wallStressPa,
+      hydraulicWallStressPa: firstNonNewtonian.hydraulicWallStressPa,
       reproducedMeanVelocityMps: firstNonNewtonian.local.profile.meanVelocityMps,
       profile: sampleProfile(firstNonNewtonian.local.profile),
       nPrime: firstNonNewtonian.local.nPrime,
       reynoldsStar: firstNonNewtonian.local.reynoldsStar,
+      reynoldsMetznerReed: firstNonNewtonian.local.reynoldsMetznerReed,
       fanningFrictionFactor: firstNonNewtonian.friction.fanningFrictionFactor,
       empiricalScale: rheologyScale,
     };
   }
+  results.transport.reynoldsKind = rheology.model === 'newtonian' ? 'newtonian' : 'generalized-metzner-reed';
   results.transport.flowRegime = worstRegime;
   results.transport.regimeValidated = !educational;
   const resultQuality = educational ? 'educational-estimate' : 'validated';
@@ -529,6 +538,7 @@ export function calculateSimulationResults(state) {
         viscosityPaS: rheology.newtonianViscosityPaS,
       };
       results.transport.reynoldsNumber = reynoldsNumber;
+      results.transport.reynoldsKind = 'newtonian';
       results.transport.flowRegime = regime;
       results.transport.regimeValidated = true;
       results.transport.relativeRoughness = relativeRoughness;
@@ -569,6 +579,7 @@ export function calculateSimulationResults(state) {
       results.rheology = {
         model: rheology.model,
         wallStressPa: solved.wallStressPa,
+        equivalentLaminarWallStressPa: solved.wallStressPa,
         reproducedMeanVelocityMps: solved.profile.meanVelocityMps,
         profile: sampleProfile(solved.profile),
         empiricalScale: rheologyScale,
@@ -585,26 +596,31 @@ export function calculateSimulationResults(state) {
           empiricalStressScale: rheologyScale.factor,
         });
         const friction = calculateNonNewtonianFrictionFactor({ reynoldsStar: local.reynoldsStar, nPrime: local.nPrime });
-        const turbulentPressureDropPa = 2 * friction.fanningFrictionFactor * densityKgM3 * pipe.velocityMps ** 2 * pipe.lengthM / pipe.innerDiameterM;
+        const frictionPressureDropPa = 2 * friction.fanningFrictionFactor * densityKgM3 * pipe.velocityMps ** 2 * pipe.lengthM / pipe.innerDiameterM;
         if (friction.regime === 'transition') {
-          distributedPressureDropPa = laminarPressureDropPa + friction.transitionFraction * (Math.max(laminarPressureDropPa, turbulentPressureDropPa) - laminarPressureDropPa);
+          distributedPressureDropPa = frictionPressureDropPa;
           mode = 'non-newtonian-educational-transition';
         } else if (friction.regime === 'turbulent') {
-          distributedPressureDropPa = Math.max(laminarPressureDropPa, turbulentPressureDropPa);
+          distributedPressureDropPa = frictionPressureDropPa;
           mode = 'non-newtonian-dodge-metzner-estimate';
         }
+        const hydraulicWallStressPa = friction.fanningFrictionFactor * densityKgM3 * pipe.velocityMps ** 2 / 2;
         results.rheology.nPrime = local.nPrime;
         results.rheology.reynoldsStar = local.reynoldsStar;
+        results.rheology.reynoldsMetznerReed = local.reynoldsMetznerReed;
         results.rheology.fanningFrictionFactor = friction.fanningFrictionFactor;
+        results.rheology.hydraulicWallStressPa = hydraulicWallStressPa;
         results.transport.reynoldsNumber = local.reynoldsStar;
+        results.transport.reynoldsKind = 'generalized-metzner-reed';
         results.transport.flowRegime = friction.regime;
         results.transport.fanningFrictionFactor = friction.fanningFrictionFactor;
         results.transport.frictionFactor = friction.darcyFrictionFactor;
+        results.transport.frictionCorrelation = friction.correlation;
         results.transport.regimeValidated = friction.regime === 'laminar';
         results.transport.resultQuality = friction.regime === 'laminar' ? 'validated-laminar' : 'educational-estimate';
         results.transport.modelStatus = friction.regime === 'laminar'
-          ? 'Perfil e hidráulica no newtoniana en rama laminar.'
-          : 'Estimación educativa no newtoniana fuera de laminar; perfil radial mostrado como equivalente laminar, no CFD turbulento.';
+          ? 'Perfil e hidráulica no newtoniana en rama laminar; τw del perfil coincide con τw hidráulico.'
+          : 'Estimación educativa no newtoniana fuera de laminar; el perfil radial y su τw se reportan como equivalente laminar, mientras τw hidráulico deriva del factor de Fanning.';
       } else {
         results.transport.flowRegime = 'laminar-model-only';
         results.transport.regimeValidated = false;
