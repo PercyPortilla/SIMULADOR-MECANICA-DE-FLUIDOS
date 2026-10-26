@@ -113,6 +113,49 @@ describe('Babylon Inspection parity', () => {
     system.dispose(); scene.dispose(); engine.dispose();
   });
 
+  it('maps only authoritative V57 Inspection meshes to canonical click targets', () => {
+    const { engine, scene } = makeScene();
+    const root = new TransformNode('MILL-01_ROOT', scene);
+    root.metadata = { v57AuthoritativeVisual: true };
+    const shell = CreateBox('MILL-01_SHELL', { size: 2 }, scene);
+    shell.parent = root;
+    shell.metadata = { v57AuthoritativeVisual: true };
+    shell.isPickable = false;
+    const terrain = CreateBox('V57_TERRAIN_INTEGRATED', { size: 4 }, scene);
+    terrain.metadata = { v57AuthoritativeVisual: true };
+    terrain.isPickable = false;
+
+    const system = createBabylonEquipmentInspectionSystem({ scene });
+    expect(system.resolvePickTargetId(shell)).toBe('MILL-01');
+    expect(shell.isPickable).toBe(true);
+    expect(system.resolvePickTargetId(terrain)).toBeNull();
+    expect(terrain.isPickable).toBe(false);
+    expect(system.getPickableMeshCount()).toBeGreaterThan(0);
+
+    system.dispose();
+    expect(shell.isPickable).toBe(false);
+    scene.dispose(); engine.dispose();
+  });
+
+  it('changes the canonical Inspection objective without leaving stale context', () => {
+    const { engine, scene } = makeScene();
+    target(scene, 'MILL-01', [0, 1, 0]);
+    target(scene, 'SUMP-01', [8, 1, 0]);
+    target(scene, 'SLURRY-PUMP-01', [16, 1, 0]);
+    const system = createBabylonEquipmentInspectionSystem({ scene });
+
+    system.setTarget('MILL-01');
+    expect(system.targetId).toBe('MILL-01');
+    system.setTarget('SUMP-01');
+    expect(system.targetId).toBe('SUMP-01');
+    const ids = system.contextOverlay.getChildMeshes(false).map((mesh) => mesh.metadata.targetId);
+    expect(ids).toContain('SUMP-01');
+    expect(ids).toContain('MILL-01');
+    expect(ids).toContain('SLURRY-PUMP-01');
+
+    system.dispose(); scene.dispose(); engine.dispose();
+  });
+
   it('marks semantic-only V57 inspection routes as non-cutaway and keeps their mode normal', () => {
     const { engine, scene } = makeScene();
     const v55Marker = CreateBox('V55_SITE_MARKER', { size: 1 }, scene);
