@@ -1,9 +1,12 @@
 import { PointLight } from '@babylonjs/core/Lights/pointLight.js';
 import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial.js';
+import { DynamicTexture } from '@babylonjs/core/Materials/Textures/dynamicTexture.js';
 import { Color3 } from '@babylonjs/core/Maths/math.color.js';
 import { Vector3 } from '@babylonjs/core/Maths/math.vector.js';
 import { CreateBox } from '@babylonjs/core/Meshes/Builders/boxBuilder.js';
 import { CreateCylinder } from '@babylonjs/core/Meshes/Builders/cylinderBuilder.js';
+import { CreatePlane } from '@babylonjs/core/Meshes/Builders/planeBuilder.js';
+import { Mesh } from '@babylonjs/core/Meshes/mesh.js';
 import { TransformNode } from '@babylonjs/core/Meshes/transformNode.js';
 import { V57_INSPECTION_NODE_ALIASES } from '../../scene/integration/v57Layout.js';
 
@@ -138,6 +141,55 @@ function addMarker(scene, root, id, position, color) {
   return marker;
 }
 
+function addMarkerLabel(scene, root, id, position, color) {
+  const label = CreatePlane(`B84_LAB_LABEL_${id}`, {
+    width: 3.1,
+    height: 1.55,
+    sideOrientation: Mesh.DOUBLESIDE,
+  }, scene);
+  label.parent = root;
+  label.position.copyFrom(Vector3.FromArray(position));
+  label.position.y += 2.35;
+  label.billboardMode = Mesh.BILLBOARDMODE_ALL;
+  label.isPickable = false;
+
+  const labelMaterial = new StandardMaterial(`b84-lab-label-${id.toLowerCase()}`, scene);
+  labelMaterial.diffuseColor = color.scale(0.18);
+  labelMaterial.emissiveColor = color.scale(0.58);
+  labelMaterial.specularColor = Color3.Black();
+  labelMaterial.backFaceCulling = false;
+
+  let texture = null;
+  if (typeof document !== 'undefined') {
+    texture = new DynamicTexture(`b84-lab-label-texture-${id.toLowerCase()}`, {
+      width: 256,
+      height: 128,
+    }, scene, false);
+    texture.hasAlpha = true;
+    texture.drawText(
+      id,
+      null,
+      96,
+      'bold 92px Arial',
+      '#ffffff',
+      'rgba(6,18,24,0.86)',
+      true,
+      true,
+    );
+    labelMaterial.diffuseTexture = texture;
+    labelMaterial.emissiveTexture = texture;
+    labelMaterial.opacityTexture = texture;
+  }
+  label.material = labelMaterial;
+  label.metadata = {
+    visualOnly: true,
+    visualBuild: 'B84',
+    labPoint: id,
+    labPointLabel: true,
+  };
+  return { label, material: labelMaterial, texture };
+}
+
 export function applyB78BernoulliEulerLabVisual({ scene, host, rootNodes = [] } = {}) {
   if (!scene || !host) throw new TypeError('B78 lab visual requires scene and host.');
 
@@ -184,9 +236,14 @@ export function applyB78BernoulliEulerLabVisual({ scene, host, rootNodes = [] } 
   });
 
   const markers = {
-    A: addMarker(scene, root, 'A', [182.4, 23.2, -90.1], new Color3(0.15, 0.78, 0.95)),
-    B: addMarker(scene, root, 'B', [210.0, 25.1, -90.0], new Color3(0.95, 0.62, 0.15)),
-    C: addMarker(scene, root, 'C', [222.0, 27.2, -99.0], new Color3(0.35, 0.92, 0.48)),
+    A: addMarker(scene, root, 'A', [184.0, 22.15, -90.0], new Color3(0.15, 0.78, 0.95)),
+    B: addMarker(scene, root, 'B', [205.0, 25.15, -90.0], new Color3(0.95, 0.62, 0.15)),
+    C: addMarker(scene, root, 'C', [228.2, 26.95, -103.1], new Color3(0.35, 0.92, 0.48)),
+  };
+  const markerLabels = {
+    A: addMarkerLabel(scene, root, 'A', [184.0, 22.15, -90.0], new Color3(0.15, 0.78, 0.95)),
+    B: addMarkerLabel(scene, root, 'B', [205.0, 25.15, -90.0], new Color3(0.95, 0.62, 0.15)),
+    C: addMarkerLabel(scene, root, 'C', [228.2, 26.95, -103.1], new Color3(0.35, 0.92, 0.48)),
   };
 
   const lights = [
@@ -267,6 +324,14 @@ export function applyB78BernoulliEulerLabVisual({ scene, host, rootNodes = [] } 
         });
         mesh.isVisible = false;
       }
+      if (mesh.metadata?.b80TerrainEdgeContinuation || mesh.metadata?.b81ProcessContinuity) {
+        generatedVisibilitySnapshots.set(mesh, {
+          isVisible: mesh.isVisible,
+          visibility: Number(mesh.visibility),
+        });
+        mesh.isVisible = false;
+        mesh.visibility = 0;
+      }
     });
     baseLightSnapshots = new Map();
     const labLightIds = new Set(lights.map((light) => light.name));
@@ -325,6 +390,7 @@ export function applyB78BernoulliEulerLabVisual({ scene, host, rootNodes = [] } 
   function applyModeVisibility() {
     const showDidactic = active && (mode === 'didactic' || mode === 'presentation');
     Object.values(markers).forEach((marker) => marker.setEnabled(showDidactic));
+    Object.values(markerLabels).forEach(({ label }) => label.setEnabled(showDidactic));
     edges.forEach((strip) => strip.visibility = mode === 'realistic' ? 0.48 : 0.92);
     floor.visibility = mode === 'presentation' ? 0.96 : 0.88;
     host.metadata = {
@@ -383,6 +449,7 @@ export function applyB78BernoulliEulerLabVisual({ scene, host, rootNodes = [] } 
     floor,
     edges,
     markers,
+    markerLabels,
     lights,
     setActive,
     setMode,
@@ -397,6 +464,11 @@ export function applyB78BernoulliEulerLabVisual({ scene, host, rootNodes = [] } 
       concrete.dispose(false, true);
       edge.dispose(false, true);
       Object.values(markers).forEach((marker) => marker.material?.dispose?.(false, true));
+      Object.values(markerLabels).forEach(({ label, material: labelMaterial, texture }) => {
+        label.dispose(false, false);
+        labelMaterial.dispose(false, false);
+        texture?.dispose?.();
+      });
     },
   };
 }

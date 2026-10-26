@@ -41,6 +41,10 @@ describe('B78 Bernoulli–Euler lab visual', () => {
     legacySeam.metadata = { b71HydraulicStudy: true, seamBridge: 'mill-to-sump' };
     const unrelatedFoundation = CreateBox('B73_FOUNDATION_R-01', { size: 1 }, scene);
     unrelatedFoundation.metadata = { b73LocalFoundation: true, equipmentId: 'R-01' };
+    const terrainApron = CreateBox('B80_TERRAIN_EDGE_CONTINUATION_TEST', { size: 1 }, scene);
+    terrainApron.metadata = { b80TerrainEdgeContinuation: true };
+    const processBridge = CreateBox('B81_CLASS-OVERFLOW-TO-R01_SEG01', { size: 1 }, scene);
+    processBridge.metadata = { b81ProcessContinuity: true };
     const slurryBody = CreateBox('B74_sump-to-pump_SLURRY_01', { size: 0.5 }, scene);
     slurryBody.visibility = 0.7;
     slurryBody.metadata = {
@@ -64,11 +68,18 @@ describe('B78 Bernoulli–Euler lab visual', () => {
     expect(unrelated.root.isEnabled()).toBe(false);
     expect(legacySeam.isVisible).toBe(false);
     expect(unrelatedFoundation.isVisible).toBe(false);
+    expect(terrainApron.isVisible).toBe(false);
+    expect(processBridge.isVisible).toBe(false);
     expect(lab.markers.A.isEnabled()).toBe(true);
+    expect(lab.markerLabels.A.label.isEnabled()).toBe(true);
+    expect(lab.markers.A.position.asArray()).toEqual([184, 22.15, -90]);
+    expect(lab.markers.B.position.asArray()).toEqual([205, 25.15, -90]);
+    expect(lab.markers.C.position.asArray()).toEqual([228.2, 26.95, -103.1]);
     expect(ambient.intensity).toBeCloseTo(0.30, 8);
 
     lab.setMode('realistic');
     expect(lab.markers.A.isEnabled()).toBe(false);
+    expect(lab.markerLabels.A.label.isEnabled()).toBe(false);
     lab.setMode('presentation');
     expect(lab.markers.C.isEnabled()).toBe(true);
 
@@ -79,6 +90,8 @@ describe('B78 Bernoulli–Euler lab visual', () => {
     expect(unrelated.root.isEnabled()).toBe(true);
     expect(legacySeam.isVisible).toBe(true);
     expect(unrelatedFoundation.isVisible).toBe(true);
+    expect(terrainApron.isVisible).toBe(true);
+    expect(processBridge.isVisible).toBe(true);
     expect(slurryBody.visibility).toBeCloseTo(0.015, 8);
     expect(ambient.intensity).toBeCloseTo(0.85, 8);
 
