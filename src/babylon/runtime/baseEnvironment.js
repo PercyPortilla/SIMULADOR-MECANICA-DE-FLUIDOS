@@ -160,6 +160,23 @@ export function applyBabylonInspectionCameraFraming(camera, framing, {
   return Object.freeze({ distance, requiredDistance, radius });
 }
 
+export function followBabylonInspectionCameraTarget(camera, previousCenter, framing) {
+  if (!camera || !previousCenter || !framing?.center || framing.followTarget !== true) return null;
+  const previous = previousCenter instanceof Vector3 ? previousCenter : Vector3.FromArray(previousCenter);
+  const center = framing.center instanceof Vector3 ? framing.center : Vector3.FromArray(framing.center);
+  const delta = center.subtract(previous);
+  if (delta.lengthSquared() <= 1e-10) return center.clone();
+  const currentTarget = camera.target?.clone?.() ?? center.clone();
+  const alpha = Number(camera.alpha);
+  const beta = Number(camera.beta);
+  const radius = Number(camera.radius);
+  camera.setTarget?.(currentTarget.add(delta));
+  if (Number.isFinite(alpha)) camera.alpha = alpha;
+  if (Number.isFinite(beta)) camera.beta = beta;
+  if (Number.isFinite(radius)) camera.radius = radius;
+  return center.clone();
+}
+
 export function captureBabylonOrbitCameraState(camera) {
   if (!camera) return null;
   return Object.freeze({
@@ -572,6 +589,7 @@ export function createBabylonRuntime({
   let labViewFocus = 'overview';
   let labPreviousCamera = null;
   let labInspectionCameraSnapshot = null;
+  let inspectionFollowCenter = null;
   let lastDecorationRefreshMs = -Infinity;
   let processFlowScale = 1;
   let processMetrics = Object.freeze({ flowRateM3s: 0, pressurePa: 0 });
@@ -964,6 +982,20 @@ export function createBabylonRuntime({
   function refreshViewDecorations(force = false) {
     const now = nowMs();
     if (!force && now - lastDecorationRefreshMs < BABYLON_VIEW_DECORATION_REFRESH_INTERVAL_MS) return false;
+    if (activeCamera === INSPECTION_CAMERA_ID && base.equipmentInspection?.targetId) {
+      const framing = base.equipmentInspection.getFraming?.(base.equipmentInspection.targetId);
+      if (framing?.followTarget === true) {
+        inspectionFollowCenter = followBabylonInspectionCameraTarget(
+          base.cameras.inspection,
+          inspectionFollowCenter,
+          framing,
+        ) ?? (framing.center?.clone?.() ?? Vector3.FromArray(framing.center));
+      } else {
+        inspectionFollowCenter = null;
+      }
+    } else {
+      inspectionFollowCenter = null;
+    }
     base.plantLabels?.updatePositions?.();
     base.plantLabels?.updateForCamera?.(base.cameras[activeCamera]);
     if (base.geotechnicalSystem?.visible) {
@@ -1256,6 +1288,9 @@ export function createBabylonRuntime({
       ? base.equipmentInspection.getTargets().find((item) => item.id === id)
       : null;
     const framing = target ? base.equipmentInspection.getFraming?.(id) : null;
+    inspectionFollowCenter = framing?.followTarget === true
+      ? (framing.center?.clone?.() ?? Vector3.FromArray(framing.center))
+      : null;
     base.plantLabels?.setInspectionTarget?.(target, targetMeta?.label ?? id ?? '', framing);
     base.plantLabels?.setView?.(activeCamera);
     if (target && framing) {

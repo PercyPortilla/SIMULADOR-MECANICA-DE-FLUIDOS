@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { INSPECTION_FOCUS_PROFILES } from '../../src/scene/inspection/inspectionContracts.js';
 
 const ASSET_PATH = path.resolve('public/models/pulpa-v57/PULPA_LAB_V57_FULL_SITE_FINAL.glb');
 
@@ -42,7 +43,7 @@ describe('Blender V57 final production asset contract', () => {
     const { gltf } = readGlbJson(ASSET_PATH);
     const names = new Set(gltf.nodes.map((node) => node.name));
     [
-      'EXCAVATOR-01', 'TRUCK-01', 'TRUCK-02', 'TRUCK-03',
+      'EXCAVATOR-01', 'TRUCK-01', 'TRUCK-02', 'TRUCK-03', 'STOCKPILE-LOADER-01',
       'ROM-HOPPER_ROOT', 'APRON-FEEDER_ROOT', 'PRIMARY-CRUSHER_ROOT.001',
       'MILL-01_ROOT', 'SUMP-01_ROOT', 'SLURRY-PUMP-01_ROOT', 'PIPE-1_ROOT',
       'CLASS-01_ROOT', 'R-01_ROOT', 'R-02_ROOT', 'R-03_ROOT', 'R-04_ROOT',
@@ -83,6 +84,21 @@ describe('Blender V57 final production asset contract', () => {
       'SMELTING-FURNACE_MOVING', 'DETOX_MOVING',
       'TAILINGS-THICKENER_MOVING', 'TAILINGS-PUMP_MOVING',
     ].forEach((name) => expect(names.has(name), `${name} must remain animated`).toBe(true));
+  });
+
+  it('retains the authored V57 nodes used by B79 Inspection focus profiles', () => {
+    const { gltf } = readGlbJson(ASSET_PATH);
+    const names = gltf.nodes.map((node) => node.name ?? '');
+    ['EXCAVATOR-01', 'STOCKPILE-RECLAIM', 'CLASS-01'].forEach((id) => {
+      const profile = INSPECTION_FOCUS_PROFILES[id];
+      expect(profile, `${id} must keep a B79 focus profile`).toBeTruthy();
+      (profile.focusObjectNames ?? []).forEach((name) => {
+        expect(names.includes(name), `${id} focus node ${name} must remain in V57`).toBe(true);
+      });
+      (profile.focusObjectPrefixes ?? []).forEach((prefix) => {
+        expect(names.some((name) => name.startsWith(prefix)), `${id} focus prefix ${prefix} must remain in V57`).toBe(true);
+      });
+    });
   });
 
   it('does not revive the superseded V57 carbon or layout helpers', () => {

@@ -65,5 +65,7 @@ describe('Babylon V57 authoritative site visual', () => {
     expect(V57_INSPECTION_NODE_ALIASES['P-PUMP-TO-CYCLONES'].names).toContain('PIPE-1_ROOT');
     expect(V57_INSPECTION_NODE_ALIASES['MT-CIP-TO-ELUTION-CARBON'].names).toContain('V57_CIP01_TO_ELUTION_CARBON_ROOT');
     expect(V57_INSPECTION_NODE_ALIASES['MT-ELUTION-TO-CIP-BARREN-CARBON'].names).toContain('V57_REGEN_TO_CIP06_ROOT');
+    expect(V57_INSPECTION_NODE_ALIASES['LOADER-01'].names).toContain('STOCKPILE-LOADER-01');
   });
+
 });

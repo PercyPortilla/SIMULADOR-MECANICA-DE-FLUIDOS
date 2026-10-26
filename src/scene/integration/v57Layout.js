@@ -68,6 +68,7 @@ export const V57_INSPECTION_NODE_ALIASES = Object.freeze({
   'APRON-FEEDER': aliasSpec({ names: ['APRON-FEEDER_ROOT', 'APRON-FEEDER'] }),
   'PRIMARY-CRUSHER': aliasSpec({ names: ['PRIMARY-CRUSHER_ROOT.001', 'PRIMARY-CRUSHER'] }),
   'STOCKPILE-RECLAIM': aliasSpec({ names: ['STOCKPILE-RECLAIM_ROOT', 'STOCKPILE-RECLAIM'] }),
+  'LOADER-01': aliasSpec({ names: ['STOCKPILE-LOADER-01'] }),
   'MILL-01': aliasSpec({ names: ['MILL-01_ROOT', 'MILL-01'] }),
   'SUMP-01': aliasSpec({ names: ['SUMP-01_ROOT', 'SUMP-01'] }),
   'SLURRY-PUMP-01': aliasSpec({ names: ['SLURRY-PUMP-01_ROOT', 'SLURRY-PUMP-01'] }),

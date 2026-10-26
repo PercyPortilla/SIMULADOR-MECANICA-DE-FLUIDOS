@@ -54,6 +54,72 @@ describe('Babylon Inspection parity', () => {
     scene.dispose(); engine.dispose();
   });
 
+  it('frames V57 stockpile and cyclone clusters from focused authored children instead of whole-route bounds', () => {
+    const { engine, scene } = makeScene();
+    const stockRoot = new TransformNode('STOCKPILE-RECLAIM_ROOT', scene);
+    stockRoot.metadata = { v57AuthoritativeVisual: true };
+    const stock = CreateBox('STOCKPILE_MAIN_ORE', { width: 18, height: 8, depth: 12 }, scene);
+    stock.position.set(10, 4, -20);
+    stock.parent = stockRoot;
+    stock.metadata = { v57AuthoritativeVisual: true };
+    const reclaimRoot = new TransformNode('STOCKPILE-RECLAIM-FEEDER_ROOT', scene);
+    reclaimRoot.position.set(42, 3, -4);
+    reclaimRoot.parent = stockRoot;
+    reclaimRoot.metadata = { v57AuthoritativeVisual: true };
+    const reclaimFeeder = CreateBox('STOCKPILE-RECLAIM-FEEDER_BODY', { width: 8, height: 3, depth: 5 }, scene);
+    reclaimFeeder.parent = reclaimRoot;
+    reclaimFeeder.metadata = { v57AuthoritativeVisual: true };
+    const remote = CreateBox('TRANSFER-TOWER-03_REMOTE', { size: 2 }, scene);
+    remote.position.set(120, 4, -20);
+    remote.parent = stockRoot;
+    remote.metadata = { v57AuthoritativeVisual: true };
+
+    const classRoot = new TransformNode('CLASS-01_ROOT', scene);
+    classRoot.metadata = { v57AuthoritativeVisual: true };
+    for (let index = 0; index < 4; index += 1) {
+      const cyclone = CreateBox(`CLASS-01_TRANS_CYCLONE_${index}_BARREL`, { width: 1.5, height: 5, depth: 1.5 }, scene);
+      cyclone.position.set(40 + index * 2, 6, -30);
+      cyclone.parent = classRoot;
+      cyclone.metadata = { v57AuthoritativeVisual: true };
+    }
+    const longPipe = CreateBox('CLASS-01_FEED_LINE_VERY_LONG', { width: 90, height: 1, depth: 1 }, scene);
+    longPipe.position.set(0, 6, -30);
+    longPipe.parent = classRoot;
+    longPipe.metadata = { v57AuthoritativeVisual: true };
+
+    const system = createBabylonEquipmentInspectionSystem({ scene });
+    const stockFrame = system.getFraming('STOCKPILE-RECLAIM');
+    const classFrame = system.getFraming('CLASS-01');
+    expect(stockFrame.source).toBe('profile-objects');
+    expect(stockFrame.center.x).toBeCloseTo(42, 1);
+    expect(stockFrame.center.z).toBeCloseTo(-4, 1);
+    expect(stockFrame.size.x).toBeLessThanOrEqual(24);
+    expect(classFrame.source).toBe('profile-objects');
+    expect(classFrame.center.x).toBeGreaterThan(39);
+    expect(classFrame.size.x).toBeLessThanOrEqual(18);
+    system.dispose(); scene.dispose(); engine.dispose();
+  });
+
+  it('maps LOADER-01 Inspection to the authoritative STOCKPILE-LOADER-01 hierarchy', () => {
+    const { engine, scene } = makeScene();
+    const legacy = target(scene, 'LOADER-01', [300, 2, 0], [8, 4, 4]);
+    const loaderRoot = new TransformNode('STOCKPILE-LOADER-01', scene);
+    loaderRoot.position.set(-118, 35, -109);
+    loaderRoot.metadata = { v57AuthoritativeVisual: true };
+    const loaderBody = CreateBox('STOCKPILE-LOADER-01_REAR_BODY', { width: 7, height: 4, depth: 4 }, scene);
+    loaderBody.parent = loaderRoot;
+    loaderBody.metadata = { v57AuthoritativeVisual: true };
+    const system = createBabylonEquipmentInspectionSystem({ scene });
+    const selected = system.setTarget('LOADER-01');
+    const framing = system.getFraming('LOADER-01');
+    expect(selected.metadata.v57InspectionAlias).toBe(true);
+    expect(framing.center.x).toBeLessThan(-100);
+    expect(framing.followTarget).toBe(true);
+    expect(system.resolvePickTargetId(legacy.shell)).toBeNull();
+    expect(loaderBody.isPickable).toBe(true);
+    system.dispose(); scene.dispose(); engine.dispose();
+  });
+
   it('applies transparent/cutaway/interior modes and restores original materials/visibility', () => {
     const { engine, scene } = makeScene();
     const { shell, interior } = target(scene, 'MILL-01', [0, 1, 0]);

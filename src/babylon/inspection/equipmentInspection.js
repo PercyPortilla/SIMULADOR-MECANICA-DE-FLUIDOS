@@ -160,6 +160,56 @@ function getBounds(node) {
   return directBounds(node);
 }
 
+function aggregateBounds(nodes) {
+  const bounds = nodes.map(directBounds).filter(Boolean);
+  if (!bounds.length) return null;
+  const min = bounds[0].min.clone();
+  const max = bounds[0].max.clone();
+  bounds.slice(1).forEach((entry) => {
+    min.minimizeInPlace(entry.min);
+    max.maximizeInPlace(entry.max);
+  });
+  return {
+    min,
+    max,
+    center: Vector3.Center(min, max),
+    size: max.subtract(min),
+  };
+}
+
+function profileFocusBounds(target, profile) {
+  if (!target || !profile) return null;
+  const names = new Set([
+    ...(profile.focusObjectName ? [profile.focusObjectName] : []),
+    ...(profile.focusObjectNames ?? []),
+  ]);
+  const prefixes = profile.focusObjectPrefixes ?? [];
+  if (!names.size && !prefixes.length) return null;
+
+  const aliasSources = nodeMetadata(target).inspectionAliasSources;
+  const roots = Array.isArray(aliasSources) && aliasSources.length ? aliasSources : [target];
+  const candidates = [];
+  const seen = new Set();
+  roots.forEach((root) => {
+    [root, ...(root.getDescendants?.(false) ?? [])].forEach((node) => {
+      if (!node || seen.has(node)) return;
+      seen.add(node);
+      const name = String(node.name ?? '');
+      if (names.has(name) || prefixes.some((prefix) => name.startsWith(prefix))) candidates.push(node);
+    });
+  });
+  return aggregateBounds(candidates);
+}
+
+function capFocusSize(size, profile) {
+  const capped = size.clone();
+  if (Number.isFinite(profile?.maxSpanM) && profile.maxSpanM > 0) {
+    capped.x = Math.min(capped.x, profile.maxSpanM);
+    capped.z = Math.min(capped.z, profile.maxSpanM);
+  }
+  return capped;
+}
+
 function collectNodeMeshes(node) {
   if (!node) return [];
   return [
@@ -213,30 +263,23 @@ export function computeBabylonInspectionFraming(target, id = target?.name) {
       fullSize: bounds.size.clone(),
       focused: false,
       source: 'full-bounds',
+      followTarget: false,
     };
   }
-  if (profile.focusObjectName) {
-    const focus = target.getChildren?.((node) => node.name === profile.focusObjectName, false)?.[0]
-      ?? target.getChildMeshes?.(false, (mesh) => mesh.name === profile.focusObjectName)?.[0]
-      ?? null;
-    const focusBounds = getBounds(focus);
-    if (focusBounds) {
-      return {
-        id,
-        center: focusBounds.center,
-        size: focusBounds.size,
-        fullSize: bounds.size,
-        focused: true,
-        source: `object:${profile.focusObjectName}`,
-      };
-    }
+  const focusBounds = profileFocusBounds(target, profile);
+  if (focusBounds) {
+    return {
+      id,
+      center: focusBounds.center,
+      size: capFocusSize(focusBounds.size, profile),
+      fullSize: bounds.size,
+      focused: true,
+      source: 'profile-objects',
+      followTarget: profile.followTarget === true,
+    };
   }
   const routeCenter = pointAlongPolyline(nodeMetadata(target).routePoints, profile.routeFraction);
-  const size = bounds.size.clone();
-  if (Number.isFinite(profile.maxSpanM) && profile.maxSpanM > 0) {
-    size.x = Math.min(size.x, profile.maxSpanM);
-    size.z = Math.min(size.z, profile.maxSpanM);
-  }
+  const size = capFocusSize(bounds.size, profile);
   return {
     id,
     center: routeCenter ?? bounds.center,
@@ -244,11 +287,18 @@ export function computeBabylonInspectionFraming(target, id = target?.name) {
     fullSize: bounds.size,
     focused: true,
     source: routeCenter ? 'route-metadata' : 'capped-bounds',
+    followTarget: profile.followTarget === true,
   };
 }
 
 function createContextMarker(scene, root, target, id, role, color) {
-  const bounds = getBounds(target);
+  const framing = role === 'selected' ? computeBabylonInspectionFraming(target, id) : null;
+  const bounds = framing
+    ? {
+      center: framing.center,
+      size: framing.size,
+    }
+    : getBounds(target);
   if (!bounds) return null;
   const span = Math.max(bounds.size.x, bounds.size.z);
   const isSelected = role === 'selected';
