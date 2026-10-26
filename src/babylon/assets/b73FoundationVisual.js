@@ -195,22 +195,22 @@ function createConcreteMaterial(scene) {
 function hideSupersededContinuousFoundations(rootNodes) {
   const hidden = [];
   const names = B73_SUPERSEDED_CONTINUOUS_FOUNDATIONS;
-  const visit = (node) => {
-    const nodeName = String(node?.name ?? '');
+  const seen = new Set();
+  rootNodes.flatMap((root) => [root, ...(root.getDescendants?.(false) ?? [])]).forEach((node) => {
+    if (!node || seen.has(node)) return;
+    seen.add(node);
+    const nodeName = String(node.name ?? '');
     const matched = names.find((name) => nodeName === name || nodeName.startsWith(`${name}.`));
-    if (matched) {
-      node.setEnabled?.(false);
-      if ('isVisible' in node) node.isVisible = false;
-      node.metadata = {
-        ...(node.metadata ?? {}),
-        b73SupersededContinuousFoundation: true,
-        b73SupersededName: matched,
-      };
-      hidden.push(nodeName);
-    }
-    node.getDescendants?.(false)?.forEach(visit);
-  };
-  rootNodes.forEach(visit);
+    if (!matched) return;
+    node.setEnabled?.(false);
+    if ('isVisible' in node) node.isVisible = false;
+    node.metadata = {
+      ...(node.metadata ?? {}),
+      b73SupersededContinuousFoundation: true,
+      b73SupersededName: matched,
+    };
+    hidden.push(nodeName);
+  });
   return hidden;
 }
 
