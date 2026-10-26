@@ -11,7 +11,7 @@ import {
   getInspectionCircuitContext,
   getInspectionTargetLabel,
 } from '../../scene/inspection/inspectionContracts.js';
-import { V56_INSPECTION_NODE_ALIASES } from '../../scene/integration/v56Layout.js';
+import { V57_INSPECTION_NODE_ALIASES } from '../../scene/integration/v57Layout.js';
 
 function nodeMetadata(node) {
   return node?.metadata ?? {};
@@ -19,7 +19,8 @@ function nodeMetadata(node) {
 
 function isAuthoritativeBlenderVisual(node) {
   const metadata = nodeMetadata(node);
-  return metadata.v56AuthoritativeVisual === true
+  return metadata.v57AuthoritativeVisual === true
+    || metadata.v56AuthoritativeVisual === true
     || metadata.v55AuthoritativeVisual === true
     || metadata.v50AuthoritativeVisual === true;
 }
@@ -41,6 +42,24 @@ function isShell(mesh) {
   const metadata = nodeMetadata(mesh);
   if (metadata.inspectionShell === true || inferImportedRole(mesh) === 'shell') return true;
   return /shell|body|casing|hopper|tank|cell|hood|cover|lid|volute|chute|feeder|bed/i.test(mesh?.name || '');
+}
+
+function cutPlaneFor(id, framing) {
+  const center = framing?.center ?? Vector3.Zero();
+  // Long horizontal machines read much better with a longitudinal side cut.
+  // Vertical vessels/cyclones use a half-section through X so internals remain
+  // visible while preserving the silhouette of the other half.
+  if (id === 'MILL-01' || id === 'SLURRY-PUMP-01' || id === 'PUMP-01') {
+    return new Plane(0, 0, 1, -center.z);
+  }
+  if (/^R-0[1-4]$/.test(id)
+    || ['CLASS-01', 'CIP-ADSORPTION', 'ELUTION-SKID', 'EW-CELLS', 'SMELTING-FURNACE', 'SUMP-01'].includes(id)) {
+    return new Plane(1, 0, 0, -center.x);
+  }
+  const size = framing?.size ?? Vector3.Zero();
+  return size.x >= size.z
+    ? new Plane(0, 0, 1, -center.z)
+    : new Plane(1, 0, 0, -center.x);
 }
 
 function allSceneNodes(scene) {
@@ -68,7 +87,7 @@ function findTarget(scene, id, aliasRoot = null) {
   const exactV50 = candidates.find(isAuthoritativeBlenderVisual);
   if (exactV50) return exactV50;
 
-  const alias = V56_INSPECTION_NODE_ALIASES[id];
+  const alias = V57_INSPECTION_NODE_ALIASES[id];
   if (alias && aliasRoot) {
     const sources = resolveV50AliasSources(scene, alias);
     const hasV50Scene = sources.length > 0 || allSceneNodes(scene).some(
@@ -85,7 +104,7 @@ function findTarget(scene, id, aliasRoot = null) {
         inspectionAliasBounds: alias.bounds ?? null,
         semanticOnly: alias.semanticOnly === true,
         proxySemantics: alias.proxySemantics ?? null,
-        siteRevision: 'V56',
+        siteRevision: 'V57',
       };
       return proxy;
     }
@@ -316,7 +335,7 @@ export function createBabylonEquipmentInspectionSystem({ scene } = {}) {
     }));
     activeSnapshot = { target, entries };
     const framing = computeBabylonInspectionFraming(target, currentTargetId);
-    const centerX = framing?.center?.x ?? target.getAbsolutePosition?.().x ?? 0;
+    const cutPlane = cutPlaneFor(currentTargetId, framing);
     entries.forEach((entry, index) => {
       const { mesh } = entry;
       const interior = isInterior(mesh);
@@ -331,19 +350,31 @@ export function createBabylonEquipmentInspectionSystem({ scene } = {}) {
       mesh.material = clone;
       if (interior) {
         clone.alpha = Math.max(Number(clone.alpha) || 1, 0.76);
+        clone.backFaceCulling = false;
         return;
       }
       if (mode === 'transparent') {
-        clone.alpha = shell ? 0.26 : Math.min(Number(clone.alpha) || 1, 0.44);
+        clone.alpha = shell ? 0.20 : Math.min(Number(clone.alpha) || 1, 0.34);
+        clone.backFaceCulling = false;
+        clone.separateCullingPass = true;
         mesh.renderingGroupId = shell ? 2 : 1;
       } else if (mode === 'cutaway' && shell) {
-        clone.clipPlane = new Plane(1, 0, 0, -centerX);
+        clone.clipPlane = cutPlane.clone();
+        clone.alpha = Math.min(Number(clone.alpha) || 1, 0.92);
+        clone.backFaceCulling = false;
+        clone.separateCullingPass = true;
+        mesh.renderingGroupId = 1;
+      } else if (mode === 'cutaway') {
+        // Dim frames/guards so the sectioned internals are not obscured.
+        clone.alpha = Math.min(Number(clone.alpha) || 1, 0.24);
+        clone.backFaceCulling = false;
         mesh.renderingGroupId = 1;
       } else if (mode === 'interior') {
         if (shell) {
           mesh.isVisible = false;
         } else {
-          clone.alpha = 0.10;
+          clone.alpha = 0.07;
+          clone.backFaceCulling = false;
           mesh.renderingGroupId = 1;
         }
       }

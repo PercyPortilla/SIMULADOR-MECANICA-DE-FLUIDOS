@@ -18,9 +18,10 @@ import {
   applyBabylonCameraPresetRevision,
   createBabylonPresetCameras,
   setInspectionControlsAttached,
+  clearBabylonInspectionCameraInertia,
 } from '../cameras/cameraPresets.js';
 import { attachBabylonReceptionEarthwork } from '../assets/receptionEarthwork.js';
-import { attachBabylonV56SiteVisual } from '../assets/v56SiteVisual.js';
+import { attachBabylonV57SiteVisual } from '../assets/v57SiteVisual.js';
 import { loadBabylonAssetContainer } from '../assets/gltfLoader.js';
 import { createBabylonMaterialTransportSystem } from '../conveying/materialTransportSystem.js';
 import { createBabylonProcessEquipmentSystem } from '../equipment/processEquipmentSystem.js';
@@ -151,6 +152,7 @@ export function applyBabylonInspectionCameraFraming(camera, framing, {
   ));
   const currentDistance = Number(camera.radius) || Vector3.Distance(camera.position, currentTarget);
   const distance = minimumOnly ? Math.max(currentDistance, requiredDistance) : requiredDistance;
+  clearBabylonInspectionCameraInertia(camera);
   camera.setTarget?.(frameTarget);
   camera.radius = distance;
   camera.minZ = Math.max(0.04, distance / 320);
@@ -350,7 +352,7 @@ export function createBabylonBaseScene(engine, { pipe1State = null } = {}) {
   const technicalGrid = createBabylonTechnicalGrid({ scene });
   const industrialSafety = createBabylonIndustrialSafety({ scene });
   const v50SiteVisual = typeof window !== 'undefined'
-    ? attachBabylonV56SiteVisual({ scene })
+    ? attachBabylonV57SiteVisual({ scene })
     : null;
   const deferredLegacyLoader = v50SiteVisual
     ? async (url, targetScene) => {
@@ -422,6 +424,7 @@ export function createBabylonBaseScene(engine, { pipe1State = null } = {}) {
     industrialInfrastructure,
     technicalGrid,
     industrialSafety,
+    v57SiteVisual: v50SiteVisual,
     v56SiteVisual: v50SiteVisual,
     v55SiteVisual: v50SiteVisual,
     v50SiteVisual,
@@ -500,11 +503,11 @@ export function createBabylonRuntime({
   }
 
   if (base.v50SiteVisual) {
-    // Keep the lightweight procedural site visible while the authoritative V56
-    // GLB downloads/parses. It is disabled atomically once V56 is ready so the
+    // Keep the lightweight procedural site visible while the authoritative V57
+    // GLB downloads/parses. It is disabled atomically once V57 is ready so the
     // viewport never presents an empty canvas on slower connections.
     setLegacyVisualsEnabled(true);
-    base.scene.metadata.activeVisualRevision = 'V56-loading';
+    base.scene.metadata.activeVisualRevision = 'V57-loading';
   }
 
   function registerShadowCasters(root) {
@@ -591,8 +594,8 @@ export function createBabylonRuntime({
     base.materialTransportSystem?.setAnimationsEnabled?.(false);
     base.mobileEquipmentSystem?.setEnabled?.(false);
     base.v50SiteVisual.setAnimationsEnabled(animationsEnabled);
-    base.scene.metadata.activeVisualRevision = 'V56';
-    applyBabylonCameraPresetRevision(base.cameras, 'V56');
+    base.scene.metadata.activeVisualRevision = 'V57';
+    applyBabylonCameraPresetRevision(base.cameras, 'V57');
     base.geotechnicalSystem?.setVisible?.(false);
     base.scene.metadata.v50ImportedRootCount = base.v50SiteVisual.host.metadata?.importedRootCount ?? 0;
     base.scene.metadata.v50ImportedMeshCount = base.v50SiteVisual.host.metadata?.importedMeshCount ?? 0;
@@ -603,6 +606,9 @@ export function createBabylonRuntime({
     base.scene.metadata.v56ImportedRootCount = base.scene.metadata.v50ImportedRootCount;
     base.scene.metadata.v56ImportedMeshCount = base.scene.metadata.v50ImportedMeshCount;
     base.scene.metadata.v56ShadowCasterCount = base.scene.metadata.v50ShadowCasterCount;
+    base.scene.metadata.v57ImportedRootCount = base.scene.metadata.v50ImportedRootCount;
+    base.scene.metadata.v57ImportedMeshCount = base.scene.metadata.v50ImportedMeshCount;
+    base.scene.metadata.v57ShadowCasterCount = base.scene.metadata.v50ShadowCasterCount;
     base.equipmentInspection?.refreshTargets?.();
     base.plantLabels?.updatePositions?.();
     invalidateRender(300);
@@ -681,6 +687,7 @@ export function createBabylonRuntime({
     activeCamera = id;
     base.scene.activeCamera = base.cameras[id];
     if (id === INSPECTION_CAMERA_ID && !inspectionControlsAttached) {
+      clearBabylonInspectionCameraInertia(base.cameras.inspection);
       setInspectionControlsAttached(base.cameras.inspection, canvas, true);
       inspectionControlsAttached = true;
     }

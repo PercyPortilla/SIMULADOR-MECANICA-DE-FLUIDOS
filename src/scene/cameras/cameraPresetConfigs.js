@@ -1,6 +1,7 @@
 import { V50_SITE_BOUNDS, V50_ZONE_ANCHORS } from '../integration/v50Layout.js';
 import { V55_SITE_BOUNDS, V55_ZONE_ANCHORS } from '../integration/v55Layout.js';
 import { V56_SITE_BOUNDS, V56_ZONE_ANCHORS } from '../integration/v56Layout.js';
+import { V57_SITE_BOUNDS, V57_ZONE_ANCHORS } from '../integration/v57Layout.js';
 import { getPlantLayoutBounds, getPlantZone } from '../layout/plantLayout.js';
 import { getTerrainHeight } from '../environment/terrainHeight.js';
 import { getSiteOverviewBounds, PIT_DESIGN } from '../config/siteDesign.js';
@@ -53,6 +54,12 @@ function v55Anchor(zoneId) {
 function v56Anchor(zoneId) {
   const point = V56_ZONE_ANCHORS[zoneId];
   if (!point) throw new RangeError(`Ancla V56 desconocida: ${zoneId}.`);
+  return vector(point.x, point.y, point.z);
+}
+
+function v57Anchor(zoneId) {
+  const point = V57_ZONE_ANCHORS[zoneId];
+  if (!point) throw new RangeError(`Ancla V57 desconocida: ${zoneId}.`);
   return vector(point.x, point.y, point.z);
 }
 
@@ -137,8 +144,6 @@ export function createV55CameraPresetConfigs() {
   return Object.freeze({
     general: preset(vector(300, 118, 255), vector(255, 0.5, 32), 42),
     top: preset(vector(siteCenter[0], 520, siteCenter[2]), siteCenter, 40),
-    // Oblique intentionally gives the new open pit enough screen area while
-    // retaining the plant in the background for presentation context.
     oblique: preset(vector(440, 105, 235), vector(330, -5.0, 72), 44),
     reception: preset(vector(190, 23, 46), vector(205, 2.8, -1), 42),
     crushing: preset(vector(214, 24, 42), vector(228, 3.2, -3), 40),
@@ -171,15 +176,41 @@ export function createV56CameraPresetConfigs() {
   const leaching = v56Anchor('Z6');
   const recovery = v56Anchor('Z8');
   return Object.freeze({
-    general: preset(vector(300, 118, 255), vector(255, 0.5, 32), 42),
+    // Closer framing for the enlarged irregular terrain so the plant reads
+    // larger while the pit remains visible in the same general view.
+    general: preset(vector(315, 92, 205), vector(270, 0.0, 22), 39),
     top: preset(vector(siteCenter[0], 520, siteCenter[2]), siteCenter, 40),
-    oblique: preset(vector(440, 105, 235), vector(330, -5.0, 72), 44),
+    oblique: preset(vector(410, 92, 205), vector(315, -3.0, 55), 41),
     reception: preset(vector(190, 23, 46), vector(205, 2.8, -1), 42),
     crushing: preset(vector(214, 24, 42), vector(228, 3.2, -3), 40),
     grinding: preset(vector(300, 33, 48), vector(305, 4.2, -18), 42),
     leaching: preset(vector(260, 30, 48), vector(leaching[0], leaching[1] - 0.5, leaching[2]), 42),
     recovery: preset(vector(225, 26, 46), vector(recovery[0], recovery[1] - 0.5, recovery[2]), 42),
     inspection: preset(vector(338, 18, -12), vector(320, 4.0, -35), 50),
+  });
+}
+
+export function createV57CameraPresetConfigs() {
+  const siteCenter = vector(
+    (V57_SITE_BOUNDS.minX + V57_SITE_BOUNDS.maxX) / 2,
+    12,
+    (V57_SITE_BOUNDS.minZ + V57_SITE_BOUNDS.maxZ) / 2,
+  );
+  const reception = v57Anchor('Z1');
+  const crushing = v57Anchor('Z2');
+  const grinding = v57Anchor('Z4');
+  const leaching = v57Anchor('Z6');
+  const recovery = v57Anchor('Z8');
+  return Object.freeze({
+    general: preset(vector(-40, 250, 430), vector(-20, 24, 0), 46),
+    top: preset(vector(siteCenter[0], 780, siteCenter[2]), siteCenter, 42),
+    oblique: preset(vector(-500, 210, 260), vector(-95, 18, -35), 45),
+    reception: preset(vector(-370, 118, -135), vector(reception[0], reception[1], reception[2]), 44),
+    crushing: preset(vector(-315, 105, -120), vector(crushing[0], crushing[1], crushing[2]), 43),
+    grinding: preset(vector(95, 88, -35), vector(grinding[0] + 35, grinding[1], grinding[2] - 4), 44),
+    leaching: preset(vector(245, 82, -45), vector(leaching[0], leaching[1], leaching[2]), 43),
+    recovery: preset(vector(400, 76, -105), vector(recovery[0], recovery[1], recovery[2]), 43),
+    inspection: preset(vector(220, 58, -55), vector(205, 25, -96), 50),
   });
 }
 
@@ -233,9 +264,11 @@ export function createV30CameraPresetConfigs() {
   });
 }
 
-export function createCameraPresetConfigs({ revision = 'V56' } = {}) {
+export function createCameraPresetConfigs({ revision = 'V57' } = {}) {
   if (revision === 'V30') return createV30CameraPresetConfigs();
   if (revision === 'V50') return createV50CameraPresetConfigs();
   if (revision === 'V55') return createV55CameraPresetConfigs();
+  if (revision === 'V56') return createV56CameraPresetConfigs();
+  if (revision === 'V57') return createV57CameraPresetConfigs();
   return createV56CameraPresetConfigs();
 }

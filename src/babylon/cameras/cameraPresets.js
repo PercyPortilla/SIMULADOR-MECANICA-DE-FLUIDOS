@@ -60,15 +60,31 @@ function createInspectionCamera(scene, config) {
   camera.setTarget(target);
   camera.lowerRadiusLimit = 0.8;
   camera.upperRadiusLimit = 1200;
-  camera.lowerBetaLimit = 0.04;
-  camera.upperBetaLimit = Math.PI * 0.92;
-  // OrbitControls dampingFactor=0.08 retains roughly 92% of motion per frame;
-  // Babylon's inertia is the retained fraction rather than the damping amount.
-  camera.inertia = 0.92;
-  camera.wheelPrecision = 50;
-  camera.panningSensibility = 1000;
-  camera.pinchPrecision = 120;
+  // Keep Inspection above the plant floor. Allowing beta to cross under the
+  // target was the main source of the apparent OrbitControls "flip".
+  camera.lowerBetaLimit = 0.10;
+  camera.upperBetaLimit = Math.PI * 0.485;
+  // Shorter inertia prevents accumulated drag/wheel offsets from continuing
+  // after the user releases the pointer.
+  camera.inertia = 0.72;
+  camera.panningInertia = 0.72;
+  camera.angularSensibilityX = 1350;
+  camera.angularSensibilityY = 1350;
+  camera.wheelPrecision = 70;
+  camera.panningSensibility = 1500;
+  camera.pinchPrecision = 150;
+  camera.useNaturalPinchZoom = true;
   return applySharedCameraConfig(camera, INSPECTION_CAMERA_ID, config);
+}
+
+export function clearBabylonInspectionCameraInertia(camera) {
+  if (!(camera instanceof ArcRotateCamera)) return false;
+  camera.inertialAlphaOffset = 0;
+  camera.inertialBetaOffset = 0;
+  camera.inertialRadiusOffset = 0;
+  camera.inertialPanningX = 0;
+  camera.inertialPanningY = 0;
+  return true;
 }
 
 /**
@@ -80,7 +96,7 @@ export function createBabylonCameraPresetConfigs() {
   return createCameraPresetConfigs();
 }
 
-export function applyBabylonCameraPresetRevision(cameras, revision = 'V56') {
+export function applyBabylonCameraPresetRevision(cameras, revision = 'V57') {
   if (!cameras) throw new TypeError('Babylon camera revision switch requires camera handles.');
   const configs = createCameraPresetConfigs({ revision });
   CAMERA_PRESET_ORDER.forEach((id) => {
@@ -118,8 +134,13 @@ export function setInspectionControlsAttached(camera, canvas, attached) {
   if (!(camera instanceof ArcRotateCamera)) {
     throw new TypeError('Inspection controls require an ArcRotateCamera.');
   }
-  if (attached) camera.attachControl(canvas, true);
-  else camera.detachControl(canvas);
+  clearBabylonInspectionCameraInertia(camera);
+  if (attached) {
+    // Runtime lifecycle already guarantees this path is entered only while
+    // Inspection is detached. Avoid a redundant detach/attach churn, which
+    // also caused duplicate lifecycle events in NullEngine tests.
+    camera.attachControl(canvas, false);
+  } else camera.detachControl();
 }
 
 export { CAMERA_PRESET_ORDER };
