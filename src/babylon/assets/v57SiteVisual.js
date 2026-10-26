@@ -1,3 +1,6 @@
+import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial.js';
+import { DynamicTexture } from '@babylonjs/core/Materials/Textures/dynamicTexture.js';
+import { Color3 } from '@babylonjs/core/Maths/math.color.js';
 import { TransformNode } from '@babylonjs/core/Meshes/transformNode.js';
 import { V57_SITE_VISUAL_URL } from '../../scene/integration/v57Layout.js';
 import { loadBabylonAssetContainer } from './gltfLoader.js';
@@ -7,12 +10,90 @@ function visitHierarchy(root, callback) {
   root.getDescendants?.(false)?.forEach(callback);
 }
 
+function createB64TerrainTexture(scene) {
+  if (typeof document === 'undefined') return null;
+  const texture = new DynamicTexture('b64-terrain-earth-texture', { width: 512, height: 512 }, scene, false);
+  const context = texture.getContext();
+  if (!context) return null;
+
+  let seed = 0xB64;
+  const random = () => {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 0x100000000;
+  };
+  const palette = ['#6f5840', '#7d6549', '#8a7255', '#5f4d3a', '#967a59', '#6b6255'];
+  context.fillStyle = '#765f45';
+  context.fillRect(0, 0, 512, 512);
+  for (let index = 0; index < 5200; index += 1) {
+    const x = Math.floor(random() * 512);
+    const y = Math.floor(random() * 512);
+    const size = 1 + Math.floor(random() * 4);
+    context.globalAlpha = 0.18 + random() * 0.34;
+    context.fillStyle = palette[Math.floor(random() * palette.length)];
+    context.fillRect(x, y, size, size);
+  }
+  context.globalAlpha = 0.12;
+  for (let index = 0; index < 80; index += 1) {
+    context.beginPath();
+    context.fillStyle = index % 3 === 0 ? '#a58a65' : '#55483a';
+    context.arc(random() * 512, random() * 512, 3 + random() * 10, 0, Math.PI * 2);
+    context.fill();
+  }
+  context.globalAlpha = 1;
+  texture.update(false);
+  texture.hasAlpha = false;
+  texture.uScale = 26;
+  texture.vScale = 26;
+  return texture;
+}
+
+function applyB64TerrainMaterial({ rootNodes, scene, host }) {
+  const terrainMeshes = [];
+  rootNodes.forEach((root) => {
+    visitHierarchy(root, (node) => {
+      if (!('material' in node)) return;
+      if (!String(node.name ?? '').startsWith('V57_TERRAIN_INTEGRATED')) return;
+      terrainMeshes.push(node);
+    });
+  });
+
+  if (!terrainMeshes.length) {
+    host.metadata.terrainMaterialStatus = 'B64-terrain-mesh-not-found';
+    return null;
+  }
+
+  const material = new StandardMaterial('b64-terrain-earth-material', scene);
+  const texture = createB64TerrainTexture(scene);
+  material.diffuseColor = texture ? new Color3(0.92, 0.88, 0.80) : new Color3(0.46, 0.35, 0.24);
+  if (texture) material.diffuseTexture = texture;
+  material.ambientColor = new Color3(0.16, 0.12, 0.08);
+  material.specularColor = new Color3(0.035, 0.035, 0.03);
+  material.specularPower = 4;
+  material.metadata = {
+    terrainMaterialBuild: 'B64',
+    visualOnly: true,
+    externalTextureDependency: false,
+  };
+
+  terrainMeshes.forEach((mesh) => {
+    mesh.material = material;
+    mesh.receiveShadows = true;
+    mesh.metadata = {
+      ...(mesh.metadata ?? {}),
+      terrainMaterialBuild: 'B64',
+    };
+  });
+  host.metadata.terrainMaterialStatus = 'B64-runtime-earth-applied';
+  host.metadata.terrainMaterialMeshCount = terrainMeshes.length;
+  return material;
+}
+
 function markV57Node(node) {
   node.metadata = {
     ...(node.metadata ?? {}),
     blenderImported: true,
     siteRevision: 'V57',
-    visualBuild: 'B63',
+    visualBuild: 'B64',
     v57AuthoritativeVisual: true,
     visualOnly: true,
   };
@@ -42,6 +123,7 @@ export function attachBabylonV57SiteVisual({
   let animationGroups = [];
   let animationsEnabled = true;
   let disposed = false;
+  let b64TerrainMaterial = null;
 
   function syncAnimationState() {
     animationGroups.forEach((group) => {
@@ -67,6 +149,7 @@ export function attachBabylonV57SiteVisual({
         root.parent = host;
         visitHierarchy(root, markV57Node);
       });
+      b64TerrainMaterial = applyB64TerrainMaterial({ rootNodes, scene, host });
       host.metadata.blenderVisualStatus = 'loaded';
       host.metadata.blenderVisualLoaded = true;
       host.metadata.importedRootCount = rootNodes.length;
@@ -82,7 +165,7 @@ export function attachBabylonV57SiteVisual({
       if (disposed) return null;
       host.metadata.blenderVisualStatus = 'error';
       host.metadata.blenderVisualError = error?.message || String(error);
-      console.error('[PULPA LAB V57/B63] No se pudo cargar la escena autoritativa.', error);
+      console.error('[PULPA LAB V57/B64] No se pudo cargar la escena autoritativa.', error);
       return null;
     });
 
@@ -102,6 +185,8 @@ export function attachBabylonV57SiteVisual({
       disposed = true;
       animationGroups.forEach((group) => group.stop?.());
       animationGroups = [];
+      b64TerrainMaterial?.dispose?.(false, true);
+      b64TerrainMaterial = null;
       container?.dispose?.();
       rootNodes = [];
       host.dispose();
