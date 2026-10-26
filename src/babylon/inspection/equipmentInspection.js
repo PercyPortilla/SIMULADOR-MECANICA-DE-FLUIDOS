@@ -159,22 +159,26 @@ function getBounds(node) {
   return directBounds(node);
 }
 
+function collectNodeMeshes(node) {
+  if (!node) return [];
+  return [
+    ...(node.getBoundingInfo && 'material' in node ? [node] : []),
+    ...(node.getChildMeshes?.(false) ?? []),
+  ];
+}
+
 function collectInspectableMeshes(target) {
   if (!target) return [];
   const sources = nodeMetadata(target).inspectionAliasSources;
-  if (!Array.isArray(sources)) return target.getChildMeshes?.(false) ?? [];
+  const candidates = Array.isArray(sources)
+    ? sources.flatMap((source) => collectNodeMeshes(source))
+    : collectNodeMeshes(target);
   const meshes = [];
   const seen = new Set();
-  sources.forEach((source) => {
-    const candidates = [
-      ...(source?.getBoundingInfo && 'material' in source ? [source] : []),
-      ...(source?.getChildMeshes?.(false) ?? []),
-    ];
-    candidates.forEach((mesh) => {
-      if (seen.has(mesh)) return;
-      seen.add(mesh);
-      meshes.push(mesh);
-    });
+  candidates.forEach((mesh) => {
+    if (!mesh || seen.has(mesh)) return;
+    seen.add(mesh);
+    meshes.push(mesh);
   });
   return meshes;
 }
@@ -274,14 +278,47 @@ export function createBabylonEquipmentInspectionSystem({ scene } = {}) {
   let currentTargetId = null;
   let currentMode = 'normal';
   let activeSnapshot = null;
+  const pickTargetIds = new Map();
+  const pickabilitySnapshot = new Map();
+
+  function restorePickability() {
+    pickabilitySnapshot.forEach((isPickable, mesh) => {
+      if (!mesh?.isDisposed?.()) mesh.isPickable = isPickable;
+    });
+    pickabilitySnapshot.clear();
+    pickTargetIds.clear();
+  }
+
+  function syncPickableMeshes() {
+    restorePickability();
+    INSPECTION_CIRCUIT_ORDER.forEach((id) => {
+      const target = targets.get(id);
+      if (!target || nodeMetadata(target).semanticOnly === true) return;
+      collectInspectableMeshes(target)
+        .filter((mesh) => isAuthoritativeBlenderVisual(mesh))
+        .forEach((mesh) => {
+          if (!pickabilitySnapshot.has(mesh)) pickabilitySnapshot.set(mesh, Boolean(mesh.isPickable));
+          if (pickTargetIds.has(mesh)) return;
+          pickTargetIds.set(mesh, id);
+          mesh.isPickable = true;
+        });
+    });
+    return pickTargetIds.size;
+  }
 
   function rebuildTargets() {
+    restorePickability();
     targets.clear();
     aliasRoot.getChildren?.().forEach((node) => node.dispose?.());
     INSPECTION_CIRCUIT_ORDER.forEach((id) => {
       const target = findTarget(scene, id, aliasRoot);
       if (target) targets.set(id, target);
     });
+    syncPickableMeshes();
+  }
+
+  function resolvePickTargetId(mesh) {
+    return pickTargetIds.get(mesh) ?? null;
   }
 
   function clearContextOverlay() {
@@ -467,6 +504,8 @@ export function createBabylonEquipmentInspectionSystem({ scene } = {}) {
     refreshTargets,
     setTarget,
     setMode,
+    resolvePickTargetId,
+    getPickableMeshCount: () => pickTargetIds.size,
     getFraming: (id = currentTargetId) => (id && targets.has(id) ? computeBabylonInspectionFraming(targets.get(id), id) : null),
     getContext: (id = currentTargetId) => getInspectionCircuitContext(id),
     refreshContextOverlay,
@@ -474,6 +513,7 @@ export function createBabylonEquipmentInspectionSystem({ scene } = {}) {
     get mode() { return currentMode; },
     dispose() {
       restore();
+      restorePickability();
       clearContextOverlay();
       contextOverlay.dispose();
       aliasRoot.dispose();
