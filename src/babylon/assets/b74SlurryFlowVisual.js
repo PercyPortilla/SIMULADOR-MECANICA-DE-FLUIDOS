@@ -1,6 +1,6 @@
 import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial.js';
 import { Color3 } from '@babylonjs/core/Maths/math.color.js';
-import { Vector3 } from '@babylonjs/core/Maths/math.vector.js';
+import { Quaternion, Vector3 } from '@babylonjs/core/Maths/math.vector.js';
 import { CreateCylinder } from '@babylonjs/core/Meshes/Builders/cylinderBuilder.js';
 import { CreateSphere } from '@babylonjs/core/Meshes/Builders/sphereBuilder.js';
 import { TransformNode } from '@babylonjs/core/Meshes/transformNode.js';
@@ -214,7 +214,9 @@ function alignCylinder(mesh, start, end) {
   const length = direction.length();
   if (length <= 1e-8) return false;
   mesh.position.copyFrom(Vector3.Lerp(start, end, 0.5));
-  mesh.rotationQuaternion = Vector3.Up().rotationTo(direction.normalize());
+  const rotation = Quaternion.Identity();
+  Quaternion.FromUnitVectorsToRef(Vector3.Up(), direction.normalize(), rotation);
+  mesh.rotationQuaternion = rotation;
   return true;
 }
 
@@ -267,6 +269,7 @@ function createFluidBody(scene, root, spec, points, material) {
     segment.metadata = {
       visualOnly: true,
       visualBuild: 'B74',
+      v57AuthoritativeVisual: true,
       inspectionInterior: true,
       inspectionRole: 'interior',
       slurryFlowBody: true,
@@ -308,6 +311,7 @@ function createTracers(scene, root, spec, points, materials) {
     tracer.metadata = {
       visualOnly: true,
       visualBuild: 'B74',
+      v57AuthoritativeVisual: true,
       inspectionInterior: true,
       inspectionRole: 'interior',
       slurryTracer: true,
