@@ -160,6 +160,55 @@ export function applyBabylonInspectionCameraFraming(camera, framing, {
   return Object.freeze({ distance, requiredDistance, radius });
 }
 
+export function resolveBabylonInspectionPick({
+  scene,
+  inspectionSystem,
+  x,
+  y,
+  camera = scene?.activeCamera,
+} = {}) {
+  const resolveTargetId = inspectionSystem?.resolvePickTargetId;
+  const pickX = Number(x);
+  const pickY = Number(y);
+  if (!scene?.pick || typeof resolveTargetId !== 'function' || !Number.isFinite(pickX) || !Number.isFinite(pickY)) {
+    return null;
+  }
+  try {
+    const pick = scene.pick(
+      pickX,
+      pickY,
+      (mesh) => Boolean(resolveTargetId(mesh)),
+      false,
+      camera,
+    );
+    return pick?.hit ? (resolveTargetId(pick.pickedMesh) ?? null) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function activateBabylonInspectionPick({
+  id,
+  setTarget,
+  setCamera,
+  activeCamera = null,
+  onPick = null,
+} = {}) {
+  if (!id || typeof setTarget !== 'function') return false;
+  setTarget(id, { smooth: true });
+  if (activeCamera !== INSPECTION_CAMERA_ID && typeof setCamera === 'function') {
+    setCamera(INSPECTION_CAMERA_ID);
+  }
+  if (typeof onPick === 'function') {
+    try {
+      onPick(id);
+    } catch (error) {
+      console.error('[PULPA LAB B67] No se pudo sincronizar la selección Inspection.', error);
+    }
+  }
+  return true;
+}
+
 function createSky(scene) {
   const sky = MeshBuilder.CreateSphere('babylon-sky-dome', {
     diameter: 1520,
@@ -669,31 +718,22 @@ export function createBabylonRuntime({
     if (pointer.pointerId !== null && event?.pointerId !== undefined && event.pointerId !== pointer.pointerId) return null;
     const point = pointerCoordinates(event);
     if (!point || Math.hypot(point.x - pointer.x, point.y - pointer.y) > 6) return null;
-    const resolveTargetId = base.equipmentInspection?.resolvePickTargetId;
-    if (typeof resolveTargetId !== 'function') return null;
-
-    let pick = null;
-    try {
-      pick = base.scene.pick(
-        point.x,
-        point.y,
-        (mesh) => Boolean(resolveTargetId(mesh)),
-        false,
-        base.scene.activeCamera,
-      );
-    } catch {
-      return null;
-    }
-    const id = pick?.hit ? resolveTargetId(pick.pickedMesh) : null;
+    const id = resolveBabylonInspectionPick({
+      scene: base.scene,
+      inspectionSystem: base.equipmentInspection,
+      x: point.x,
+      y: point.y,
+      camera: base.scene.activeCamera,
+    });
     if (!id) return null;
 
-    setInspectionTarget(id, { smooth: true });
-    if (activeCamera !== INSPECTION_CAMERA_ID) setCamera(INSPECTION_CAMERA_ID);
-    try {
-      inspectionPickHandler?.(id);
-    } catch (error) {
-      console.error('[PULPA LAB B67] No se pudo sincronizar la selección Inspection.', error);
-    }
+    activateBabylonInspectionPick({
+      id,
+      setTarget: setInspectionTarget,
+      setCamera,
+      activeCamera,
+      onPick: inspectionPickHandler,
+    });
     return id;
   }
 
