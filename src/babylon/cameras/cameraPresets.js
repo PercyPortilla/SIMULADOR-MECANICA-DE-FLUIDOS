@@ -66,13 +66,14 @@ function createInspectionCamera(scene, config) {
   camera.upperBetaLimit = Math.PI * 0.485;
   // Shorter inertia prevents accumulated drag/wheel offsets from continuing
   // after the user releases the pointer.
-  camera.inertia = 0.56;
-  camera.panningInertia = 0.56;
-  camera.angularSensibilityX = 800;
-  camera.angularSensibilityY = 800;
-  camera.wheelPrecision = 20;
-  camera.panningSensibility = 1000;
-  camera.pinchPrecision = 85;
+  camera.inertia = 0.35;
+  camera.panningInertia = 0.35;
+  camera.angularSensibilityX = 400;
+  camera.angularSensibilityY = 400;
+  camera.wheelPrecision = 5;
+  camera.wheelDeltaPercentage = 0.08;
+  camera.panningSensibility = 400;
+  camera.pinchPrecision = 35;
   camera.useNaturalPinchZoom = true;
   return applySharedCameraConfig(camera, INSPECTION_CAMERA_ID, config);
 }

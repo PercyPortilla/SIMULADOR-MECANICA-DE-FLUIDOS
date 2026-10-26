@@ -1,6 +1,5 @@
 import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial.js';
 import { Color3 } from '@babylonjs/core/Maths/math.color.js';
-import { HighlightLayer } from '@babylonjs/core/Layers/highlightLayer.js';
 import { Plane } from '@babylonjs/core/Maths/math.plane.js';
 import { Vector3 } from '@babylonjs/core/Maths/math.vector.js';
 import { CreateSphere } from '@babylonjs/core/Meshes/Builders/sphereBuilder.js';
@@ -334,12 +333,6 @@ export function createBabylonEquipmentInspectionSystem({ scene } = {}) {
   statusOverlay.metadata = { inspectionOperationalStatusOverlay: true, visualOnly: true };
   const aliasRoot = new TransformNode('inspection-v50-aliases', scene);
   aliasRoot.metadata = { inspectionAliasRoot: true, visualOnly: true };
-  const selectedHighlight = new HighlightLayer('inspection-selected-highlight', scene, {
-    blurHorizontalSize: 0.55,
-    blurVerticalSize: 0.55,
-  });
-  selectedHighlight.innerGlow = false;
-  selectedHighlight.outerGlow = true;
   let currentTargetId = null;
   let currentMode = 'normal';
   let hoverTargetId = null;
@@ -392,7 +385,6 @@ export function createBabylonEquipmentInspectionSystem({ scene } = {}) {
   }
 
   function clearContextOverlay() {
-    selectedHighlight.removeAllMeshes();
     contextOverlay.getChildMeshes(false).forEach((mesh) => {
       mesh.material?.dispose?.(false, false);
       mesh.dispose(false, false);
@@ -436,20 +428,12 @@ export function createBabylonEquipmentInspectionSystem({ scene } = {}) {
     );
   }
 
-  function highlightSelectedTarget(target) {
-    collectInspectableMeshes(target)
-      .filter((mesh) => mesh?.isVisible !== false && mesh?.visibility !== 0 && !isInterior(mesh))
-      .slice(0, 10)
-      .forEach((mesh) => selectedHighlight.addMesh(mesh, Color3.FromHexString('#79dce6')));
-  }
-
   function updateContextOverlay(id) {
     clearContextOverlay();
     if (!id) return;
     const context = getInspectionCircuitContext(id);
     const selected = targets.get(id);
     createContextMarker(scene, contextOverlay, selected, id, 'selected', Color3.FromHexString('#7de3ed'));
-    highlightSelectedTarget(selected);
     if (context.previousId && targets.has(context.previousId)) {
       createContextMarker(scene, contextOverlay, targets.get(context.previousId), context.previousId, 'upstream', Color3.FromHexString('#f0b35a'));
     }
@@ -672,7 +656,6 @@ export function createBabylonEquipmentInspectionSystem({ scene } = {}) {
       clearContextOverlay();
       clearHoverOverlay();
       clearStatusOverlay();
-      selectedHighlight.dispose();
       contextOverlay.dispose();
       hoverOverlay.dispose();
       statusOverlay.dispose();

@@ -89,6 +89,7 @@ describe('Babylon Inspection parity', () => {
     expect(markers.filter((mesh) => mesh.metadata.role !== 'selected').every((mesh) => mesh.metadata.markerKind === 'compact-marker')).toBe(true);
     expect(markers.every((mesh) => mesh.isPickable === false)).toBe(true);
     expect(markers.every((mesh) => mesh.material?.wireframe !== true)).toBe(true);
+    expect(scene.effectLayers).toHaveLength(0);
     system.dispose(); scene.dispose(); engine.dispose();
   });
 
