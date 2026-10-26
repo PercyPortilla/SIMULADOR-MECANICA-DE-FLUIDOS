@@ -440,6 +440,7 @@ export function applyB75EquipmentSlurryVisual({ scene, rootNodes = [], host } = 
   let animationsEnabled = true;
   let elapsedSeconds = 0;
   let inspectionState = Object.freeze({ targetId: null, mode: 'normal' });
+  let labState = Object.freeze({ active: false, mode: 'realistic' });
   let metrics = Object.freeze({
     flowRateM3s: 0,
     solidsMassFraction: 0,
@@ -495,6 +496,12 @@ export function applyB75EquipmentSlurryVisual({ scene, rootNodes = [], host } = 
     motions.forEach((motion) => {
       const metricVisibility = metricParticleVisibility(motion);
       const selected = motion.equipmentId === inspectionState.targetId;
+      const labRelevant = labState.active
+        && ['SUMP-01', 'SLURRY-PUMP-01', 'CLASS-01'].includes(motion.equipmentId);
+      if (labRelevant) {
+        motion.mesh.visibility = metricVisibility * (labState.mode === 'realistic' ? 0.58 : 1);
+        return;
+      }
       const openSumpHint = !reveal && motion.equipmentId === 'SUMP-01';
       motion.mesh.visibility = reveal && selected
         ? metricVisibility
@@ -504,6 +511,8 @@ export function applyB75EquipmentSlurryVisual({ scene, rootNodes = [], host } = 
       ...(root.metadata ?? {}),
       inspectionTargetId: inspectionState.targetId,
       inspectionMode: inspectionState.mode,
+      labActive: labState.active,
+      labMode: labState.mode,
     };
   }
 
@@ -514,6 +523,15 @@ export function applyB75EquipmentSlurryVisual({ scene, rootNodes = [], host } = 
     });
     applyInspectionVisibility();
     return inspectionState;
+  }
+
+  function setLabState({ active = false, mode = 'realistic' } = {}) {
+    labState = Object.freeze({
+      active: Boolean(active),
+      mode: ['realistic', 'didactic', 'presentation'].includes(mode) ? mode : 'realistic',
+    });
+    applyInspectionVisibility();
+    return labState;
   }
 
   function update(deltaSeconds) {
@@ -571,10 +589,12 @@ export function applyB75EquipmentSlurryVisual({ scene, rootNodes = [], host } = 
     materials,
     setMetrics,
     setInspectionState,
+    setLabState,
     update,
     setAnimationsEnabled,
     get metrics() { return metrics; },
     get inspectionState() { return inspectionState; },
+    get labState() { return labState; },
     dispose() {
       materialSnapshots.forEach((material, mesh) => {
         if (!mesh?.isDisposed?.()) mesh.material = material;

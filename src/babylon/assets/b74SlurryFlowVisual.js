@@ -488,6 +488,7 @@ export function applyB74SlurryFlowVisual({ scene, rootNodes = [], host } = {}) {
   const paths = B74_FLOW_SPECS.map((spec) => buildPath(scene, root, meshes, spec, materials));
   let animationsEnabled = true;
   let inspectionState = Object.freeze({ targetId: null, mode: 'normal' });
+  let labState = Object.freeze({ active: false, mode: 'realistic' });
   let metrics = Object.freeze({
     flowRateM3s: 0,
     imposedFlowRateM3s: 0,
@@ -575,6 +576,27 @@ export function applyB74SlurryFlowVisual({ scene, rootNodes = [], host } = {}) {
     const reveal = INSPECTION_REVEAL_MODES.has(inspectionState.mode);
     paths.forEach((path) => {
       const relevant = pathMatchesInspection(path, inspectionState.targetId);
+      const labRelevant = labState.active && ['sump-to-pump', 'pump-to-class'].includes(path.spec.id);
+      if (labRelevant) {
+        const labStrength = labState.mode === 'realistic' ? 0.70 : 1;
+        path.fluidSegments.forEach((segment) => {
+          segment.visibility = labStrength;
+        });
+        path.tracers.forEach((tracer) => {
+          const metricVisibility = finite(tracer.metadata?.metricVisibility, 0);
+          tracer.visibility = metricVisibility * (labState.mode === 'realistic' ? 0.55 : 1);
+        });
+        return;
+      }
+      if (labState.active) {
+        path.fluidSegments.forEach((segment) => {
+          segment.visibility = 0;
+        });
+        path.tracers.forEach((tracer) => {
+          tracer.visibility = 0;
+        });
+        return;
+      }
       const fluidVisibility = reveal
         ? (relevant ? 1 : 0.025)
         : (relevant ? 0.10 : 0.015);
@@ -592,6 +614,8 @@ export function applyB74SlurryFlowVisual({ scene, rootNodes = [], host } = {}) {
       ...(root.metadata ?? {}),
       inspectionTargetId: inspectionState.targetId,
       inspectionMode: inspectionState.mode,
+      labActive: labState.active,
+      labMode: labState.mode,
     };
   }
 
@@ -602,6 +626,15 @@ export function applyB74SlurryFlowVisual({ scene, rootNodes = [], host } = {}) {
     });
     applyInspectionVisibility();
     return inspectionState;
+  }
+
+  function setLabState({ active = false, mode = 'realistic' } = {}) {
+    labState = Object.freeze({
+      active: Boolean(active),
+      mode: ['realistic', 'didactic', 'presentation'].includes(mode) ? mode : 'realistic',
+    });
+    applyInspectionVisibility();
+    return labState;
   }
 
   function update(deltaSeconds) {
@@ -649,10 +682,12 @@ export function applyB74SlurryFlowVisual({ scene, rootNodes = [], host } = {}) {
     materials,
     setMetrics,
     setInspectionState,
+    setLabState,
     update,
     setAnimationsEnabled,
     get metrics() { return metrics; },
     get inspectionState() { return inspectionState; },
+    get labState() { return labState; },
     dispose() {
       root.dispose(false, true);
       Object.values(materials).forEach((material) => material.dispose(false, true));

@@ -160,6 +160,36 @@ export function applyBabylonInspectionCameraFraming(camera, framing, {
   return Object.freeze({ distance, requiredDistance, radius });
 }
 
+export function captureBabylonOrbitCameraState(camera) {
+  if (!camera) return null;
+  return Object.freeze({
+    target: Object.freeze(camera.target?.asArray?.() ?? [0, 0, 0]),
+    position: Object.freeze(camera.position?.asArray?.() ?? [0, 0, 0]),
+    alpha: Number(camera.alpha),
+    beta: Number(camera.beta),
+    radius: Number(camera.radius),
+    lowerRadiusLimit: Number(camera.lowerRadiusLimit),
+    upperRadiusLimit: Number(camera.upperRadiusLimit),
+    minZ: Number(camera.minZ),
+    maxZ: Number(camera.maxZ),
+  });
+}
+
+export function restoreBabylonOrbitCameraState(camera, snapshot) {
+  if (!camera || !snapshot) return false;
+  clearBabylonInspectionCameraInertia(camera);
+  camera.setTarget?.(Vector3.FromArray(snapshot.target));
+  camera.setPosition?.(Vector3.FromArray(snapshot.position));
+  if (Number.isFinite(snapshot.alpha)) camera.alpha = snapshot.alpha;
+  if (Number.isFinite(snapshot.beta)) camera.beta = snapshot.beta;
+  if (Number.isFinite(snapshot.radius)) camera.radius = snapshot.radius;
+  camera.lowerRadiusLimit = Number.isFinite(snapshot.lowerRadiusLimit) ? snapshot.lowerRadiusLimit : null;
+  camera.upperRadiusLimit = Number.isFinite(snapshot.upperRadiusLimit) ? snapshot.upperRadiusLimit : null;
+  if (Number.isFinite(snapshot.minZ)) camera.minZ = snapshot.minZ;
+  if (Number.isFinite(snapshot.maxZ)) camera.maxZ = snapshot.maxZ;
+  return true;
+}
+
 export function resolveBabylonInspectionPick({
   scene,
   inspectionSystem,
@@ -537,6 +567,11 @@ export function createBabylonRuntime({
   let previousFrameMs = null;
   let labelsEnabled = true;
   let presentationMode = false;
+  let labViewActive = false;
+  let labViewMode = 'realistic';
+  let labViewFocus = 'overview';
+  let labPreviousCamera = null;
+  let labInspectionCameraSnapshot = null;
   let lastDecorationRefreshMs = -Infinity;
   let processFlowScale = 1;
   let processMetrics = Object.freeze({ flowRateM3s: 0, pressurePa: 0 });
@@ -1049,6 +1084,77 @@ export function createBabylonRuntime({
     return presentationMode;
   }
 
+  function frameLabView(focus = 'overview') {
+    const framings = base.v57SiteVisual?.labFramings;
+    const framing = framings?.[focus] ?? framings?.overview;
+    if (!framing) return null;
+    labViewFocus = framings?.[focus] ? focus : 'overview';
+    const camera = base.cameras.inspection;
+    const center = Vector3.FromArray(framing.center);
+    const position = Vector3.FromArray(framing.position);
+    clearBabylonInspectionCameraInertia(camera);
+    inspectionCameraTransition = null;
+    camera.setTarget(center);
+    camera.setPosition(position);
+    const radius = Math.max(1, Vector3.Distance(position, center));
+    camera.lowerRadiusLimit = Math.max(1.5, radius * 0.18);
+    camera.upperRadiusLimit = Math.max(140, radius * 5.5);
+    camera.minZ = Math.max(0.04, radius / 420);
+    refreshViewDecorations(true);
+    invalidateRender(260);
+    return Object.freeze({
+      focus: labViewFocus,
+      center: Object.freeze([...framing.center]),
+      position: Object.freeze([...framing.position]),
+      radius,
+    });
+  }
+
+  function setLabViewMode(mode = 'realistic') {
+    labViewMode = ['realistic', 'didactic', 'presentation'].includes(mode)
+      ? mode
+      : 'realistic';
+    base.v57SiteVisual?.setLabViewState?.({
+      active: labViewActive,
+      mode: labViewMode,
+    });
+    if (labViewActive && labViewMode === 'presentation') frameLabView('overview');
+    refreshViewDecorations(true);
+    invalidateRender(180);
+    return labViewMode;
+  }
+
+  function setLabViewActive(active, { mode = labViewMode, focus = 'overview' } = {}) {
+    const next = Boolean(active);
+    if (next && !labViewActive) {
+      labPreviousCamera = activeCamera;
+      labInspectionCameraSnapshot = captureBabylonOrbitCameraState(base.cameras.inspection);
+    }
+    labViewMode = ['realistic', 'didactic', 'presentation'].includes(mode)
+      ? mode
+      : 'realistic';
+    labViewActive = next;
+    base.v57SiteVisual?.setLabViewState?.({
+      active: labViewActive,
+      mode: labViewMode,
+    });
+    if (labViewActive) {
+      if (activeCamera !== INSPECTION_CAMERA_ID) setCamera(INSPECTION_CAMERA_ID);
+      frameLabView(focus);
+    } else {
+      restoreBabylonOrbitCameraState(base.cameras.inspection, labInspectionCameraSnapshot);
+      labInspectionCameraSnapshot = null;
+      const restoreCamera = labPreviousCamera;
+      labPreviousCamera = null;
+      if (restoreCamera && restoreCamera !== activeCamera) setCamera(restoreCamera);
+      else {
+        refreshViewDecorations(true);
+        invalidateRender(180);
+      }
+    }
+    return labViewActive;
+  }
+
   function setGeotechnicsVisible(visible) {
     const allowed = !base.v57SiteVisual;
     const nextVisible = Boolean(visible) && allowed;
@@ -1250,6 +1356,9 @@ export function createBabylonRuntime({
     setAnimationsEnabled,
     setLabelsVisible,
     setPresentationMode,
+    setLabViewActive,
+    setLabViewMode,
+    frameLabView,
     setGeotechnicsVisible,
     setProcessMetrics,
     setScenePalette,
@@ -1268,6 +1377,9 @@ export function createBabylonRuntime({
     get animationsEnabled() { return animationsEnabled; },
     get labelsVisible() { return labelsEnabled; },
     get presentationMode() { return presentationMode; },
+    get labViewActive() { return labViewActive; },
+    get labViewMode() { return labViewMode; },
+    get labViewFocus() { return labViewFocus; },
     get geotechnicsVisible() { return Boolean(base.geotechnicalSystem?.visible); },
     get processMetrics() { return processMetrics; },
     get visualFlowScale() { return processFlowScale; },

@@ -8,6 +8,7 @@ import { applyB71HydraulicStudyVisual } from './b71HydraulicStudyVisual.js';
 import { applyB73FoundationVisual } from './b73FoundationVisual.js';
 import { applyB74SlurryFlowVisual } from './b74SlurryFlowVisual.js';
 import { applyB75EquipmentSlurryVisual } from './b75EquipmentSlurryVisual.js';
+import { applyB78BernoulliEulerLabVisual } from '../lab/bernoulliEulerLabVisual.js';
 
 function visitHierarchy(root, callback) {
   callback(root);
@@ -154,8 +155,10 @@ export function attachBabylonV57SiteVisual({
   let b73FoundationVisual = null;
   let b74SlurryFlowVisual = null;
   let b75EquipmentSlurryVisual = null;
+  let b78BernoulliEulerLabVisual = null;
   let processMetrics = Object.freeze({});
   let inspectionState = Object.freeze({ targetId: null, mode: 'normal' });
+  let labViewState = Object.freeze({ active: false, mode: 'realistic' });
 
   function syncAnimationState() {
     animationGroups.forEach((group) => {
@@ -192,6 +195,14 @@ export function attachBabylonV57SiteVisual({
       b75EquipmentSlurryVisual.setMetrics(processMetrics);
       b75EquipmentSlurryVisual.setAnimationsEnabled(animationsEnabled);
       b75EquipmentSlurryVisual.setInspectionState(inspectionState);
+      b75EquipmentSlurryVisual.setLabState(labViewState);
+      b78BernoulliEulerLabVisual = applyB78BernoulliEulerLabVisual({
+        scene,
+        rootNodes,
+        host,
+      });
+      b78BernoulliEulerLabVisual.setActive(labViewState.active, labViewState.mode);
+      b74SlurryFlowVisual.setLabState(labViewState);
       host.metadata.blenderVisualStatus = 'loaded';
       host.metadata.blenderVisualLoaded = true;
       host.metadata.importedRootCount = rootNodes.length;
@@ -236,15 +247,30 @@ export function attachBabylonV57SiteVisual({
       b75EquipmentSlurryVisual?.setInspectionState?.(inspectionState);
       return inspectionState;
     },
+    setLabViewState(nextState = {}) {
+      labViewState = Object.freeze({
+        active: Boolean(nextState.active),
+        mode: ['realistic', 'didactic', 'presentation'].includes(nextState.mode)
+          ? nextState.mode
+          : 'realistic',
+      });
+      b74SlurryFlowVisual?.setLabState?.(labViewState);
+      b75EquipmentSlurryVisual?.setLabState?.(labViewState);
+      b78BernoulliEulerLabVisual?.setActive?.(labViewState.active, labViewState.mode);
+      return labViewState;
+    },
     update(deltaSeconds) {
       const pipeMoved = b74SlurryFlowVisual?.update?.(deltaSeconds) ?? false;
       const equipmentMoved = b75EquipmentSlurryVisual?.update?.(deltaSeconds) ?? false;
-      return pipeMoved || equipmentMoved;
+      const labMoved = b78BernoulliEulerLabVisual?.update?.(deltaSeconds) ?? false;
+      return pipeMoved || equipmentMoved || labMoved;
     },
     get loaded() { return host.metadata?.blenderVisualStatus === 'loaded'; },
     get rootNodes() { return [...rootNodes]; },
     get animationGroups() { return [...animationGroups]; },
     get inspectionState() { return inspectionState; },
+    get labViewState() { return labViewState; },
+    get labFramings() { return b78BernoulliEulerLabVisual?.framing ?? null; },
     dispose() {
       if (disposed) return;
       disposed = true;
@@ -252,6 +278,8 @@ export function attachBabylonV57SiteVisual({
       animationGroups = [];
       b64TerrainMaterial?.dispose?.(false, true);
       b64TerrainMaterial = null;
+      b78BernoulliEulerLabVisual?.dispose?.();
+      b78BernoulliEulerLabVisual = null;
       b75EquipmentSlurryVisual?.dispose?.();
       b75EquipmentSlurryVisual = null;
       b74SlurryFlowVisual?.dispose?.();

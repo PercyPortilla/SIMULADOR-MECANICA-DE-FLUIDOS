@@ -1,8 +1,38 @@
 import { describe, expect, it, vi } from 'vitest';
-import { NullEngine } from '@babylonjs/core';
-import { createBabylonRuntime, createBaseEnvironment } from '../../src/babylon/runtime/baseEnvironment.js';
+import { NullEngine, Vector3 } from '@babylonjs/core';
+import {
+  captureBabylonOrbitCameraState,
+  createBabylonRuntime,
+  createBaseEnvironment,
+  restoreBabylonOrbitCameraState,
+} from '../../src/babylon/runtime/baseEnvironment.js';
 
 describe('Babylon runtime lifecycle', () => {
+  it('captures and restores the shared Inspection orbit camera exactly around Lab use', () => {
+    const engine = new NullEngine({ renderWidth: 800, renderHeight: 500 });
+    const canvas = { addEventListener() {}, removeEventListener() {} };
+    const runtime = createBabylonRuntime({ canvas, engineFactory: () => engine });
+    const camera = runtime.cameras.inspection;
+    camera.setTarget(new Vector3(201, 26, -94));
+    camera.setPosition(new Vector3(175, 49, -52));
+    camera.lowerRadiusLimit = 2.25;
+    camera.upperRadiusLimit = 310;
+    camera.minZ = 0.17;
+    const snapshot = captureBabylonOrbitCameraState(camera);
+    camera.setTarget(new Vector3(0, 0, 0));
+    camera.setPosition(new Vector3(1, 2, 3));
+    camera.lowerRadiusLimit = 8;
+    camera.upperRadiusLimit = 90;
+    camera.minZ = 1;
+    expect(restoreBabylonOrbitCameraState(camera, snapshot)).toBe(true);
+    expect(camera.target.asArray()).toEqual(snapshot.target);
+    expect(camera.position.asArray()).toEqual(snapshot.position);
+    expect(camera.lowerRadiusLimit).toBeCloseTo(2.25, 8);
+    expect(camera.upperRadiusLimit).toBeCloseTo(310, 8);
+    expect(camera.minZ).toBeCloseTo(0.17, 8);
+    runtime.dispose();
+  }, 30000);
+
   it('attaches controls only for Inspection and exposes resize/render/dispose lifecycle', () => {
     const engine = new NullEngine({ renderWidth: 1096, renderHeight: 520 });
     const canvas = { addEventListener() {}, removeEventListener() {} };

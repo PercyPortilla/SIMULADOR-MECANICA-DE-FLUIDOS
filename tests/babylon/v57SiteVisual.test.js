@@ -44,6 +44,13 @@ describe('Babylon V57 authoritative site visual', () => {
       mode: 'transparent',
     });
     expect(visual.inspectionState).toEqual({ targetId: 'MILL-01', mode: 'transparent' });
+    expect(visual.setLabViewState({ active: true, mode: 'didactic' })).toEqual({
+      active: true,
+      mode: 'didactic',
+    });
+    expect(visual.labViewState).toEqual({ active: true, mode: 'didactic' });
+    expect(visual.labFramings?.overview?.center).toEqual([205, 26.5, -96]);
+    visual.setLabViewState({ active: false, mode: 'realistic' });
     expect(animation.start).toHaveBeenCalled();
     visual.setAnimationsEnabled(false);
     expect(animation.pause).toHaveBeenCalled();
