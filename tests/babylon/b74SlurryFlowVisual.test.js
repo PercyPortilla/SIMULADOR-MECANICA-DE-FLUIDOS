@@ -110,4 +110,23 @@ describe('B74 slurry flow visualization', () => {
     scene.dispose();
     engine.dispose();
   });
+
+  it('keeps a visible slurry body on long authored downstream segments allowed by the route spec', () => {
+    const engine = new NullEngine();
+    const scene = new Scene(engine);
+    scene.useRightHandedSystem = true;
+    const host = new TransformNode('PULPA-LAB-V57-SITE', scene);
+    const root = new TransformNode('V57_DOWNSTREAM_FIXTURE', scene);
+    addBox(scene, root, 'B52_R04_TO_PUMP_SEG00', [344, 29.7, -122], [22, 0.8, 0.8]);
+
+    const visual = applyB74SlurryFlowVisual({ scene, rootNodes: [root], host });
+    const downstream = visual.paths.find((path) => path.spec.id === 'r04-to-cip');
+    expect(downstream.skipped).toBe(false);
+    expect(downstream.totalLengthM).toBeGreaterThan(18);
+    expect(downstream.fluidSegments.length).toBeGreaterThan(0);
+
+    visual.dispose();
+    scene.dispose();
+    engine.dispose();
+  });
 });
