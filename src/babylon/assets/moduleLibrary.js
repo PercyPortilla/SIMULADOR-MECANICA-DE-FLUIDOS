@@ -77,7 +77,9 @@ export function attachBabylonBlenderModule({
   };
   let clone = null;
   let disposed = false;
-  const shouldLoad = typeof window !== 'undefined' || loadContainer !== loadBabylonAssetContainer;
+  const shouldLoad = scene.metadata?.visualAuthority !== 'V57/B63'
+    && (typeof window !== 'undefined' || loadContainer !== loadBabylonAssetContainer);
+  if (scene.metadata?.visualAuthority === 'V57/B63') host.metadata.blenderModuleStatus = 'authored-in-B63';
   const ready = shouldLoad
     ? loadSourceContainer(scene, url, loadContainer)
       .then((container) => {

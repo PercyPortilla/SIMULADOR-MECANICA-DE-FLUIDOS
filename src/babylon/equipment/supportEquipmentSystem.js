@@ -24,6 +24,7 @@ export const BABYLON_SUPPORT_EQUIPMENT_IDS = Object.freeze(Object.keys(SUPPORT_D
 export function createBabylonSupportEquipmentSystem({
   scene,
   loadContainer,
+  visualGeometry = true,
 } = {}) {
   if (!scene) throw new TypeError('Babylon support equipment system requires a Scene.');
   if (scene.useRightHandedSystem !== true) throw new Error('Babylon support equipment system requires a right-handed Scene.');
@@ -57,6 +58,8 @@ export function createBabylonSupportEquipmentSystem({
       type: definition.type,
       metadata: { category: definition.type },
     });
+    // Keep semantic equipment and hydraulic ports even without legacy meshes.
+    if (!visualGeometry) return;
     const visual = attachBabylonEquipmentVisual({
       scene,
       instanceId,

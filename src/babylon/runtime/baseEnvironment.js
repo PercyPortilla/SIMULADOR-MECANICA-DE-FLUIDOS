@@ -335,6 +335,7 @@ export function createBabylonBaseScene(engine, { pipe1State = null } = {}) {
     toneMapping: 'ACES',
     toneMappingExposure: 1.05,
     toneMappingContrast: 1.12,
+    visualAuthority: 'V57/B63',
   };
 
   const sky = createSky(scene);
@@ -371,6 +372,7 @@ export function createBabylonBaseScene(engine, { pipe1State = null } = {}) {
   const processEquipmentSystem = typeof window !== 'undefined'
     ? createBabylonProcessEquipmentSystem({
       scene,
+      visualGeometry: false,
       ...(authoritativeOnlyLoader ? { loadContainer: authoritativeOnlyLoader } : {}),
     })
     : null;
@@ -407,6 +409,7 @@ export function createBabylonBaseScene(engine, { pipe1State = null } = {}) {
   const cameras = createBabylonPresetCameras(scene);
   scene.activeCamera = cameras.general;
   scene.metadata.migrationStage = 'V31-BLOCK-2';
+  scene.metadata.visualAuthority = 'V57/B63';
 
   return {
     scene,
@@ -503,6 +506,20 @@ export function createBabylonRuntime({
     // B62 authoritative-only policy: do not expose the old procedural site even
     // temporarily while the V57/B61 GLB downloads or parses.
     setLegacyVisualsEnabled(false);
+    // Retain functional registries, ports, connections and simulation handles.
+    // Only the disabled, superseded render meshes are released.
+    const discardLegacyMeshes = () => {
+      base.scene.meshes.filter((mesh) => mesh !== base.sky
+        && !mesh.metadata?.v57AuthoritativeVisual
+        && mesh !== base.v57SiteVisual.host
+        && !mesh.isEnabled()).forEach((mesh) => mesh.dispose(true, false));
+    };
+    discardLegacyMeshes();
+    Promise.allSettled([
+      base.processEquipmentSystem?.ready,
+      base.mobileEquipmentSystem?.ready,
+      base.receptionEarthworkOverlay?.ready,
+    ]).then(() => { if (!disposed) discardLegacyMeshes(); });
     base.scene.metadata.activeVisualRevision = 'V57-loading';
   }
 

@@ -9,7 +9,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const assets = [
   {
     label: 'V56 runtime GLB',
-    compressed: path.join(root, 'public', 'models', 'pulpa-v56', 'PULPA_LAB_V56_FULL_SITE.glb.gz'),
+    compressed: path.join(root, 'blender', 'legacy', 'PULPA_LAB_V56_FULL_SITE.glb.gz'),
     output: path.join(root, 'public', 'models', 'pulpa-v56', 'PULPA_LAB_V56_FULL_SITE.glb'),
     sha256: '17F2B8C5346DBEAC1BB8DDE7DAA61FEAE06DE8C2212D2F47486CFC582C3F1D53',
     required: true,

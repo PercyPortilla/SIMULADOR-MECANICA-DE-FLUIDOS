@@ -12,6 +12,7 @@ function markV57Node(node) {
     ...(node.metadata ?? {}),
     blenderImported: true,
     siteRevision: 'V57',
+    visualBuild: 'B63',
     v57AuthoritativeVisual: true,
     visualOnly: true,
   };
@@ -81,7 +82,7 @@ export function attachBabylonV57SiteVisual({
       if (disposed) return null;
       host.metadata.blenderVisualStatus = 'error';
       host.metadata.blenderVisualError = error?.message || String(error);
-      console.error('[PULPA LAB V57] No se pudo cargar el sitio Blender V57. B62 bloquea cualquier fallback visual antiguo.', error);
+      console.error('[PULPA LAB V57/B63] No se pudo cargar la escena autoritativa.', error);
       return null;
     });
 

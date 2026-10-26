@@ -4,9 +4,9 @@ import { describe, expect, it } from 'vitest';
 const mainSource = readFileSync(new URL('../../src/main.js', import.meta.url), 'utf8');
 const runtimeSource = readFileSync(new URL('../../src/babylon/runtime/baseEnvironment.js', import.meta.url), 'utf8');
 
-describe('B62 V57 authoritative loading UX contract', () => {
-  it('labels the initial viewport loader as the final V57/B61 Blender site', () => {
-    expect(mainSource).toContain('<strong>Cargando Blender V57 · B61</strong>');
+describe('B63 V57 authoritative loading UX contract', () => {
+  it('labels the initial viewport loader as the optimized V57/B63 Blender site', () => {
+    expect(mainSource).toContain('<strong>Cargando Blender V57 · B63</strong>');
     expect(mainSource).not.toContain('Cargando entorno Blender V56');
   });
 

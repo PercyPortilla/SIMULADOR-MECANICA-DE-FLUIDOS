@@ -263,6 +263,10 @@ function createSolidTransfer({ scene, equipmentSystem, definition }) {
     end,
   ];
   const root = new TransformNode(definition.id, scene);
+  if (scene.metadata?.visualAuthority === 'V57/B63') {
+    root.metadata = { connectionId: definition.id, routePoints: points.map((point) => point.asArray()), visualAuthority: 'V57/B63' };
+    return { root, route: points, materials: [] };
+  }
   const color = new Color3(
     ((definition.color >> 16) & 0xff) / 255,
     ((definition.color >> 8) & 0xff) / 255,
@@ -337,6 +341,24 @@ export function renderBabylonPipeConnection({
   const route = buildBabylonConnectionRoute(equipmentSystem, definition);
   const renderedDiameterM = getBabylonRenderedPipeDiameter(nominalDiameterM);
   const root = new TransformNode(definition.id, scene);
+  if (scene.metadata?.visualAuthority === 'V57/B63') {
+    // Retain topology and parameter updates; B63 supplies the visible pipes.
+    const sourceDiameterM = Number(equipmentSystem.getPort?.(...definition.source)?.nominalDiameterM ?? nominalDiameterM);
+    const targetDiameterM = Number(equipmentSystem.getPort?.(...definition.target)?.nominalDiameterM ?? nominalDiameterM);
+    root.metadata = {
+      connectionId: definition.id,
+      source: { equipmentId: definition.source[0], portId: definition.source[1] },
+      target: { equipmentId: definition.target[0], portId: definition.target[1] },
+      nominalDiameterM, physicalDiameterM: nominalDiameterM, renderedDiameterM,
+      processKind: definition.kind, supportPolicy: definition.supportPolicy,
+      routePoints: route.map((point) => point.asArray()), sourceDiameterM, targetDiameterM,
+      requiresReducer: Math.abs(sourceDiameterM - nominalDiameterM) > 1e-9 || Math.abs(targetDiameterM - nominalDiameterM) > 1e-9,
+      requestedMaterial: pipeMaterialName, visualValveCount: visualValveCount ?? 0,
+      flowParticleCount: 0, visualAuthority: 'V57/B63',
+    };
+    return { root, route, material: null, fluidMaterial: null, fittingMaterial: null,
+      flow: { particles: [], update: () => false }, moduleHandles: [] };
+  }
   const material = createMaterial(scene, definition.kind);
   const fluidMaterial = createFluidMaterial(scene, definition.kind);
   const fittingMaterial = new StandardMaterial(`${definition.id}-fitting-material`, scene);

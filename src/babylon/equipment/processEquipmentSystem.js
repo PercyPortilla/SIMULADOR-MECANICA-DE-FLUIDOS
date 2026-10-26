@@ -4,9 +4,10 @@ import { createBabylonSupportEquipmentSystem } from './supportEquipmentSystem.js
 export function createBabylonProcessEquipmentSystem({
   scene,
   loadContainer,
+  visualGeometry = true,
 } = {}) {
-  const fixed = createBabylonFixedEquipmentSystem({ scene, ...(loadContainer ? { loadContainer } : {}) });
-  const support = createBabylonSupportEquipmentSystem({ scene, ...(loadContainer ? { loadContainer } : {}) });
+  const fixed = createBabylonFixedEquipmentSystem({ scene, visualGeometry, ...(loadContainer ? { loadContainer } : {}) });
+  const support = createBabylonSupportEquipmentSystem({ scene, visualGeometry, ...(loadContainer ? { loadContainer } : {}) });
 
   function ownerFor(id) {
     if (fixed.registry.has(id)) return fixed;

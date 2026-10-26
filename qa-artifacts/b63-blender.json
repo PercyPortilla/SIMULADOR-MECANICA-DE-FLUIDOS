@@ -1,0 +1,1519 @@
+{
+  "revision": "V57/B63",
+  "removed": [
+    {
+      "name": "B26_LOADER_RUT_1_L",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B26_LOADER_RUT_1_R",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B26_RECLAIM_WORKED_GROUND",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B27_DUST_03",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B29_TIRE_RUT_1_0",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B29_TIRE_RUT_1_1",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_FACE_DUST_00",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_FACE_DUST_01",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_FACE_DUST_02",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_FACE_DUST_03",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_FACE_DUST_04",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_FACE_DUST_05",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_FACE_DUST_06",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_FACE_DUST_07",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_FACE_DUST_08",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_ROM_DUST_0_0",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_ROM_DUST_0_1",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_ROM_DUST_1_0",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_ROM_DUST_1_1",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_ROM_DUST_2_0",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_ROM_DUST_2_1",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-01_SCOOP1_CHUNK_00",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-01_SCOOP1_CHUNK_01",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-01_SCOOP1_CHUNK_02",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-01_SCOOP1_CHUNK_03",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-01_SCOOP1_CHUNK_04",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-01_SCOOP2_CHUNK_00",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-01_SCOOP2_CHUNK_01",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-01_SCOOP2_CHUNK_02",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-01_SCOOP2_CHUNK_03",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-01_SCOOP2_CHUNK_04",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-01_SCOOP3_CHUNK_00",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-01_SCOOP3_CHUNK_01",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-01_SCOOP3_CHUNK_02",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-01_SCOOP3_CHUNK_03",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-01_SCOOP3_CHUNK_04",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-02_SCOOP1_CHUNK_00",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-02_SCOOP1_CHUNK_01",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-02_SCOOP1_CHUNK_02",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-02_SCOOP1_CHUNK_03",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-02_SCOOP1_CHUNK_04",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-02_SCOOP2_CHUNK_00",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-02_SCOOP2_CHUNK_01",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-02_SCOOP2_CHUNK_02",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-02_SCOOP2_CHUNK_03",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-02_SCOOP2_CHUNK_04",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-02_SCOOP3_CHUNK_00",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-02_SCOOP3_CHUNK_01",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-02_SCOOP3_CHUNK_02",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-02_SCOOP3_CHUNK_03",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-02_SCOOP3_CHUNK_04",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-03_SCOOP1_CHUNK_00",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-03_SCOOP1_CHUNK_01",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-03_SCOOP1_CHUNK_02",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-03_SCOOP1_CHUNK_03",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-03_SCOOP1_CHUNK_04",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-03_SCOOP2_CHUNK_00",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-03_SCOOP2_CHUNK_01",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-03_SCOOP2_CHUNK_02",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-03_SCOOP2_CHUNK_03",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-03_SCOOP2_CHUNK_04",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-03_SCOOP3_CHUNK_00",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-03_SCOOP3_CHUNK_01",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-03_SCOOP3_CHUNK_02",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-03_SCOOP3_CHUNK_03",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "B47_TRUCK-03_SCOOP3_CHUNK_04",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "CIP-TO-ELUTION-CARBON_00",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "CIP-TO-ELUTION-CARBON_01",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "CIP-TO-ELUTION-CARBON_ELBOW_01",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "CIP_CARBON_TO_ELUTION_STUB_00",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "CIP_CARBON_TO_ELUTION_STUB_01",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "CIP_CARBON_TO_ELUTION_STUB_ELBOW_01",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "CIV_REGEN_BASE",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "CIV_ROM_BERM_N",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "CIV_ROM_BERM_W",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "CIV_ROM_EARTHWORK",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "CIV_ROM_MANEUVER_PAD_EARTH_SKIRT",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "CIV_ROM_SERVICE_ACCESS",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "CIV_SMELTING_BASE",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "CLASS-01_CUT_BARREL",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "CLASS-01_CUT_CONE",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "CORRIDOR_01_SOLID_MINERAL",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "CORRIDOR_02_PULP_PROCESS",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "CORRIDOR_03_SERVICES_PIPE_RACK",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "CORRIDOR_04_TRAFFIC_MAINTENANCE",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "CORRIDOR_05_TAILINGS",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "CORRIDOR_CARBON_PRODUCT",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "CORRIDOR_CARBON_REGEN_RETURN",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "EW-CELLS-ROOF",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_AIR_OXYGEN",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_APRON_FEEDER",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_CARBON_REGEN",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_CIP_AREA",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_CONTROL_LAB",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_CYCLONE_TOWER",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_DETOX",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_ELECTROWINNING",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_ELUTION_ACID_WASH",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_FIRE_WATER",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_FUEL_LUBE_BAY",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_LEACH_AREA",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_MINE_WORKSHOP",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_OPEN_PIT_REFERENCE",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_PRIMARY_CRUSHER",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_PROCESS_WATER_TANK",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_REAGENTS_AREA",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_RECLAIM_WATER_TANK",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_ROM_HOPPER",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_ROM_PAD",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_SAG_MILL",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_SEDIMENT_POND",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_SMELTING",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_STOCKPILE",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_STOCKPILE_RECLAIM",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_SUBSTATION_MCC",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_SUMP",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_TAILINGS_PUMP",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_TAILINGS_THICKENER",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_TOPSOIL_STOCKPILE",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_TSF_CONCEPT",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LAYOUT_WASTE_DUMP",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LEACH_CIP_PIPE_SUPPORT_04_FOOT",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LEACH_CIP_PIPE_SUPPORT_04_POST",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LEACH_CIP_PIPE_SUPPORT_04_SADDLE",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LEACH_TO_CIP_00",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LEACH_TO_CIP_01",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LEACH_TO_CIP_02",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LEACH_TO_CIP_ELBOW_01",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "LEACH_TO_CIP_ELBOW_02",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "MILL-01_CUT_HALF",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "POV-HUMAN-REFERENCE",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "RECLAIM_LOADER_MAINT_PAD",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_BACK",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_GRIZZLY_00",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_GRIZZLY_01",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_GRIZZLY_02",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_GRIZZLY_03",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_GRIZZLY_04",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_GRIZZLY_05",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_GRIZZLY_06",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_GRIZZLY_07",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_GRIZZLY_08",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_GRIZZLY_09",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_GRIZZLY_10",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_LEFT",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_LEG",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_LEG.001",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_LEG.002",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_LEG.003",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_LINER_BACK",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_LINER_LEFT",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_LINER_RIGHT",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_ORE_BULK",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_ORE_ROCK_00",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_ORE_ROCK_01",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_ORE_ROCK_02",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_ORE_ROCK_03",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_ORE_ROCK_04",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_ORE_ROCK_05",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_ORE_ROCK_06",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_ORE_ROCK_07",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_ORE_ROCK_08",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_ORE_ROCK_09",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_ORE_ROCK_10",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_ORE_ROCK_11",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_ORE_ROCK_12",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_ORE_ROCK_13",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_ORE_ROCK_14",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_ORE_ROCK_15",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_ORE_ROCK_16",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_ORE_ROCK_17",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_ORE_ROCK_18",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_ORE_ROCK_19",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_ORE_ROCK_20",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_ORE_ROCK_21",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_RIGHT",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_RIM_E",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_RIM_N",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_RIM_S",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "ROM-HOPPER_CUTAWAY_RIM_W",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "STOCKPILE_DROP_ORE_00",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "STOCKPILE_DROP_ORE_01",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "STOCKPILE_DROP_ORE_02",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "STOCKPILE_DROP_ORE_03",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "STOCKPILE_DROP_ORE_04",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "STOCKPILE_DROP_ORE_05",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "STOCKPILE_DROP_ORE_06",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "STOCKPILE_DROP_ORE_07",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "STOCKPILE_DROP_ORE_08",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "STOCKPILE_DROP_ORE_09",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "STOCKPILE_DROP_ORE_10",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "STOCKPILE_DROP_ORE_11",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "STOCKPILE_DROP_ORE_12",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "STOCKPILE_DROP_ORE_13",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "STOCKPILE_DROP_ORE_14",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "STOCKPILE_DROP_ORE_15",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "STOCKPILE_DROP_ORE_16",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "STOCKPILE_DROP_ORE_17",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "STOCKPILE_DROP_ORE_18",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "STOCKPILE_DROP_ORE_19",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "TSF-WATER-TAILINGS",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V573_OUTCROP_06",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V573_OUTCROP_07",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V573_V57_FINAL_HILL_RAMP_SHOULDER",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_BROKEN_ORE_APRON_00",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_BROKEN_ORE_APRON_01",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_BROKEN_ORE_APRON_02",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_BROKEN_ORE_APRON_03",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_BROKEN_ORE_APRON_04",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_BROKEN_ORE_APRON_05",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_BROKEN_ORE_APRON_06",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_BROKEN_ORE_APRON_07",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_BROKEN_ORE_APRON_08",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_BROKEN_ORE_APRON_09",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_BROKEN_ORE_APRON_10",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_BROKEN_ORE_APRON_11",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_BROKEN_ORE_APRON_12",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_BROKEN_ORE_APRON_13",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_FINAL_HILL_RAMP",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_GROUNDED_ROCK_PIT_FINAL",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_LOADED_CARBON_GOLD_00",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_LOADED_CARBON_GOLD_01",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_LOADED_CARBON_GOLD_02",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_LOADED_CARBON_GOLD_03",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_LOADING_DUST_00",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_LOADING_DUST_01",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_LOADING_DUST_02",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_MINE_ROM_TRUCK_ROUTE",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_ORE_FACE_EXPOSED",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_ORE_FACE_WALL_00",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_ORE_FACE_WALL_01",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_ORE_FACE_WALL_02",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_ORE_FACE_WALL_03",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_ORE_FACE_WALL_04",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_ORE_FACE_WALL_05",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_ORE_FACE_WALL_06",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_ORE_FACE_WALL_07",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_ORE_FACE_WALL_08",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_ORE_FACE_WALL_09",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_ORE_FACE_WALL_10",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_ORE_FACE_WALL_11",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_ORE_FACE_WALL_12",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_000",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_001",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_002",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_003",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_004",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_005",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_006",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_007",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_008",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_009",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_010",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_011",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_012",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_013",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_014",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_015",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_016",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_017",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_018",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_019",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_020",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_021",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_022",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_023",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_024",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_025",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_026",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_027",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_028",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_029",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_030",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_031",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_PIT_ROCK_DRESS_032",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_RECLAIM_FLOW_ROCK_00",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_RECLAIM_FLOW_ROCK_01",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_RECLAIM_FLOW_ROCK_02",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_RECLAIM_FLOW_ROCK_03",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_RECLAIM_FLOW_ROCK_04",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_RECLAIM_FLOW_ROCK_05",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_RECLAIM_FLOW_ROCK_06",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_RECLAIM_FLOW_ROCK_07",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_RECLAIM_FLOW_ROCK_08",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_RECLAIM_FLOW_ROCK_09",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_ROM_ENTRY_BERM_E",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_ROM_ENTRY_BERM_W",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "V57_TRUCK_FULL_CYCLE_GUIDE",
+      "reason": "permanently hidden superseded geometry"
+    },
+    {
+      "name": "CV-02_SUPPORT_02_FOOT",
+      "reason": "superseded by grounded B60 paired footings"
+    },
+    {
+      "name": "CV-02_SUPPORT_03_FOOT",
+      "reason": "superseded by grounded B60 paired footings"
+    },
+    {
+      "name": "CV-02_SUPPORT_04_FOOT",
+      "reason": "superseded by grounded B60 paired footings"
+    },
+    {
+      "name": "CV-02_SUPPORT_05_FOOT",
+      "reason": "superseded by grounded B60 paired footings"
+    },
+    {
+      "name": "CV-02_SUPPORT_06_FOOT",
+      "reason": "superseded by grounded B60 paired footings"
+    }
+  ],
+  "contacts": [
+    {
+      "name": "LEACH_CIP_PIPE_SUPPORT_00_FOOT",
+      "delta_z": 2.19007,
+      "surface": "CIV_WET_PROCESS_PAD"
+    },
+    {
+      "name": "LEACH_CIP_PIPE_SUPPORT_01_FOOT",
+      "delta_z": 0.255,
+      "surface": "CIV_WET_PROCESS_PAD"
+    },
+    {
+      "name": "LEACH_CIP_PIPE_SUPPORT_02_FOOT",
+      "delta_z": 0.255,
+      "surface": "CIV_WET_PROCESS_PAD"
+    },
+    {
+      "name": "LEACH_CIP_PIPE_SUPPORT_03_FOOT",
+      "delta_z": 0.25498,
+      "surface": "CIV_WET_PROCESS_PAD"
+    },
+    {
+      "name": "LEACH_CIP_PIPE_SUPPORT_05_FOOT",
+      "delta_z": 0.255,
+      "surface": "CIV_WET_PROCESS_PAD"
+    },
+    {
+      "name": "LEACH_CIP_PIPE_SUPPORT_06_FOOT",
+      "delta_z": 0.255,
+      "surface": "CIV_WET_PROCESS_PAD"
+    },
+    {
+      "name": "LEACH_CIP_PIPE_SUPPORT_07_FOOT",
+      "delta_z": 1.70826,
+      "surface": "CIV_WET_PROCESS_PAD"
+    },
+    {
+      "name": "LEACH_CIP_PIPE_SUPPORT_08_FOOT",
+      "delta_z": 0.68731,
+      "surface": "CIV_WET_PROCESS_PAD"
+    },
+    {
+      "name": "LEACH_CIP_PIPE_SUPPORT_09_FOOT",
+      "delta_z": 0.25498,
+      "surface": "CIV_WET_PROCESS_PAD"
+    },
+    {
+      "name": "GOLDROOM_PIPE_SUPPORT_00_FOOT",
+      "delta_z": 0.235,
+      "surface": "CIV_GOLD_PROCESS_PAD"
+    },
+    {
+      "name": "GOLDROOM_PIPE_SUPPORT_01_FOOT",
+      "delta_z": 0.23498,
+      "surface": "CIV_GOLD_PROCESS_PAD"
+    },
+    {
+      "name": "GOLDROOM_PIPE_SUPPORT_02_FOOT",
+      "delta_z": 0.235,
+      "surface": "CIV_GOLD_PROCESS_PAD"
+    },
+    {
+      "name": "GOLDROOM_PIPE_SUPPORT_03_FOOT",
+      "delta_z": 0.23503,
+      "surface": "CIV_GOLD_PROCESS_PAD"
+    },
+    {
+      "name": "GOLDROOM_PIPE_SUPPORT_04_FOOT",
+      "delta_z": 0.235,
+      "surface": "CIV_GOLD_PROCESS_PAD"
+    },
+    {
+      "name": "GOLDROOM_PIPE_SUPPORT_05_FOOT",
+      "delta_z": 0.235,
+      "surface": "CIV_GOLD_PROCESS_PAD"
+    },
+    {
+      "name": "TAILINGS-WATER-SUPPORT-02_FOOT",
+      "delta_z": 0.35502,
+      "surface": "CIV_THICKENER_PAD"
+    },
+    {
+      "name": "TAILINGS-WATER-SUPPORT-03_FOOT",
+      "delta_z": 0.355,
+      "surface": "CIV_THICKENER_PAD"
+    },
+    {
+      "name": "TAILINGS-WATER-SUPPORT-04_FOOT",
+      "delta_z": 0.79592,
+      "surface": "CIV_THICKENER_PAD"
+    },
+    {
+      "name": "TAILINGS-WATER-SUPPORT-09_FOOT",
+      "delta_z": -0.13952,
+      "surface": "V57_TERRAIN_INTEGRATED"
+    },
+    {
+      "name": "TAILINGS-WATER-SUPPORT-11_FOOT",
+      "delta_z": 0.43501,
+      "surface": "CIV_REAGENTS_PAD"
+    },
+    {
+      "name": "TAILINGS-WATER-SUPPORT-12_FOOT",
+      "delta_z": -4.56894,
+      "surface": "V57_TERRAIN_INTEGRATED"
+    },
+    {
+      "name": "TAILINGS-WATER-SUPPORT-15_FOOT",
+      "delta_z": 1.34391,
+      "surface": "V57_TERRAIN_INTEGRATED"
+    },
+    {
+      "name": "TAILINGS-WATER-SUPPORT-18_FOOT",
+      "delta_z": 0.435,
+      "surface": "CIV_REAGENTS_PAD"
+    },
+    {
+      "name": "CV-01_SUPPORT_01_FOOT",
+      "delta_z": -0.19175,
+      "surface": "CIV_APRON_FOUNDATION"
+    },
+    {
+      "name": "CV-01_SUPPORT_02_FOOT",
+      "delta_z": 0.469,
+      "surface": "CIV_APRON_FOUNDATION"
+    },
+    {
+      "name": "CV-01_SUPPORT_03_FOOT",
+      "delta_z": -3.37588,
+      "surface": "V57_TERRAIN_INTEGRATED"
+    },
+    {
+      "name": "CV-02A_SUPPORT_01_FOOT",
+      "delta_z": -0.165,
+      "surface": "V57_TERRAIN_INTEGRATED"
+    },
+    {
+      "name": "CV-02_SUPPORT_01_FOOT",
+      "delta_z": -0.165,
+      "surface": "V57_TERRAIN_INTEGRATED"
+    },
+    {
+      "name": "CV-03_SUPPORT_01_FOOT",
+      "delta_z": 0.95345,
+      "surface": "V57_TERRAIN_INTEGRATED"
+    },
+    {
+      "name": "CV-03_SUPPORT_03_FOOT",
+      "delta_z": -0.51945,
+      "surface": "V57_TERRAIN_INTEGRATED"
+    },
+    {
+      "name": "CV-03_SUPPORT_04_FOOT",
+      "delta_z": -0.47134,
+      "surface": "V57_TERRAIN_INTEGRATED"
+    },
+    {
+      "name": "CV-03_SUPPORT_05_FOOT",
+      "delta_z": -0.18165,
+      "surface": "V57_TERRAIN_INTEGRATED"
+    },
+    {
+      "name": "CV-03_SUPPORT_06_FOOT",
+      "delta_z": -0.17318,
+      "surface": "V57_TERRAIN_INTEGRATED"
+    },
+    {
+      "name": "CV-03_SUPPORT_07_FOOT",
+      "delta_z": -0.38389,
+      "surface": "V57_TERRAIN_INTEGRATED"
+    },
+    {
+      "name": "CV-03_SUPPORT_08_FOOT",
+      "delta_z": -0.16499,
+      "surface": "V57_TERRAIN_INTEGRATED"
+    },
+    {
+      "name": "CV-03_SUPPORT_09_FOOT",
+      "delta_z": -0.16502,
+      "surface": "V57_TERRAIN_INTEGRATED"
+    },
+    {
+      "name": "CV-03_SUPPORT_10_FOOT",
+      "delta_z": -0.18156,
+      "surface": "V57_TERRAIN_INTEGRATED"
+    },
+    {
+      "name": "CV-03_SUPPORT_11_FOOT",
+      "delta_z": -2.22292,
+      "surface": "V57_TERRAIN_INTEGRATED"
+    },
+    {
+      "name": "CV-03_SUPPORT_12_FOOT",
+      "delta_z": -0.22622,
+      "surface": "V57_TERRAIN_INTEGRATED"
+    },
+    {
+      "name": "SLURRY-PUMP-01_SUCTION_SUPPORT_01_FOOT",
+      "delta_z": 0.17498,
+      "surface": "CIV_GRINDING_PAD"
+    },
+    {
+      "name": "CLASS-01_FEED_LINE_SUPPORT_01_FOOT",
+      "delta_z": 0.17498,
+      "surface": "CIV_GRINDING_PAD"
+    },
+    {
+      "name": "CLASS-01_FEED_LINE_SUPPORT_02_FOOT",
+      "delta_z": 0.175,
+      "surface": "CIV_GRINDING_PAD"
+    },
+    {
+      "name": "CLASS-01_FEED_LINE_SUPPORT_03_FOOT",
+      "delta_z": 0.175,
+      "surface": "CIV_GRINDING_PAD"
+    },
+    {
+      "name": "CLASS-01_FEED_LINE_SUPPORT_04_FOOT",
+      "delta_z": 0.175,
+      "surface": "CIV_GRINDING_PAD"
+    },
+    {
+      "name": "CLASS-01_OVERFLOW_TO_LEACH_SUPPORT_01_FOOT",
+      "delta_z": 0.175,
+      "surface": "CIV_GRINDING_PAD"
+    },
+    {
+      "name": "CLASS-01_UNDERFLOW_RETURN_SUPPORT_01_FOOT",
+      "delta_z": 0.175,
+      "surface": "CIV_GRINDING_PAD"
+    },
+    {
+      "name": "CLASS-01_UNDERFLOW_RETURN_SUPPORT_02_FOOT",
+      "delta_z": 0.175,
+      "surface": "CIV_GRINDING_PAD"
+    },
+    {
+      "name": "CLASS-01_UNDERFLOW_RETURN_SUPPORT_03_FOOT",
+      "delta_z": 0.17498,
+      "surface": "CIV_GRINDING_PAD"
+    },
+    {
+      "name": "CLASS-01_UNDERFLOW_RETURN_SUPPORT_04_FOOT",
+      "delta_z": 0.175,
+      "surface": "CIV_GRINDING_PAD"
+    },
+    {
+      "name": "CLASS-01_UNDERFLOW_RETURN_SUPPORT_05_FOOT",
+      "delta_z": 0.175,
+      "surface": "CIV_GRINDING_PAD"
+    },
+    {
+      "name": "CLASS-01_UNDERFLOW_RETURN_SUPPORT_06_FOOT",
+      "delta_z": 0.175,
+      "surface": "CIV_GRINDING_PAD"
+    },
+    {
+      "name": "CLASS-01_UNDERFLOW_RETURN_SUPPORT_07_FOOT",
+      "delta_z": 0.175,
+      "surface": "CIV_GRINDING_PAD"
+    },
+    {
+      "name": "CLASS-01_UNDERFLOW_RETURN_SUPPORT_08_FOOT",
+      "delta_z": 0.17476,
+      "surface": "CIV_GRINDING_PAD"
+    },
+    {
+      "name": "CLASS-01_UNDERFLOW_RETURN_SUPPORT_09_FOOT",
+      "delta_z": 0.175,
+      "surface": "CIV_GRINDING_PAD"
+    },
+    {
+      "name": "B52_PUMP_PIPE_SUPPORT_0_FOOT",
+      "delta_z": -0.215,
+      "surface": "CIV_WET_PROCESS_PAD"
+    },
+    {
+      "name": "B52_PUMP_PIPE_SUPPORT_1_FOOT",
+      "delta_z": -0.215,
+      "surface": "CIV_WET_PROCESS_PAD"
+    },
+    {
+      "name": "RACK-COLUMN-230--1.5",
+      "base_z": 13.419999122619629
+    },
+    {
+      "name": "RACK-COLUMN-320--1.5",
+      "base_z": 13.0
+    },
+    {
+      "name": "RACK-COLUMN-320-1.5",
+      "base_z": 13.0
+    },
+    {
+      "name": "RACK-COLUMN-410--1.5",
+      "base_z": 12.912109375
+    },
+    {
+      "name": "RACK-COLUMN-410-1.5",
+      "base_z": 12.879837036132812
+    },
+    {
+      "name": "RACK-COLUMN-485--1.5",
+      "base_z": 8.902074813842773
+    },
+    {
+      "name": "RACK-COLUMN-485-1.5",
+      "base_z": 9.585315704345703
+    },
+    {
+      "name": "TRUCK-01",
+      "max_z_correction": 0.49234161376953267
+    },
+    {
+      "name": "STOCKPILE-LOADER-01",
+      "max_z_correction": 0.4750007629394517
+    },
+    {
+      "name": "EXCAVATOR-01",
+      "max_z_correction": 0.5563568115234361
+    }
+  ],
+  "shared_meshes": 2738,
+  "shared_materials": 53,
+  "keys_removed": 2805,
+  "checks": {
+    "truck_loop_position_error_m": 0.0065135955810546875,
+    "finite_transforms": true,
+    "critical_equipment": true
+  },
+  "before": {
+    "objects": 6874,
+    "meshes": 5452,
+    "materials": 265,
+    "keys": 39549
+  },
+  "after": {
+    "objects": 6582,
+    "meshes": 2489,
+    "materials": 203,
+    "keys": 34143
+  }
+}

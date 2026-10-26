@@ -22,6 +22,9 @@ babylon-preview-*.png
 babylon-preview-dom.html
 
 # V56 compressed source is retained only for legacy tests. The uncompressed
-# runtime GLB is ignored and the B62 production guard removes it before dev/build.
+# runtime GLB is ignored and the B63 production guard removes it before dev/build.
 public/models/pulpa-v56/PULPA_LAB_V56_FULL_SITE.glb
 blender/PULPA_LAB_BLENDER_MASTER_V56.blend
+
+# B63 production GLB is reconstructed from tracked packed parts by predev/pretest/prebuild.
+public/models/pulpa-v57/PULPA_LAB_V57_FULL_SITE_FINAL.glb

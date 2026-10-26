@@ -217,6 +217,10 @@ export function createBabylonProcessPipeRacks({ scene, connections = new Map(), 
   function refresh(nextConnections = connections) {
     connections = nextConnections;
     clearFrames();
+    if (scene.metadata?.visualAuthority === 'V57/B63') {
+      root.metadata = { totalFrames: 0, visualAuthority: 'V57/B63' };
+      return root;
+    }
     let totalFrames = 0;
     handlesOf(connections).forEach((handle) => {
       const metadata = handle?.root?.metadata ?? {};

@@ -15,6 +15,7 @@ export function createBabylonFixedEquipmentSystem({
   scene,
   instanceIds = BABYLON_FIXED_PROCESS_IDS,
   loadContainer,
+  visualGeometry = true,
 } = {}) {
   if (!scene) throw new TypeError('Babylon fixed equipment system requires a Scene.');
   if (scene.useRightHandedSystem !== true) throw new Error('Babylon fixed equipment system requires a right-handed Scene.');
@@ -58,6 +59,8 @@ export function createBabylonFixedEquipmentSystem({
       },
     });
 
+    // The B63 site owns rendering; retain the complete equipment/port registry.
+    if (!visualGeometry) return;
     const visual = attachBabylonEquipmentVisual({
       scene,
       instanceId,

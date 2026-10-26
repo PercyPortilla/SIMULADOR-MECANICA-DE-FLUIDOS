@@ -1,11 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { gunzipSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
 
-const ASSET_PATH = path.resolve('public/models/pulpa-v56/PULPA_LAB_V56_FULL_SITE.glb');
+const ASSET_PATH = path.resolve('blender/legacy/PULPA_LAB_V56_FULL_SITE.glb.gz');
 
 function readGlbJson(filePath) {
-  const buffer = fs.readFileSync(filePath);
+  const buffer = gunzipSync(fs.readFileSync(filePath));
   expect(buffer.toString('utf8', 0, 4)).toBe('glTF');
   const jsonLength = buffer.readUInt32LE(12);
   const json = buffer.subarray(20, 20 + jsonLength).toString('utf8').replace(/\0+$/, '').trimEnd();
@@ -18,7 +19,7 @@ function animatedNodeNames(gltf) {
   )));
 }
 
-describe('Blender V56 production asset contract', () => {
+describe('Archived Blender V56 asset contract', () => {
   it('keeps the final full site compact and structurally intact', () => {
     const { buffer, gltf } = readGlbJson(ASSET_PATH);
     expect(buffer.byteLength).toBeLessThan(6 * 1024 * 1024);
