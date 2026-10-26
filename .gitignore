@@ -28,3 +28,5 @@ blender/PULPA_LAB_BLENDER_MASTER_V56.blend
 
 # B63 production GLB is reconstructed from tracked packed parts by predev/pretest/prebuild.
 public/models/pulpa-v57/PULPA_LAB_V57_FULL_SITE_FINAL.glb
+
+.venv/
