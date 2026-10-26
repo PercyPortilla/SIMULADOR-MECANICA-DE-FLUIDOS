@@ -1420,9 +1420,11 @@ async function initializeEnvironment(canvas) {
       `;
       inspectionGuide.hidden = false;
     };
-    inspectionTarget?.addEventListener('change', () => {
+    const selectInspectionTarget = (id, { applyEnvironment = true, smoothCamera = false } = {}) => {
+      const selectedId = id || '';
+      if (inspectionTarget && inspectionTarget.value !== selectedId) inspectionTarget.value = selectedId;
       if (presentationActive && !presentationSelecting) {
-        const rank = presentationStops.findIndex((item) => item.id === inspectionTarget.value);
+        const rank = presentationStops.findIndex((item) => item.id === selectedId);
         if (rank >= 0) {
           presentationIndex = rank;
           presentationPlaying = false;
@@ -1432,19 +1434,26 @@ async function initializeEnvironment(canvas) {
           setPresentationActive(false);
         }
       }
-      environment.setInspectionTarget(inspectionTarget.value || null);
+      if (applyEnvironment) {
+        environment.setInspectionTarget(selectedId || null, { smooth: smoothCamera });
+      }
       if (inspectionMode) {
-        const selectedInspection = inspectionTargets.find((item) => item.id === inspectionTarget.value);
-        inspectionMode.disabled = !inspectionTarget.value || selectedInspection?.supportsModes === false;
+        const selectedInspection = inspectionTargets.find((item) => item.id === selectedId);
+        inspectionMode.disabled = !selectedId || selectedInspection?.supportsModes === false;
         inspectionMode.value = 'normal';
       }
       updateInspectionStepper();
-      renderInspectionGuide();
-      if (inspectionTarget.value && environment.activeCamera !== 'inspection') {
-        environment.setCamera('inspection');
+      if (selectedId) {
+        if (environment.activeCamera !== 'inspection') environment.setCamera('inspection');
         document.querySelector('#view-title').textContent = CAMERA_PRESET_LABELS.inspection;
         document.querySelectorAll('[data-camera]').forEach((item) => item.classList.toggle('active', item.dataset.camera === 'inspection'));
       }
+      renderInspectionGuide();
+    };
+    inspectionTarget?.addEventListener('change', () => selectInspectionTarget(inspectionTarget.value));
+    environment.setInspectionPickHandler?.((id) => {
+      if (!inspectionTarget) return;
+      selectInspectionTarget(id, { applyEnvironment: false });
     });
     const stepInspection = (delta) => {
       const index = inspectionTargets.findIndex((item) => item.id === inspectionTarget?.value);
