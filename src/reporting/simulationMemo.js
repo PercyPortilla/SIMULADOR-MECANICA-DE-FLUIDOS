@@ -76,8 +76,16 @@ export function buildSimulationMemo({ state, results, scenarioName = 'Escenario 
     equationRows.push(row('sub.dp', 'Sustitución presión', `${num(results.transport.distributedPressureDropPa)} + ${num(results.transport.minorLossPressurePa)} + ${num(results.transport.staticPressurePa)} = ${num(results.transport.pressureDropPa)}`, 'Pa'));
   }
   if (results.energy?.electricalPowerW !== undefined) {
+    const energyFlowRateM3s = results.energy.flowRateM3s ?? results.transport?.flowRateM3s;
+    const energyRequiredPressurePa = results.energy.requiredPressurePa ?? results.transport?.requiredPressurePa;
+    const energyPumpEfficiency = results.energy.pumpEfficiency ?? state.energy.pumpEfficiency;
     equationRows.push(row('eq.power', 'Potencia', 'Ph = ΔP·Q; Pe = Ph/(ηbomba·ηmotor)'));
-    equationRows.push(row('sub.power', 'Sustitución potencia eléctrica', `${num(results.transport.requiredPressurePa)}·${num(results.transport.flowRateM3s)}/(${num(state.energy.pumpEfficiency)}·${num(state.energy.motorEfficiency)}) = ${num(results.energy.electricalPowerW)}`, 'W'));
+    equationRows.push(row(
+      'sub.power',
+      results.energy.basis === 'pump-operating-point' ? 'Sustitución potencia eléctrica @ Qop' : 'Sustitución potencia eléctrica @ Q impuesto',
+      `${num(energyRequiredPressurePa)}·${num(energyFlowRateM3s)}/(${num(energyPumpEfficiency)}·${num(state.energy.motorEfficiency)}) = ${num(results.energy.electricalPowerW)}`,
+      'W',
+    ));
   }
   if (results.pump?.npshAvailableM !== undefined) {
     equationRows.push(row('eq.npsha', 'NPSH disponible', 'NPSHa = (Pabs − Pv)/(ρg) + zs − hfs'));
@@ -87,7 +95,8 @@ export function buildSimulationMemo({ state, results, scenarioName = 'Escenario 
 
   const resultRows = [
     row('result.rho', 'Densidad mezcla', num(results.slurry?.densityKgM3), 'kg/m³'),
-    row('result.q', 'Caudal', num(results.transport?.flowRateM3s), 'm³/s'),
+    row('result.q.imposed', 'Caudal impuesto', num(results.transport?.flowRateM3s), 'm³/s'),
+    row('result.q.operating', 'Caudal de operación Qop', num(results.pump?.operatingPoint?.flowRateM3s), 'm³/s'),
     row('result.v', 'Velocidad media', num(state.transport.pipe1.velocityMps), 'm/s'),
     row('result.restar', state.rheology.model === 'newtonian' ? 'Reynolds Re' : 'Reynolds generalizado Re*', num(results.transport?.reynoldsNumber)),
     row('result.f', 'Factor Darcy', num(results.transport?.frictionFactor)),
@@ -97,7 +106,7 @@ export function buildSimulationMemo({ state, results, scenarioName = 'Escenario 
     row('result.dp', 'Presión total', num(results.transport?.pressureDropPa), 'Pa'),
     row('result.head', 'Carga total', num(results.transport?.totalHeadM), 'm'),
     row('result.regime', 'Régimen', results.transport?.flowRegime ?? '—'),
-    row('result.power', 'Potencia eléctrica', num(results.energy?.electricalPowerW), 'W'),
+    row('result.power', results.energy?.basis === 'pump-operating-point' ? 'Potencia eléctrica @ Qop' : 'Potencia eléctrica @ Q impuesto', num(results.energy?.electricalPowerW), 'W'),
     row('result.npsha', 'NPSH disponible', num(results.pump?.npshAvailableM), 'm'),
     row('result.npshr', 'NPSH requerido', num(results.pump?.npsh?.requiredNpshM), 'm'),
     row('result.npshmargin', 'Margen NPSH', num(results.pump?.npsh?.marginM), 'm'),

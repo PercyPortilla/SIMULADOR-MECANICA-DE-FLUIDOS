@@ -5,6 +5,7 @@ import { PARAMETER_SECTIONS } from '../../src/ui/parameterSchema.js';
 const mainSource = readFileSync(new URL('../../src/main.js', import.meta.url), 'utf8');
 const resultsSource = readFileSync(new URL('../../src/ui/resultsPanel.js', import.meta.url), 'utf8');
 const memoSource = readFileSync(new URL('../../src/reporting/simulationMemo.js', import.meta.url), 'utf8');
+const balanceSource = readFileSync(new URL('../../src/ui/balancePanel.js', import.meta.url), 'utf8');
 
 describe('University fluid-mechanics UI contract', () => {
   it('separates the primary parameter domains used by the engineering workflow', () => {
@@ -26,6 +27,11 @@ describe('University fluid-mechanics UI contract', () => {
     expect(resultsSource).toContain('REYNOLDS GENERALIZADO Re*');
     expect(resultsSource).toContain('τw hidráulico');
     expect(resultsSource).toContain('perfil laminar equivalente');
+    expect(resultsSource).toContain('Q impuesto · Qop');
+    expect(resultsSource).toContain('potencia eléctrica en Qop');
+    expect(balanceSource).toContain("row('Q impuesto'");
+    expect(balanceSource).toContain("row('Qop'");
+    expect(balanceSource).toContain('NPSH requerido @ Qop');
   });
 
   it('keeps equations, scenario comparison and technical exports visible in the workflow', () => {
@@ -34,5 +40,6 @@ describe('University fluid-mechanics UI contract', () => {
     expect(mainSource).toContain('Comparación A/B');
     expect(memoSource).toContain('NPSH disponible');
     expect(memoSource).toContain('Darcy–Weisbach');
+    expect(memoSource).toContain('Sustitución potencia eléctrica @ Qop');
   });
 });

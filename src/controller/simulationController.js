@@ -337,6 +337,7 @@ function calculatePumpAssessment({ state, results }) {
   const { energy, transport } = state;
   const densityKgM3 = results.slurry?.densityKgM3;
   if (!densityKgM3 || !Array.isArray(energy.pumpCurve) || energy.pumpCurve.length < 2 || !(transport.pipe1.innerDiameterM > 0)) return;
+  const imposedFlowRateM3s = results.transport?.flowRateM3s;
 
   const systemHeadAtFlow = (flowRateM3s) => {
     const candidate = structuredClone(state);
@@ -361,25 +362,56 @@ function calculatePumpAssessment({ state, results }) {
       curves,
       curveSource: 'user-tabulated',
       extrapolated: false,
+      imposedFlowRateM3s,
     };
     if (!solution.operatingPoint) {
       results.pump.modelStatus = 'No existe intersección H–Q dentro del dominio tabulado; no se extrapola.';
       return;
     }
     const q = solution.operatingPoint.flowRateM3s;
+    results.pump.operatingFlowRateM3s = q;
+    results.pump.flowDeltaM3s = Number.isFinite(imposedFlowRateM3s) ? q - imposedFlowRateM3s : null;
     const pumpEfficiency = energy.efficiencyCurve.length >= 2
       ? interpolateTabulatedCurve(energy.efficiencyCurve, q, 'efficiency', { name: 'efficiencyCurve' })
       : energy.pumpEfficiency;
     results.pump.pumpEfficiency = pumpEfficiency;
+    const operatingRequiredPressurePa = densityKgM3 * 9.80665 * solution.operatingPoint.systemHeadM;
+    results.pump.operatingRequiredPressurePa = operatingRequiredPressurePa;
     if (pumpEfficiency > 0 && energy.motorEfficiency > 0) {
-      results.pump.energy = calculatePumpEnergy({
+      const operatingEnergy = calculatePumpEnergy({
         flowRateM3s: q,
-        requiredPressurePa: densityKgM3 * 9.80665 * solution.operatingPoint.pumpHeadM,
+        requiredPressurePa: operatingRequiredPressurePa,
         pumpEfficiency,
         motorEfficiency: energy.motorEfficiency,
         operatingHoursPerYear: energy.operatingHoursPerYear,
         electricityPricePerKwh: energy.electricityPricePerKwh,
       });
+      results.pump.energy = {
+        ...operatingEnergy,
+        basis: 'pump-operating-point',
+        flowRateM3s: q,
+        imposedFlowRateM3s,
+        requiredPressurePa: operatingRequiredPressurePa,
+        pumpHeadM: solution.operatingPoint.pumpHeadM,
+        systemHeadM: solution.operatingPoint.systemHeadM,
+        pumpEfficiency,
+        motorEfficiency: energy.motorEfficiency,
+      };
+      results.energy = {
+        ...results.pump.energy,
+        resultQuality: results.transport?.resultQuality ?? 'validated',
+        modelStatus: 'Potencia y energía evaluadas en el punto de operación Qop de la curva bomba–sistema.',
+      };
+    } else {
+      results.energy = {
+        basis: 'pump-operating-point-unavailable',
+        flowRateM3s: q,
+        imposedFlowRateM3s,
+        requiredPressurePa: operatingRequiredPressurePa,
+        pumpEfficiency,
+        motorEfficiency: energy.motorEfficiency,
+        modelStatus: 'Existe Qop, pero falta una eficiencia de bomba válida en ese caudal; no se reutiliza la potencia del caudal impuesto.',
+      };
     }
     const availableNpshM = calculateNpshAvailable({
       surfaceAbsolutePressurePa: energy.suctionAbsolutePressurePa,
@@ -392,6 +424,7 @@ function calculatePumpAssessment({ state, results }) {
       ? interpolateTabulatedCurve(energy.npshrCurve, q, 'npshM', { name: 'npshrCurve' })
       : null;
     results.pump.npshAvailableM = availableNpshM;
+    results.pump.npshEvaluationFlowRateM3s = q;
     if (requiredNpshM !== null) results.pump.npsh = assessNpsh({ availableNpshM, requiredNpshM });
     results.pump.modelStatus = solution.status === 'multiple-intersections'
       ? 'Se detectaron múltiples intersecciones; se reporta la primera y deben revisarse las curvas.'
@@ -659,6 +692,12 @@ export function calculateSimulationResults(state) {
         operatingHoursPerYear: energy.operatingHoursPerYear,
         electricityPricePerKwh: energy.electricityPricePerKwh,
       });
+      results.energy.basis = 'imposed-flow';
+      results.energy.flowRateM3s = results.transport.flowRateM3s;
+      results.energy.imposedFlowRateM3s = results.transport.flowRateM3s;
+      results.energy.requiredPressurePa = results.transport.requiredPressurePa;
+      results.energy.pumpEfficiency = energy.pumpEfficiency;
+      results.energy.motorEfficiency = energy.motorEfficiency;
       results.energy.resultQuality = results.transport.resultQuality ?? 'validated';
       if (results.transport.resultQuality === 'educational-estimate') results.energy.modelStatus = 'Potencia derivada de una estimación hidráulica educativa fuera de rama laminar.';
     }

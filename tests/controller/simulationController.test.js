@@ -220,6 +220,8 @@ describe('simulationController', () => {
       energy: {
         pumpEfficiency: 0.75,
         motorEfficiency: 0.92,
+        operatingHoursPerYear: 8000,
+        electricityPricePerKwh: 0.12,
         pumpCurve: [
           { flowRateM3s: 0, headM: 60 }, { flowRateM3s: 0.02, headM: 48 }, { flowRateM3s: 0.04, headM: 22 },
         ],
@@ -231,13 +233,37 @@ describe('simulationController', () => {
         ],
       },
     });
-    const pump = getResults().pump;
+    const results = getResults();
+    const pump = results.pump;
     expect(pump.status).toBe('unique');
     expect(pump.operatingPoint.flowRateM3s).toBeGreaterThan(0);
     expect(pump.operatingPoint.flowRateM3s).toBeLessThanOrEqual(0.04);
+    expect(pump.operatingPoint.flowRateM3s).not.toBeCloseTo(results.transport.flowRateM3s, 4);
+    expect(pump.operatingPoint.pumpHeadM).toBeCloseTo(pump.operatingPoint.systemHeadM, 5);
     expect(pump.pumpEfficiency).toBeGreaterThan(0);
     expect(pump.npsh.availableNpshM).toBeGreaterThan(0);
+    expect(pump.npshEvaluationFlowRateM3s).toBeCloseTo(pump.operatingPoint.flowRateM3s, 12);
     expect(pump.extrapolated).toBe(false);
+
+    const qop = pump.operatingPoint.flowRateM3s;
+    const expectedEfficiency = qop <= 0.02
+      ? 0.5 + (qop / 0.02) * (0.82 - 0.5)
+      : 0.82 + ((qop - 0.02) / 0.02) * (0.7 - 0.82);
+    const expectedNpshr = qop <= 0.02
+      ? 1.5 + (qop / 0.02) * (2.5 - 1.5)
+      : 2.5 + ((qop - 0.02) / 0.02) * (4.5 - 2.5);
+    const expectedPressurePa = results.slurry.densityKgM3 * 9.80665 * pump.operatingPoint.systemHeadM;
+    const expectedElectricalPowerW = qop * expectedPressurePa / (expectedEfficiency * 0.92);
+
+    expect(pump.pumpEfficiency).toBeCloseTo(expectedEfficiency, 10);
+    expect(pump.npsh.requiredNpshM).toBeCloseTo(expectedNpshr, 10);
+    expect(results.energy.basis).toBe('pump-operating-point');
+    expect(results.energy.flowRateM3s).toBeCloseTo(qop, 12);
+    expect(results.energy.imposedFlowRateM3s).toBeCloseTo(results.transport.flowRateM3s, 12);
+    expect(results.energy.requiredPressurePa).toBeCloseTo(expectedPressurePa, 6);
+    expect(results.energy.electricalPowerW).toBeCloseTo(expectedElectricalPowerW, 6);
+    expect(results.energy.annualEnergyKwh).toBeCloseTo(expectedElectricalPowerW / 1000 * 8000, 6);
+    expect(results.energy.annualEnergyCost).toBeCloseTo(expectedElectricalPowerW / 1000 * 8000 * 0.12, 6);
   });
 
   it('calcula balance de sólidos/agua y continuidad contra descarga de tanque', () => {
@@ -273,6 +299,8 @@ describe('simulationController', () => {
     });
     const results = getResults();
     expect(results.energy.electricalPowerW).toBeGreaterThan(0);
+    expect(results.energy.basis).toBe('imposed-flow');
+    expect(results.energy.flowRateM3s).toBeCloseTo(results.transport.flowRateM3s, 12);
     expect(results.leaching.residenceTimeH).toBeGreaterThan(0);
     expect(results.leaching.conversion).toBeGreaterThan(0);
     expect(results.recovery.overallRecovery).toBeCloseTo(0.9 * 0.8 * 0.95 * 0.98, 12);

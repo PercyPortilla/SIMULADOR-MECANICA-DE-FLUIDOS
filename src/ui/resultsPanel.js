@@ -19,6 +19,12 @@ function setText(selector, value) {
   if (node) node.textContent = value;
 }
 
+function setFollowingNote(selector, value) {
+  const node = document.querySelector(selector);
+  const note = node?.nextElementSibling;
+  if (note?.tagName === 'SMALL') note.textContent = value;
+}
+
 function setValidity(selector, label, state = 'pending') {
   const node = document.querySelector(selector);
   if (!node) return;
@@ -47,8 +53,13 @@ export function renderResultsPanel(results, state) {
   const displayedWallStress = outsideLaminar && hydraulicWallStress !== undefined
     ? hydraulicWallStress
     : equivalentWallStress;
+  const operatingFlow = results.pump?.operatingPoint?.flowRateM3s;
+  const energyAtOperatingPoint = results.energy?.basis === 'pump-operating-point';
 
   setText('#kpi-flow', flow === undefined ? '—' : `${(flow * 3600).toFixed(2)} m³/h`);
+  setFollowingNote('#kpi-flow', operatingFlow === undefined
+    ? 'Q impuesto por la velocidad'
+    : `Q impuesto · Qop ${(operatingFlow * 3600).toFixed(2)} m³/h`);
   setText('#kpi-velocity', state?.transport?.pipe1?.velocityMps === undefined ? '—' : `${state.transport.pipe1.velocityMps.toFixed(3)} m/s`);
   setText('#kpi-reynolds-label', generalizedReynolds ? 'REYNOLDS GENERALIZADO Re*' : 'REYNOLDS Re');
   setText('#kpi-reynolds', results.transport?.reynoldsNumber === undefined ? '—' : results.transport.reynoldsNumber.toFixed(0));
@@ -58,6 +69,7 @@ export function renderResultsPanel(results, state) {
   setText('#kpi-regime-note', REGIME_LABELS[results.transport?.flowRegime] ?? 'régimen pendiente');
   setText('#kpi-head', results.transport?.totalHeadM === undefined ? '—' : `${results.transport.totalHeadM.toFixed(2)} m`);
   setText('#kpi-power', results.energy?.electricalPowerW === undefined ? '—' : `${(results.energy.electricalPowerW / 1000).toFixed(2)} kW`);
+  setFollowingNote('#kpi-power', energyAtOperatingPoint ? 'potencia eléctrica en Qop' : 'potencia eléctrica con Q impuesto');
   setText('#kpi-npsh', results.pump?.npshAvailableM === undefined ? '—' : `${results.pump.npshAvailableM.toFixed(2)} m`);
   setText('#kpi-npsh-note', results.pump?.npsh
     ? `margen ${(results.pump.npsh.marginM ?? 0).toFixed(2)} m`
