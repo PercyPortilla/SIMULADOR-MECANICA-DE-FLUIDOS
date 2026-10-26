@@ -89,6 +89,30 @@ describe('Blender V57 final production asset contract', () => {
     ].forEach((name) => expect(names.has(name), `${name} must remain animated`).toBe(true));
   });
 
+  it('keeps the exact B82 production animation families addressable for runtime repair', () => {
+    const { gltf } = readGlbJson(ASSET_PATH);
+    const channels = gltf.animations[0].channels.map((channel) => ({
+      name: gltf.nodes[channel.target.node]?.name ?? '',
+      path: channel.target.path,
+    }));
+    const count = (predicate) => channels.filter(predicate).length;
+    expect(count(({ name, path: targetPath }) => (
+      /^(?:CV-01|CV-02|CV-02A|CV-03)_.*_SPINNER$/.test(name) && targetPath === 'rotation'
+    ))).toBe(135);
+    expect(count(({ name, path: targetPath }) => (
+      /^CIP-0[1-6]_MOVING$/.test(name) && targetPath === 'rotation'
+    ))).toBe(6);
+    expect(count(({ name, path: targetPath }) => (
+      /^EW-CELL-[0-9]{2}-GOLD-DEPOSIT-/.test(name) && targetPath === 'scale'
+    ))).toBe(32);
+    expect(count(({ name, path: targetPath }) => (
+      /^(?:B53_EW_GOLD_SOLIDS|B53_CALCINE_TO_SMELTING)_/.test(name) && targetPath === 'translation'
+    ))).toBe(14);
+    expect(count(({ name }) => name === 'PRIMARY-CRUSHER_MOVING_JAW_PIVOT.001')).toBe(1);
+    expect(count(({ name }) => name.startsWith('SMELTING-FURNACE'))).toBe(8);
+    expect(count(({ name }) => /^(?:TRUCK-0[1-3]|EXCAVATOR-01|STOCKPILE-LOADER-01)(?:$|_)/.test(name))).toBe(197);
+  });
+
   it('retains the authored V57 nodes used by B79 Inspection focus profiles', () => {
     const { gltf } = readGlbJson(ASSET_PATH);
     const names = gltf.nodes.map((node) => node.name ?? '');

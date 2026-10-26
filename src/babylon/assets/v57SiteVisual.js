@@ -10,6 +10,7 @@ import { applyB74SlurryFlowVisual } from './b74SlurryFlowVisual.js';
 import { applyB75EquipmentSlurryVisual } from './b75EquipmentSlurryVisual.js';
 import { applyB80TerrainCivilVisual } from './b80TerrainCivilVisual.js';
 import { applyB81ProcessContinuityVisual } from './b81ProcessContinuityVisual.js';
+import { applyB82OperationalAnimationVisual } from './b82OperationalAnimationVisual.js';
 import { applyB78BernoulliEulerLabVisual } from '../lab/bernoulliEulerLabVisual.js';
 
 function visitHierarchy(root, callback) {
@@ -159,6 +160,7 @@ export function attachBabylonV57SiteVisual({
   let b75EquipmentSlurryVisual = null;
   let b80TerrainCivilVisual = null;
   let b81ProcessContinuityVisual = null;
+  let b82OperationalAnimationVisual = null;
   let b78BernoulliEulerLabVisual = null;
   let processMetrics = Object.freeze({});
   let inspectionState = Object.freeze({ targetId: null, mode: 'normal' });
@@ -193,6 +195,12 @@ export function attachBabylonV57SiteVisual({
       b73FoundationVisual = applyB73FoundationVisual({ scene, rootNodes, host });
       b80TerrainCivilVisual = applyB80TerrainCivilVisual({ scene, rootNodes, host });
       b81ProcessContinuityVisual = applyB81ProcessContinuityVisual({ scene, rootNodes, host });
+      b82OperationalAnimationVisual = applyB82OperationalAnimationVisual({
+        scene,
+        rootNodes,
+        host,
+        animationGroups,
+      });
       b74SlurryFlowVisual = applyB74SlurryFlowVisual({
         scene,
         rootNodes: [...rootNodes, b81ProcessContinuityVisual.root],
@@ -206,6 +214,8 @@ export function attachBabylonV57SiteVisual({
       b75EquipmentSlurryVisual.setAnimationsEnabled(animationsEnabled);
       b75EquipmentSlurryVisual.setInspectionState(inspectionState);
       b75EquipmentSlurryVisual.setLabState(labViewState);
+      b82OperationalAnimationVisual.setAnimationsEnabled(animationsEnabled);
+      b82OperationalAnimationVisual.setLabState(labViewState);
       b78BernoulliEulerLabVisual = applyB78BernoulliEulerLabVisual({
         scene,
         rootNodes,
@@ -240,6 +250,7 @@ export function attachBabylonV57SiteVisual({
       syncAnimationState();
       b74SlurryFlowVisual?.setAnimationsEnabled?.(animationsEnabled);
       b75EquipmentSlurryVisual?.setAnimationsEnabled?.(animationsEnabled);
+      b82OperationalAnimationVisual?.setAnimationsEnabled?.(animationsEnabled);
       return animationsEnabled;
     },
     setProcessMetrics(nextMetrics = {}) {
@@ -266,14 +277,16 @@ export function attachBabylonV57SiteVisual({
       });
       b74SlurryFlowVisual?.setLabState?.(labViewState);
       b75EquipmentSlurryVisual?.setLabState?.(labViewState);
+      b82OperationalAnimationVisual?.setLabState?.(labViewState);
       b78BernoulliEulerLabVisual?.setActive?.(labViewState.active, labViewState.mode);
       return labViewState;
     },
     update(deltaSeconds) {
       const pipeMoved = b74SlurryFlowVisual?.update?.(deltaSeconds) ?? false;
       const equipmentMoved = b75EquipmentSlurryVisual?.update?.(deltaSeconds) ?? false;
+      const operationalMoved = b82OperationalAnimationVisual?.update?.(deltaSeconds) ?? false;
       const labMoved = b78BernoulliEulerLabVisual?.update?.(deltaSeconds) ?? false;
-      return pipeMoved || equipmentMoved || labMoved;
+      return pipeMoved || equipmentMoved || operationalMoved || labMoved;
     },
     get loaded() { return host.metadata?.blenderVisualStatus === 'loaded'; },
     get rootNodes() { return [...rootNodes]; },
@@ -300,6 +313,8 @@ export function attachBabylonV57SiteVisual({
       b80TerrainCivilVisual = null;
       b81ProcessContinuityVisual?.dispose?.();
       b81ProcessContinuityVisual = null;
+      b82OperationalAnimationVisual?.dispose?.();
+      b82OperationalAnimationVisual = null;
       b71HydraulicStudyVisual?.dispose?.();
       b71HydraulicStudyVisual = null;
       container?.dispose?.();
