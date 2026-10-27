@@ -1,7 +1,7 @@
 import { PointLight } from '@babylonjs/core/Lights/pointLight.js';
 import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial.js';
 import { DynamicTexture } from '@babylonjs/core/Materials/Textures/dynamicTexture.js';
-import { Color3 } from '@babylonjs/core/Maths/math.color.js';
+import { Color3, Color4 } from '@babylonjs/core/Maths/math.color.js';
 import { Vector3 } from '@babylonjs/core/Maths/math.vector.js';
 import { CreateBox } from '@babylonjs/core/Meshes/Builders/boxBuilder.js';
 import { CreateCylinder } from '@babylonjs/core/Meshes/Builders/cylinderBuilder.js';
@@ -24,8 +24,8 @@ export const B78_LAB_CONNECTION_IDS = Object.freeze([
 export const B78_LAB_FRAMINGS = Object.freeze({
   overview: Object.freeze({
     center: Object.freeze([205.0, 26.5, -96.0]),
-    size: Object.freeze([68.0, 21.0, 38.0]),
-    position: Object.freeze([162.0, 54.0, -48.0]),
+    size: Object.freeze([58.0, 17.0, 28.0]),
+    position: Object.freeze([166.0, 43.0, -61.0]),
   }),
   sump: Object.freeze({
     center: Object.freeze([178.5, 23.4, -90.1]),
@@ -112,8 +112,35 @@ function material(scene, name, diffuse, emissive = null) {
   result.specularColor = new Color3(0.10, 0.11, 0.11);
   result.specularPower = 18;
   if (emissive) result.emissiveColor = emissive;
-  result.metadata = { visualOnly: true, visualBuild: 'B78' };
+  result.metadata = { visualOnly: true, visualBuild: 'B86', bernoulliEulerLab: true };
   return result;
+}
+
+function isLabOwnedMesh(mesh) {
+  const metadata = mesh?.metadata ?? {};
+  return metadata.bernoulliEulerLab === true
+    || metadata.labFloor === true
+    || metadata.labEdge === true
+    || metadata.labPoint != null
+    || metadata.labPointLabel === true;
+}
+
+function isFlowManagedMesh(mesh) {
+  const metadata = mesh?.metadata ?? {};
+  return metadata.slurryFlowBody === true
+    || metadata.slurryTracer === true
+    || metadata.equipmentSlurryTracer === true;
+}
+
+function isRelevantGeneratedMesh(mesh) {
+  const metadata = mesh?.metadata ?? {};
+  const name = String(mesh?.name ?? '');
+  if (B78_LAB_EQUIPMENT_IDS.includes(metadata.equipmentId)) return true;
+  if (B78_LAB_CONNECTION_IDS.includes(metadata.connectionId)) return true;
+  if (metadata.b71HydraulicStudy && ['sump-to-pump', 'pump-to-class'].includes(metadata.seamBridge)) return true;
+  return name.startsWith('B73_FOUNDATION_SUMP-01')
+    || name.startsWith('B73_FOUNDATION_SLURRY-PUMP-01')
+    || name.startsWith('B73_FOUNDATION_CLASS-01');
 }
 
 function addMarker(scene, root, id, position, color) {
@@ -134,7 +161,8 @@ function addMarker(scene, root, id, position, color) {
   );
   marker.metadata = {
     visualOnly: true,
-    visualBuild: 'B78',
+    visualBuild: 'B86',
+    bernoulliEulerLab: true,
     labPoint: id,
     inspectionInterior: true,
   };
@@ -183,7 +211,8 @@ function addMarkerLabel(scene, root, id, position, color) {
   label.material = labelMaterial;
   label.metadata = {
     visualOnly: true,
-    visualBuild: 'B84',
+    visualBuild: 'B86',
+    bernoulliEulerLab: true,
     labPoint: id,
     labPointLabel: true,
   };
@@ -197,8 +226,10 @@ export function applyB78BernoulliEulerLabVisual({ scene, host, rootNodes = [] } 
   root.parent = host;
   root.metadata = {
     visualOnly: true,
-    visualBuild: 'B78',
+    visualBuild: 'B86',
     labView: true,
+    bernoulliEulerLab: true,
+    isolationStrategy: 'mesh-level-dedicated-stage',
   };
 
   const concrete = material(scene, 'b78-lab-concrete', new Color3(0.235, 0.255, 0.25));
@@ -211,27 +242,37 @@ export function applyB78BernoulliEulerLabVisual({ scene, host, rootNodes = [] } 
     new Color3(0.015, 0.075, 0.085),
   );
 
-  const floor = CreateBox('B78_LAB_FLOOR', { width: 78, height: 0.34, depth: 48 }, scene);
+  const floor = CreateBox('B86_LAB_FLOOR', { width: 66, height: 0.34, depth: 32 }, scene);
   floor.parent = root;
   floor.position.set(205, 20.15, -96);
   floor.material = concrete;
   floor.receiveShadows = true;
   floor.isPickable = false;
-  floor.metadata = { visualOnly: true, visualBuild: 'B78', labFloor: true };
+  floor.metadata = {
+    visualOnly: true,
+    visualBuild: 'B86',
+    bernoulliEulerLab: true,
+    labFloor: true,
+  };
 
   const edgeSpecs = [
-    [78, 0.12, 0.16, 205, 20.37, -120],
-    [78, 0.12, 0.16, 205, 20.37, -72],
-    [0.16, 0.12, 48, 166, 20.37, -96],
-    [0.16, 0.12, 48, 244, 20.37, -96],
+    [66, 0.12, 0.16, 205, 20.37, -112],
+    [66, 0.12, 0.16, 205, 20.37, -80],
+    [0.16, 0.12, 32, 172, 20.37, -96],
+    [0.16, 0.12, 32, 238, 20.37, -96],
   ];
   const edges = edgeSpecs.map(([width, height, depth, x, y, z], index) => {
-    const strip = CreateBox(`B78_LAB_EDGE_${index + 1}`, { width, height, depth }, scene);
+    const strip = CreateBox(`B86_LAB_EDGE_${index + 1}`, { width, height, depth }, scene);
     strip.parent = root;
     strip.position.set(x, y, z);
     strip.material = edge;
     strip.isPickable = false;
-    strip.metadata = { visualOnly: true, visualBuild: 'B78', labEdge: true };
+    strip.metadata = {
+      visualOnly: true,
+      visualBuild: 'B86',
+      bernoulliEulerLab: true,
+      labEdge: true,
+    };
     return strip;
   });
 
@@ -260,118 +301,82 @@ export function applyB78BernoulliEulerLabVisual({ scene, host, rootNodes = [] } 
   lights.forEach((light) => {
     light.range = 82;
     light.setEnabled(false);
-    light.metadata = { visualOnly: true, visualBuild: 'B78', labLight: true };
+    light.metadata = { visualOnly: true, visualBuild: 'B86', labLight: true, bernoulliEulerLab: true };
   });
 
   root.setEnabled(false);
   let active = false;
   let mode = 'realistic';
   let relevantMeshes = new Set();
-  let rootSnapshots = new Map();
-  let meshVisibilitySnapshots = new Map();
-  let generatedVisibilitySnapshots = new Map();
+  let meshStateSnapshots = new Map();
   let baseLightSnapshots = new Map();
+  let sceneSnapshot = null;
   let elapsed = 0;
-
-  function rootIsRelevant(rootNode) {
-    let relevant = false;
-    visitHierarchy(rootNode, (node) => {
-      if (relevant) return;
-      const name = String(node?.name ?? '');
-      const matchedAlias = LAB_TARGET_SPECS.some((spec) => (
-          spec.names.includes(name)
-          || spec.prefixes.some((prefix) => name.startsWith(prefix))
-        ));
-      if (matchedAlias) relevant = true;
-    });
-    return relevant;
-  }
 
   function snapshotAndIsolate() {
     relevantMeshes = collectRelevantMeshes(scene);
-    rootSnapshots = new Map();
-    rootNodes.forEach((rootNode) => {
-      const enabled = rootNode.isEnabled?.() !== false;
-      rootSnapshots.set(rootNode, enabled);
-      rootNode.setEnabled?.(rootIsRelevant(rootNode));
-    });
-    meshVisibilitySnapshots = new Map();
-    relevantMeshes.forEach((mesh) => {
-      if (
-        mesh.metadata?.inspectionInterior
-        || mesh.metadata?.slurryFlowBody
-        || mesh.metadata?.slurryTracer
-        || mesh.metadata?.equipmentSlurryTracer
-      ) return;
-      meshVisibilitySnapshots.set(mesh, Number(mesh.visibility));
-    });
-    generatedVisibilitySnapshots = new Map();
+    meshStateSnapshots = new Map();
     scene.meshes.forEach((mesh) => {
-      if (mesh.metadata?.b71HydraulicStudy && mesh.metadata?.seamBridge) {
-        const keep = ['sump-to-pump', 'pump-to-class'].includes(mesh.metadata.seamBridge);
-        if (!keep) {
-          generatedVisibilitySnapshots.set(mesh, {
-            isVisible: mesh.isVisible,
-            visibility: Number(mesh.visibility),
-          });
-          mesh.isVisible = false;
-        }
-      }
-      if (mesh.metadata?.b73LocalFoundation && !B78_LAB_EQUIPMENT_IDS.includes(mesh.metadata?.equipmentId)) {
-        generatedVisibilitySnapshots.set(mesh, {
-          isVisible: mesh.isVisible,
-          visibility: Number(mesh.visibility),
-        });
-        mesh.isVisible = false;
-      }
-      if (mesh.metadata?.b80TerrainEdgeContinuation || mesh.metadata?.b81ProcessContinuity) {
-        generatedVisibilitySnapshots.set(mesh, {
-          isVisible: mesh.isVisible,
-          visibility: Number(mesh.visibility),
-        });
-        mesh.isVisible = false;
-        mesh.visibility = 0;
-      }
+      if (isLabOwnedMesh(mesh) || isFlowManagedMesh(mesh)) return;
+      const keep = relevantMeshes.has(mesh) || isRelevantGeneratedMesh(mesh);
+      meshStateSnapshots.set(mesh, {
+        isVisible: mesh.isVisible,
+        visibility: Number(mesh.visibility),
+      });
+      if (keep) return;
+      mesh.isVisible = false;
+      mesh.visibility = 0;
     });
+
+    sceneSnapshot = {
+      clearColor: scene.clearColor?.clone?.() ?? null,
+      environmentIntensity: Number(scene.environmentIntensity),
+      fogEnabled: Boolean(scene.fogEnabled),
+    };
+    scene.clearColor = new Color4(0.018, 0.027, 0.034, 1);
+    if (Number.isFinite(scene.environmentIntensity)) scene.environmentIntensity = 0.42;
+    scene.fogEnabled = false;
+
     baseLightSnapshots = new Map();
     const labLightIds = new Set(lights.map((light) => light.name));
     scene.lights.forEach((light) => {
       if (labLightIds.has(light.name)) return;
-      baseLightSnapshots.set(light, Number(light.intensity));
-      if (light.name === 'mine-sun-key-light') light.intensity = 0.45;
-      else if (light.name === 'ambient-industrial-light') light.intensity = 0.30;
-      else if (light.name === 'soft-fill-light') light.intensity = 0.12;
-      else if (light.name === 'warm-ground-bounce') light.intensity = 0.05;
+      baseLightSnapshots.set(light, {
+        enabled: light.isEnabled?.() !== false,
+        intensity: Number(light.intensity),
+      });
+      light.setEnabled?.(false);
     });
     host.metadata = {
       ...(host.metadata ?? {}),
+      b86LabIsolationStrategy: 'mesh-level-dedicated-stage',
       b78LabRelevantMeshCount: relevantMeshes.size,
-      b78LabIsolatedRootCount: [...rootSnapshots.entries()].filter(([rootNode]) => !rootIsRelevant(rootNode)).length,
+      b86LabHiddenMeshCount: [...meshStateSnapshots.keys()].filter((mesh) => !mesh.isVisible).length,
     };
   }
 
   function restoreScene() {
-    rootSnapshots.forEach((enabled, rootNode) => {
-      if (rootNode?.isDisposed?.()) return;
-      rootNode.setEnabled?.(enabled);
-    });
-    meshVisibilitySnapshots.forEach((visibility, mesh) => {
-      if (mesh?.isDisposed?.()) return;
-      if (Number.isFinite(visibility)) mesh.visibility = visibility;
-    });
-    generatedVisibilitySnapshots.forEach((snapshot, mesh) => {
+    meshStateSnapshots.forEach((snapshot, mesh) => {
       if (mesh?.isDisposed?.()) return;
       mesh.isVisible = snapshot.isVisible;
       if (Number.isFinite(snapshot.visibility)) mesh.visibility = snapshot.visibility;
     });
-    baseLightSnapshots.forEach((intensity, light) => {
-      if (!light?.isDisposed?.() && Number.isFinite(intensity)) light.intensity = intensity;
+    baseLightSnapshots.forEach((snapshot, light) => {
+      if (light?.isDisposed?.()) return;
+      if (Number.isFinite(snapshot.intensity)) light.intensity = snapshot.intensity;
+      light.setEnabled?.(snapshot.enabled);
     });
-    rootSnapshots.clear();
-    meshVisibilitySnapshots.clear();
-    generatedVisibilitySnapshots.clear();
+    if (sceneSnapshot) {
+      if (sceneSnapshot.clearColor) scene.clearColor = sceneSnapshot.clearColor;
+      if (Number.isFinite(sceneSnapshot.environmentIntensity)) {
+        scene.environmentIntensity = sceneSnapshot.environmentIntensity;
+      }
+      scene.fogEnabled = sceneSnapshot.fogEnabled;
+    }
+    meshStateSnapshots.clear();
     baseLightSnapshots.clear();
     relevantMeshes.clear();
+    sceneSnapshot = null;
   }
 
   function applyLabVisibility() {

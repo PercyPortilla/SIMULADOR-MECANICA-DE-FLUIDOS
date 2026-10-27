@@ -34,8 +34,12 @@ describe('B78 Bernoulli–Euler lab visual', () => {
     const suction = authoredRoot(scene, 'SLURRY-PUMP-01_SUCTION_SHELL_ROOT', [193, 23, -90]);
     const discharge = authoredRoot(scene, 'PIPE-1_ROOT', [219, 28, -96]);
     const unrelated = authoredRoot(scene, 'R-01_ROOT', [268, 30, -88]);
-    const rootNodes = [sump.root, pump.root, klass.root, suction.root, discharge.root, unrelated.root];
-    rootNodes.forEach((root) => { root.parent = host; });
+    const plantRoot = new TransformNode('V57_SHARED_GLTF_ROOT', scene);
+    plantRoot.parent = host;
+    plantRoot.metadata = { v57AuthoritativeVisual: true };
+    const rootNodes = [plantRoot];
+    [sump.root, pump.root, klass.root, suction.root, discharge.root, unrelated.root]
+      .forEach((root) => { root.parent = plantRoot; });
 
     const legacySeam = CreateBox('B71_mill-to-sump_SEAM_BRIDGE', { size: 1 }, scene);
     legacySeam.metadata = { b71HydraulicStudy: true, seamBridge: 'mill-to-sump' };
@@ -58,6 +62,7 @@ describe('B78 Bernoulli–Euler lab visual', () => {
 
     const lab = applyB78BernoulliEulerLabVisual({ scene, host, rootNodes });
     expect(lab.active).toBe(false);
+    const originalClearColor = scene.clearColor.clone();
     expect(B78_LAB_FRAMINGS.overview.center).toEqual([205, 26.5, -96]);
     expect(lab.setActive(true, 'didactic')).toBe(true);
     expect(sump.root.isEnabled()).toBe(true);
@@ -65,7 +70,9 @@ describe('B78 Bernoulli–Euler lab visual', () => {
     expect(klass.root.isEnabled()).toBe(true);
     expect(suction.root.isEnabled()).toBe(true);
     expect(discharge.root.isEnabled()).toBe(true);
-    expect(unrelated.root.isEnabled()).toBe(false);
+    expect(plantRoot.isEnabled()).toBe(true);
+    expect(unrelated.root.isEnabled()).toBe(true);
+    expect(unrelated.mesh.isVisible).toBe(false);
     expect(legacySeam.isVisible).toBe(false);
     expect(unrelatedFoundation.isVisible).toBe(false);
     expect(terrainApron.isVisible).toBe(false);
@@ -75,7 +82,9 @@ describe('B78 Bernoulli–Euler lab visual', () => {
     expect(lab.markers.A.position.asArray()).toEqual([184, 22.15, -90]);
     expect(lab.markers.B.position.asArray()).toEqual([205, 25.15, -90]);
     expect(lab.markers.C.position.asArray()).toEqual([228.2, 26.95, -103.1]);
-    expect(ambient.intensity).toBeCloseTo(0.30, 8);
+    expect(ambient.isEnabled()).toBe(false);
+    expect(scene.fogEnabled).toBe(false);
+    expect(scene.clearColor.r).toBeCloseTo(0.018, 8);
 
     lab.setMode('realistic');
     expect(lab.markers.A.isEnabled()).toBe(false);
@@ -88,12 +97,15 @@ describe('B78 Bernoulli–Euler lab visual', () => {
     slurryBody.visibility = 0.015;
     expect(lab.setActive(false)).toBe(false);
     expect(unrelated.root.isEnabled()).toBe(true);
+    expect(unrelated.mesh.isVisible).toBe(true);
     expect(legacySeam.isVisible).toBe(true);
     expect(unrelatedFoundation.isVisible).toBe(true);
     expect(terrainApron.isVisible).toBe(true);
     expect(processBridge.isVisible).toBe(true);
     expect(slurryBody.visibility).toBeCloseTo(0.015, 8);
     expect(ambient.intensity).toBeCloseTo(0.85, 8);
+    expect(ambient.isEnabled()).toBe(true);
+    expect(scene.clearColor.asArray()).toEqual(originalClearColor.asArray());
 
     lab.dispose();
     scene.dispose();
