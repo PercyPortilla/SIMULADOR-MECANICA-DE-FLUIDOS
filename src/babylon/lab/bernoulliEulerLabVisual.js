@@ -9,6 +9,7 @@ import { CreatePlane } from '@babylonjs/core/Meshes/Builders/planeBuilder.js';
 import { Mesh } from '@babylonjs/core/Meshes/mesh.js';
 import { TransformNode } from '@babylonjs/core/Meshes/transformNode.js';
 import { V57_INSPECTION_NODE_ALIASES } from '../../scene/integration/v57Layout.js';
+import { applyB87HydraulicRigVisual } from './b87HydraulicRigVisual.js';
 
 export const B78_LAB_EQUIPMENT_IDS = Object.freeze([
   'SUMP-01',
@@ -276,6 +277,8 @@ export function applyB78BernoulliEulerLabVisual({ scene, host, rootNodes = [] } 
     return strip;
   });
 
+  const hydraulicRig = applyB87HydraulicRigVisual({ scene, parent: root });
+
   const markers = {
     A: addMarker(scene, root, 'A', [184.0, 22.15, -90.0], new Color3(0.15, 0.78, 0.95)),
     B: addMarker(scene, root, 'B', [205.0, 25.15, -90.0], new Color3(0.95, 0.62, 0.15)),
@@ -398,6 +401,7 @@ export function applyB78BernoulliEulerLabVisual({ scene, host, rootNodes = [] } 
     Object.values(markerLabels).forEach(({ label }) => label.setEnabled(showDidactic));
     edges.forEach((strip) => strip.visibility = mode === 'realistic' ? 0.48 : 0.92);
     floor.visibility = mode === 'presentation' ? 0.96 : 0.88;
+    hydraulicRig.setMode(mode);
     host.metadata = {
       ...(host.metadata ?? {}),
       b78LabMode: mode,
@@ -455,6 +459,7 @@ export function applyB78BernoulliEulerLabVisual({ scene, host, rootNodes = [] } 
     edges,
     markers,
     markerLabels,
+    hydraulicRig,
     lights,
     setActive,
     setMode,
@@ -474,6 +479,7 @@ export function applyB78BernoulliEulerLabVisual({ scene, host, rootNodes = [] } 
         labelMaterial.dispose(false, false);
         texture?.dispose?.();
       });
+      hydraulicRig.dispose();
     },
   };
 }
