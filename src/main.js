@@ -1100,6 +1100,7 @@ async function initializeEnvironment(canvas) {
     environment.setScenePalette(paletteHexToNumbers(activeScenePalette));
     const applyProcessMetrics = (results) => {
       const state = getState();
+      const labReadout = getBernoulliEulerLabReadout(state, results);
       const imposedFlowRateM3s = results.transport?.flowRateM3s ?? 0;
       const operatingFlowRateM3s = results.pump?.operatingFlowRateM3s;
       const useOperatingPoint = Number.isFinite(operatingFlowRateM3s) && operatingFlowRateM3s >= 0;
@@ -1114,6 +1115,13 @@ async function initializeEnvironment(canvas) {
         solidVolumeFraction: results.slurry?.solidVolumeFraction ?? 0,
         densityKgM3: results.slurry?.densityKgM3 ?? 0,
         feedGoldKgH: state.recovery?.feedGoldKgH ?? 0,
+        pressureDropPa: labReadout.pressureDropPa ?? 0,
+        pumpHeadM: labReadout.pumpHeadM ?? 0,
+        distributedHeadM: labReadout.distributedHeadM ?? 0,
+        minorLossHeadM: labReadout.minorLossHeadM ?? 0,
+        staticHeadM: labReadout.staticHeadM ?? 0,
+        totalLossHeadM: labReadout.totalLossHeadM ?? 0,
+        rheologyModel: labReadout.rheologyModel,
         basis: useOperatingPoint ? 'pump-operating-point' : 'transport-imposed-flow',
       });
     };

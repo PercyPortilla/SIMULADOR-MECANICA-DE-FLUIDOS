@@ -1206,6 +1206,13 @@ export function createBabylonRuntime({
     solidVolumeFraction = 0,
     densityKgM3 = 0,
     feedGoldKgH = 0,
+    pressureDropPa = 0,
+    pumpHeadM = 0,
+    distributedHeadM = 0,
+    minorLossHeadM = 0,
+    staticHeadM = 0,
+    totalLossHeadM = 0,
+    rheologyModel = '',
     basis = 'transport-imposed-flow',
   } = {}) {
     const normalizedFlow = Number.isFinite(flowRateM3s) && flowRateM3s > 0 ? flowRateM3s : 0;
@@ -1234,6 +1241,13 @@ export function createBabylonRuntime({
       solidVolumeFraction: normalizedSolidVolume,
       densityKgM3: normalizedDensity,
       feedGoldKgH: normalizedGold,
+      pressureDropPa: Number.isFinite(pressureDropPa) ? pressureDropPa : 0,
+      pumpHeadM: Number.isFinite(pumpHeadM) ? pumpHeadM : 0,
+      distributedHeadM: Number.isFinite(distributedHeadM) ? distributedHeadM : 0,
+      minorLossHeadM: Number.isFinite(minorLossHeadM) ? minorLossHeadM : 0,
+      staticHeadM: Number.isFinite(staticHeadM) ? staticHeadM : 0,
+      totalLossHeadM: Number.isFinite(totalLossHeadM) ? totalLossHeadM : 0,
+      rheologyModel: String(rheologyModel || ''),
       basis: String(basis || 'transport-imposed-flow'),
     });
     base.v57SiteVisual?.setProcessMetrics?.(processMetrics);

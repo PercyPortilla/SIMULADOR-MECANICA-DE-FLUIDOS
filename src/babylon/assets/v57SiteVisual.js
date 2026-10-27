@@ -224,6 +224,7 @@ export function attachBabylonV57SiteVisual({
         rootNodes,
         host,
       });
+      b78BernoulliEulerLabVisual.setMetrics(processMetrics);
       b78BernoulliEulerLabVisual.setActive(labViewState.active, labViewState.mode);
       b74SlurryFlowVisual.setLabState(labViewState);
       host.metadata.blenderVisualStatus = 'loaded';
@@ -260,6 +261,7 @@ export function attachBabylonV57SiteVisual({
       processMetrics = Object.freeze({ ...nextMetrics });
       b74SlurryFlowVisual?.setMetrics?.(processMetrics);
       b75EquipmentSlurryVisual?.setMetrics?.(processMetrics);
+      b78BernoulliEulerLabVisual?.setMetrics?.(processMetrics);
       return processMetrics;
     },
     setInspectionState(nextState = {}) {

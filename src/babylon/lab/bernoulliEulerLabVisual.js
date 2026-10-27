@@ -10,6 +10,7 @@ import { Mesh } from '@babylonjs/core/Meshes/mesh.js';
 import { TransformNode } from '@babylonjs/core/Meshes/transformNode.js';
 import { V57_INSPECTION_NODE_ALIASES } from '../../scene/integration/v57Layout.js';
 import { applyB87HydraulicRigVisual } from './b87HydraulicRigVisual.js';
+import { applyB88BernoulliEnergyVisual } from './b88BernoulliEnergyVisual.js';
 
 export const B78_LAB_EQUIPMENT_IDS = Object.freeze([
   'SUMP-01',
@@ -278,6 +279,7 @@ export function applyB78BernoulliEulerLabVisual({ scene, host, rootNodes = [] } 
   });
 
   const hydraulicRig = applyB87HydraulicRigVisual({ scene, parent: root });
+  const energyVisual = applyB88BernoulliEnergyVisual({ scene, parent: root });
 
   const markers = {
     A: addMarker(scene, root, 'A', [184.0, 22.15, -90.0], new Color3(0.15, 0.78, 0.95)),
@@ -402,6 +404,7 @@ export function applyB78BernoulliEulerLabVisual({ scene, host, rootNodes = [] } 
     edges.forEach((strip) => strip.visibility = mode === 'realistic' ? 0.48 : 0.92);
     floor.visibility = mode === 'presentation' ? 0.96 : 0.88;
     hydraulicRig.setMode(mode);
+    energyVisual.setMode(mode);
     host.metadata = {
       ...(host.metadata ?? {}),
       b78LabMode: mode,
@@ -413,6 +416,10 @@ export function applyB78BernoulliEulerLabVisual({ scene, host, rootNodes = [] } 
     mode = LAB_MODES.has(nextMode) ? nextMode : 'realistic';
     applyModeVisibility();
     return mode;
+  }
+
+  function setMetrics(nextMetrics = {}) {
+    return energyVisual.setMetrics(nextMetrics);
   }
 
   function setActive(nextActive, nextMode = mode) {
@@ -460,9 +467,11 @@ export function applyB78BernoulliEulerLabVisual({ scene, host, rootNodes = [] } 
     markers,
     markerLabels,
     hydraulicRig,
+    energyVisual,
     lights,
     setActive,
     setMode,
+    setMetrics,
     update,
     get active() { return active; },
     get mode() { return mode; },
@@ -480,6 +489,7 @@ export function applyB78BernoulliEulerLabVisual({ scene, host, rootNodes = [] } 
         texture?.dispose?.();
       });
       hydraulicRig.dispose();
+      energyVisual.dispose();
     },
   };
 }
