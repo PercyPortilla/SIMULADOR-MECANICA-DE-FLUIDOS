@@ -12,18 +12,18 @@ import { V57_INSPECTION_NODE_ALIASES } from '../../scene/integration/v57Layout.j
 import { applyB87HydraulicRigVisual } from './b87HydraulicRigVisual.js';
 import { applyB88BernoulliEnergyVisual } from './b88BernoulliEnergyVisual.js';
 
-export const B78_LAB_EQUIPMENT_IDS = Object.freeze([
+export const BERNOULLI_EULER_LAB_EQUIPMENT_IDS = Object.freeze([
   'SUMP-01',
   'SLURRY-PUMP-01',
   'CLASS-01',
 ]);
 
-export const B78_LAB_CONNECTION_IDS = Object.freeze([
+export const BERNOULLI_EULER_LAB_CONNECTION_IDS = Object.freeze([
   'P-SUMP-TO-PUMP',
   'P-PUMP-TO-CYCLONES',
 ]);
 
-export const B78_LAB_FRAMINGS = Object.freeze({
+export const BERNOULLI_EULER_LAB_FRAMINGS = Object.freeze({
   overview: Object.freeze({
     center: Object.freeze([205.0, 26.5, -96.0]),
     size: Object.freeze([58.0, 17.0, 28.0]),
@@ -48,7 +48,7 @@ export const B78_LAB_FRAMINGS = Object.freeze({
 
 const LAB_MODES = new Set(['realistic', 'didactic', 'presentation']);
 const LAB_TARGET_SPECS = Object.freeze(
-  [...B78_LAB_EQUIPMENT_IDS, ...B78_LAB_CONNECTION_IDS].map((id) => ({
+  [...BERNOULLI_EULER_LAB_EQUIPMENT_IDS, ...BERNOULLI_EULER_LAB_CONNECTION_IDS].map((id) => ({
     id,
     ...aliasesFor(id),
   })),
@@ -83,8 +83,8 @@ function collectRelevantMeshes(scene) {
     const name = String(node?.name ?? '');
     const metadataId = node?.metadata?.equipmentId;
     const connectionId = node?.metadata?.connectionId;
-    const direct = B78_LAB_EQUIPMENT_IDS.includes(metadataId)
-      || B78_LAB_CONNECTION_IDS.includes(connectionId)
+    const direct = BERNOULLI_EULER_LAB_EQUIPMENT_IDS.includes(metadataId)
+      || BERNOULLI_EULER_LAB_CONNECTION_IDS.includes(connectionId)
       || name.startsWith('B73_FOUNDATION_SUMP-01')
       || name.startsWith('B73_FOUNDATION_SLURRY-PUMP-01')
       || name.startsWith('B73_FOUNDATION_CLASS-01')
@@ -137,8 +137,8 @@ function isFlowManagedMesh(mesh) {
 function isRelevantGeneratedMesh(mesh) {
   const metadata = mesh?.metadata ?? {};
   const name = String(mesh?.name ?? '');
-  if (B78_LAB_EQUIPMENT_IDS.includes(metadata.equipmentId)) return true;
-  if (B78_LAB_CONNECTION_IDS.includes(metadata.connectionId)) return true;
+  if (BERNOULLI_EULER_LAB_EQUIPMENT_IDS.includes(metadata.equipmentId)) return true;
+  if (BERNOULLI_EULER_LAB_CONNECTION_IDS.includes(metadata.connectionId)) return true;
   if (metadata.b71HydraulicStudy && ['sump-to-pump', 'pump-to-class'].includes(metadata.seamBridge)) return true;
   return name.startsWith('B73_FOUNDATION_SUMP-01')
     || name.startsWith('B73_FOUNDATION_SLURRY-PUMP-01')
@@ -146,7 +146,7 @@ function isRelevantGeneratedMesh(mesh) {
 }
 
 function addMarker(scene, root, id, position, color) {
-  const marker = CreateCylinder(`B78_LAB_POINT_${id}`, {
+  const marker = CreateCylinder(`BERNOULLI_EULER_LAB_POINT_${id}`, {
     diameter: 2.0,
     height: 0.10,
     tessellation: 48,
@@ -157,7 +157,7 @@ function addMarker(scene, root, id, position, color) {
   marker.isPickable = false;
   marker.material = material(
     scene,
-    `b78-lab-point-${id.toLowerCase()}`,
+    `bernoulli-euler-lab-point-${id.toLowerCase()}`,
     color.scale(0.26),
     color.scale(0.62),
   );
@@ -172,7 +172,7 @@ function addMarker(scene, root, id, position, color) {
 }
 
 function addMarkerLabel(scene, root, id, position, color) {
-  const label = CreatePlane(`B84_LAB_LABEL_${id}`, {
+  const label = CreatePlane(`BERNOULLI_EULER_LAB_LABEL_${id}`, {
     width: 3.1,
     height: 1.55,
     sideOrientation: Mesh.DOUBLESIDE,
@@ -183,7 +183,7 @@ function addMarkerLabel(scene, root, id, position, color) {
   label.billboardMode = Mesh.BILLBOARDMODE_ALL;
   label.isPickable = false;
 
-  const labelMaterial = new StandardMaterial(`b84-lab-label-${id.toLowerCase()}`, scene);
+  const labelMaterial = new StandardMaterial(`bernoulli-euler-lab-label-${id.toLowerCase()}`, scene);
   labelMaterial.diffuseColor = color.scale(0.18);
   labelMaterial.emissiveColor = color.scale(0.58);
   labelMaterial.specularColor = Color3.Black();
@@ -191,7 +191,7 @@ function addMarkerLabel(scene, root, id, position, color) {
 
   let texture = null;
   if (typeof document !== 'undefined') {
-    texture = new DynamicTexture(`b84-lab-label-texture-${id.toLowerCase()}`, {
+    texture = new DynamicTexture(`bernoulli-euler-lab-label-texture-${id.toLowerCase()}`, {
       width: 256,
       height: 128,
     }, scene, false);
@@ -221,30 +221,53 @@ function addMarkerLabel(scene, root, id, position, color) {
   return { label, material: labelMaterial, texture };
 }
 
-export function applyB78BernoulliEulerLabVisual({ scene, host, rootNodes = [] } = {}) {
-  if (!scene || !host) throw new TypeError('B78 lab visual requires scene and host.');
+const LEGACY_LAB_ROOT_NAMES = Object.freeze([
+  'B78-BERNOULLI-EULER-LAB',
+  'B84-BERNOULLI-EULER-LAB',
+  'B86-BERNOULLI-EULER-LAB',
+]);
 
-  const root = new TransformNode('B78-BERNOULLI-EULER-LAB', scene);
+function retireLegacyLabRoots(scene) {
+  const retired = [];
+  scene.transformNodes
+    .filter((node) => LEGACY_LAB_ROOT_NAMES.includes(String(node?.name ?? '')))
+    .forEach((node) => {
+      retired.push(node.name);
+      node.dispose(false, true);
+    });
+  return retired;
+}
+
+export function applyBernoulliEulerLabVisual({ scene, host, rootNodes = [] } = {}) {
+  if (!scene || !host) throw new TypeError('Bernoulli–Euler lab visual requires scene and host.');
+
+  const retiredLegacyRoots = retireLegacyLabRoots(scene);
+  delete host.metadata?.b78LabRelevantMeshCount;
+  delete host.metadata?.b78LabMode;
+  delete host.metadata?.b78LabActive;
+
+  const root = new TransformNode('BERNOULLI-EULER-LAB', scene);
   root.parent = host;
   root.metadata = {
     visualOnly: true,
-    visualBuild: 'B86',
+    visualBuild: 'B89',
     labView: true,
     bernoulliEulerLab: true,
     isolationStrategy: 'mesh-level-dedicated-stage',
+    retiredLegacyRoots,
   };
 
-  const concrete = material(scene, 'b78-lab-concrete', new Color3(0.235, 0.255, 0.25));
+  const concrete = material(scene, 'bernoulli-euler-lab-concrete', new Color3(0.235, 0.255, 0.25));
   concrete.specularColor = new Color3(0.025, 0.028, 0.027);
   concrete.specularPower = 4;
   const edge = material(
     scene,
-    'b78-lab-edge',
+    'bernoulli-euler-lab-edge',
     new Color3(0.045, 0.075, 0.085),
     new Color3(0.015, 0.075, 0.085),
   );
 
-  const floor = CreateBox('B86_LAB_FLOOR', { width: 66, height: 0.34, depth: 32 }, scene);
+  const floor = CreateBox('BERNOULLI_EULER_LAB_FLOOR', { width: 66, height: 0.34, depth: 32 }, scene);
   floor.parent = root;
   floor.position.set(205, 20.15, -96);
   floor.material = concrete;
@@ -252,7 +275,7 @@ export function applyB78BernoulliEulerLabVisual({ scene, host, rootNodes = [] } 
   floor.isPickable = false;
   floor.metadata = {
     visualOnly: true,
-    visualBuild: 'B86',
+    visualBuild: 'B89',
     bernoulliEulerLab: true,
     labFloor: true,
   };
@@ -264,14 +287,14 @@ export function applyB78BernoulliEulerLabVisual({ scene, host, rootNodes = [] } 
     [0.16, 0.12, 32, 238, 20.37, -96],
   ];
   const edges = edgeSpecs.map(([width, height, depth, x, y, z], index) => {
-    const strip = CreateBox(`B86_LAB_EDGE_${index + 1}`, { width, height, depth }, scene);
+    const strip = CreateBox(`BERNOULLI_EULER_LAB_EDGE_${index + 1}`, { width, height, depth }, scene);
     strip.parent = root;
     strip.position.set(x, y, z);
     strip.material = edge;
     strip.isPickable = false;
     strip.metadata = {
       visualOnly: true,
-      visualBuild: 'B86',
+      visualBuild: 'B89',
       bernoulliEulerLab: true,
       labEdge: true,
     };
@@ -293,9 +316,9 @@ export function applyB78BernoulliEulerLabVisual({ scene, host, rootNodes = [] } 
   };
 
   const lights = [
-    new PointLight('B78_LAB_KEY', new Vector3(190, 45, -72), scene),
-    new PointLight('B78_LAB_FILL', new Vector3(228, 39, -86), scene),
-    new PointLight('B78_LAB_RIM', new Vector3(218, 34, -122), scene),
+    new PointLight('BERNOULLI_EULER_LAB_KEY', new Vector3(190, 45, -72), scene),
+    new PointLight('BERNOULLI_EULER_LAB_FILL', new Vector3(228, 39, -86), scene),
+    new PointLight('BERNOULLI_EULER_LAB_RIM', new Vector3(218, 34, -122), scene),
   ];
   lights[0].diffuse = new Color3(0.96, 0.93, 0.86);
   lights[1].diffuse = new Color3(0.72, 0.86, 0.96);
@@ -306,7 +329,7 @@ export function applyB78BernoulliEulerLabVisual({ scene, host, rootNodes = [] } 
   lights.forEach((light) => {
     light.range = 82;
     light.setEnabled(false);
-    light.metadata = { visualOnly: true, visualBuild: 'B86', labLight: true, bernoulliEulerLab: true };
+    light.metadata = { visualOnly: true, visualBuild: 'B89', labLight: true, bernoulliEulerLab: true };
   });
 
   root.setEnabled(false);
@@ -354,9 +377,9 @@ export function applyB78BernoulliEulerLabVisual({ scene, host, rootNodes = [] } 
     });
     host.metadata = {
       ...(host.metadata ?? {}),
-      b86LabIsolationStrategy: 'mesh-level-dedicated-stage',
-      b78LabRelevantMeshCount: relevantMeshes.size,
-      b86LabHiddenMeshCount: [...meshStateSnapshots.keys()].filter((mesh) => !mesh.isVisible).length,
+      bernoulliEulerLabIsolationStrategy: 'mesh-level-dedicated-stage',
+      bernoulliEulerLabRelevantMeshCount: relevantMeshes.size,
+      bernoulliEulerLabHiddenMeshCount: [...meshStateSnapshots.keys()].filter((mesh) => !mesh.isVisible).length,
     };
   }
 
@@ -407,7 +430,7 @@ export function applyB78BernoulliEulerLabVisual({ scene, host, rootNodes = [] } 
     energyVisual.setMode(mode);
     host.metadata = {
       ...(host.metadata ?? {}),
-      b78LabMode: mode,
+      bernoulliEulerLabMode: mode,
     };
     applyLabVisibility();
   }
@@ -441,8 +464,8 @@ export function applyB78BernoulliEulerLabVisual({ scene, host, rootNodes = [] } 
     }
     host.metadata = {
       ...(host.metadata ?? {}),
-      b78LabActive: active,
-      b78LabMode: mode,
+      bernoulliEulerLabActive: active,
+      bernoulliEulerLabMode: mode,
     };
     return active;
   }
@@ -475,21 +498,24 @@ export function applyB78BernoulliEulerLabVisual({ scene, host, rootNodes = [] } 
     update,
     get active() { return active; },
     get mode() { return mode; },
-    get framing() { return B78_LAB_FRAMINGS; },
+    get framing() { return BERNOULLI_EULER_LAB_FRAMINGS; },
     dispose() {
       if (active) restoreScene();
-      lights.forEach((light) => light.dispose());
-      root.dispose(false, true);
-      concrete.dispose(false, true);
-      edge.dispose(false, true);
-      Object.values(markers).forEach((marker) => marker.material?.dispose?.(false, true));
+      hydraulicRig.dispose();
+      energyVisual.dispose();
       Object.values(markerLabels).forEach(({ label, material: labelMaterial, texture }) => {
         label.dispose(false, false);
         labelMaterial.dispose(false, false);
         texture?.dispose?.();
       });
-      hydraulicRig.dispose();
-      energyVisual.dispose();
+      Object.values(markers).forEach((marker) => {
+        marker.material?.dispose?.(false, true);
+        marker.dispose(false, false);
+      });
+      lights.forEach((light) => light.dispose());
+      concrete.dispose(false, true);
+      edge.dispose(false, true);
+      root.dispose(false, true);
     },
   };
 }

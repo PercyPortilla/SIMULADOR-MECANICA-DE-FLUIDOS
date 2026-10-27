@@ -8,8 +8,8 @@ import {
 } from '@babylonjs/core';
 import { describe, expect, it } from 'vitest';
 import {
-  B78_LAB_FRAMINGS,
-  applyB78BernoulliEulerLabVisual,
+  BERNOULLI_EULER_LAB_FRAMINGS,
+  applyBernoulliEulerLabVisual,
 } from '../../src/babylon/lab/bernoulliEulerLabVisual.js';
 
 function authoredRoot(scene, name, position = [0, 0, 0]) {
@@ -60,10 +60,17 @@ describe('B78 Bernoulli–Euler lab visual', () => {
     const ambient = new HemisphericLight('ambient-industrial-light', new Vector3(0, 1, 0), scene);
     ambient.intensity = 0.85;
 
-    const lab = applyB78BernoulliEulerLabVisual({ scene, host, rootNodes });
+    const legacyRoot = new TransformNode('B78-BERNOULLI-EULER-LAB', scene);
+    const legacyMesh = CreateBox('B78_LEGACY_LAB_MESH', { size: 1 }, scene);
+    legacyMesh.parent = legacyRoot;
+
+    const lab = applyBernoulliEulerLabVisual({ scene, host, rootNodes });
     expect(lab.active).toBe(false);
+    expect(legacyRoot.isDisposed()).toBe(true);
+    expect(legacyMesh.isDisposed()).toBe(true);
+    expect(lab.root.name).toBe('BERNOULLI-EULER-LAB');
     const originalClearColor = scene.clearColor.clone();
-    expect(B78_LAB_FRAMINGS.overview.center).toEqual([205, 26.5, -96]);
+    expect(BERNOULLI_EULER_LAB_FRAMINGS.overview.center).toEqual([205, 26.5, -96]);
     expect(lab.setActive(true, 'didactic')).toBe(true);
     expect(sump.root.isEnabled()).toBe(true);
     expect(pump.root.isEnabled()).toBe(true);
@@ -106,6 +113,15 @@ describe('B78 Bernoulli–Euler lab visual', () => {
     expect(ambient.intensity).toBeCloseTo(0.85, 8);
     expect(ambient.isEnabled()).toBe(true);
     expect(scene.clearColor.asArray()).toEqual(originalClearColor.asArray());
+
+    // Re-entry must not accumulate hidden state, stale lights or legacy roots.
+    expect(lab.setActive(true, 'presentation')).toBe(true);
+    expect(unrelated.mesh.isVisible).toBe(false);
+    expect(lab.setActive(false)).toBe(false);
+    expect(unrelated.mesh.isVisible).toBe(true);
+    expect(ambient.isEnabled()).toBe(true);
+    expect(scene.clearColor.asArray()).toEqual(originalClearColor.asArray());
+    expect(scene.transformNodes.filter((node) => node.name === 'BERNOULLI-EULER-LAB')).toHaveLength(1);
 
     lab.dispose();
     scene.dispose();

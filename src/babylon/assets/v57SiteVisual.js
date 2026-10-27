@@ -12,7 +12,7 @@ import { applyB80TerrainCivilVisual } from './b80TerrainCivilVisual.js';
 import { applyB81ProcessContinuityVisual } from './b81ProcessContinuityVisual.js';
 import { applyB82OperationalAnimationVisual } from './b82OperationalAnimationVisual.js';
 import { applyB83VisualCleanup } from './b83VisualCleanup.js';
-import { applyB78BernoulliEulerLabVisual } from '../lab/bernoulliEulerLabVisual.js';
+import { applyBernoulliEulerLabVisual } from '../lab/bernoulliEulerLabVisual.js';
 
 function visitHierarchy(root, callback) {
   callback(root);
@@ -163,7 +163,7 @@ export function attachBabylonV57SiteVisual({
   let b81ProcessContinuityVisual = null;
   let b82OperationalAnimationVisual = null;
   let b83VisualCleanup = null;
-  let b78BernoulliEulerLabVisual = null;
+  let bernoulliEulerLabVisual = null;
   let processMetrics = Object.freeze({});
   let inspectionState = Object.freeze({ targetId: null, mode: 'normal' });
   let labViewState = Object.freeze({ active: false, mode: 'realistic' });
@@ -219,13 +219,13 @@ export function attachBabylonV57SiteVisual({
       b75EquipmentSlurryVisual.setLabState(labViewState);
       b82OperationalAnimationVisual.setAnimationsEnabled(animationsEnabled);
       b82OperationalAnimationVisual.setLabState(labViewState);
-      b78BernoulliEulerLabVisual = applyB78BernoulliEulerLabVisual({
+      bernoulliEulerLabVisual = applyBernoulliEulerLabVisual({
         scene,
         rootNodes,
         host,
       });
-      b78BernoulliEulerLabVisual.setMetrics(processMetrics);
-      b78BernoulliEulerLabVisual.setActive(labViewState.active, labViewState.mode);
+      bernoulliEulerLabVisual.setMetrics(processMetrics);
+      bernoulliEulerLabVisual.setActive(labViewState.active, labViewState.mode);
       b74SlurryFlowVisual.setLabState(labViewState);
       host.metadata.blenderVisualStatus = 'loaded';
       host.metadata.blenderVisualLoaded = true;
@@ -261,7 +261,7 @@ export function attachBabylonV57SiteVisual({
       processMetrics = Object.freeze({ ...nextMetrics });
       b74SlurryFlowVisual?.setMetrics?.(processMetrics);
       b75EquipmentSlurryVisual?.setMetrics?.(processMetrics);
-      b78BernoulliEulerLabVisual?.setMetrics?.(processMetrics);
+      bernoulliEulerLabVisual?.setMetrics?.(processMetrics);
       return processMetrics;
     },
     setInspectionState(nextState = {}) {
@@ -283,14 +283,14 @@ export function attachBabylonV57SiteVisual({
       b74SlurryFlowVisual?.setLabState?.(labViewState);
       b75EquipmentSlurryVisual?.setLabState?.(labViewState);
       b82OperationalAnimationVisual?.setLabState?.(labViewState);
-      b78BernoulliEulerLabVisual?.setActive?.(labViewState.active, labViewState.mode);
+      bernoulliEulerLabVisual?.setActive?.(labViewState.active, labViewState.mode);
       return labViewState;
     },
     update(deltaSeconds) {
       const pipeMoved = b74SlurryFlowVisual?.update?.(deltaSeconds) ?? false;
       const equipmentMoved = b75EquipmentSlurryVisual?.update?.(deltaSeconds) ?? false;
       const operationalMoved = b82OperationalAnimationVisual?.update?.(deltaSeconds) ?? false;
-      const labMoved = b78BernoulliEulerLabVisual?.update?.(deltaSeconds) ?? false;
+      const labMoved = bernoulliEulerLabVisual?.update?.(deltaSeconds) ?? false;
       return pipeMoved || equipmentMoved || operationalMoved || labMoved;
     },
     get loaded() { return host.metadata?.blenderVisualStatus === 'loaded'; },
@@ -298,7 +298,7 @@ export function attachBabylonV57SiteVisual({
     get animationGroups() { return [...animationGroups]; },
     get inspectionState() { return inspectionState; },
     get labViewState() { return labViewState; },
-    get labFramings() { return b78BernoulliEulerLabVisual?.framing ?? null; },
+    get labFramings() { return bernoulliEulerLabVisual?.framing ?? null; },
     dispose() {
       if (disposed) return;
       disposed = true;
@@ -306,8 +306,8 @@ export function attachBabylonV57SiteVisual({
       animationGroups = [];
       b64TerrainMaterial?.dispose?.(false, true);
       b64TerrainMaterial = null;
-      b78BernoulliEulerLabVisual?.dispose?.();
-      b78BernoulliEulerLabVisual = null;
+      bernoulliEulerLabVisual?.dispose?.();
+      bernoulliEulerLabVisual = null;
       b75EquipmentSlurryVisual?.dispose?.();
       b75EquipmentSlurryVisual = null;
       b74SlurryFlowVisual?.dispose?.();
