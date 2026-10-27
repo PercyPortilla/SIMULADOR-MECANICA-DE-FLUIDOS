@@ -15,6 +15,9 @@ describe('Babylon runtime state invariance', () => {
     runtime.setLabelsVisible(false);
     runtime.setCamera('top');
     runtime.setCamera('inspection');
+    runtime.setLabViewMode('didactic');
+    runtime.setLabViewActive(true, { mode: 'didactic' });
+    runtime.setLabViewActive(false);
     runtime.setPresentationMode(true);
     expect(getState()).toEqual(before);
     runtime.dispose();

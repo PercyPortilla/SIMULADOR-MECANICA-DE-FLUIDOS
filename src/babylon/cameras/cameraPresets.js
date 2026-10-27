@@ -72,9 +72,16 @@ function createInspectionCamera(scene, config) {
   camera.angularSensibilityY = 400;
   camera.wheelPrecision = 5;
   camera.wheelDeltaPercentage = 0.08;
-  camera.panningSensibility = 400;
+  // B76: Babylon uses an inverse panning sensibility scale. Dropping 400→100
+  // makes RMB pan ~4x more responsive without changing orbit or wheel zoom.
+  camera.panningSensibility = 100;
   camera.pinchPrecision = 35;
   camera.useNaturalPinchZoom = true;
+  camera.metadata = {
+    ...(camera.metadata ?? {}),
+    b76Navigation: true,
+    rightMousePanSensitivityMultiplier: 4,
+  };
   return applySharedCameraConfig(camera, INSPECTION_CAMERA_ID, config);
 }
 

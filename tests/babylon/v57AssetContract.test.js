@@ -1,6 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { B73_FOUNDATION_SPECS } from '../../src/babylon/assets/b73FoundationVisual.js';
+import { B80_CIVIL_MATERIAL_PROFILES } from '../../src/babylon/assets/b80TerrainCivilVisual.js';
+import { B81_CONTINUITY_SPECS } from '../../src/babylon/assets/b81ProcessContinuityVisual.js';
+import { INSPECTION_FOCUS_PROFILES } from '../../src/scene/inspection/inspectionContracts.js';
 
 const ASSET_PATH = path.resolve('public/models/pulpa-v57/PULPA_LAB_V57_FULL_SITE_FINAL.glb');
 
@@ -42,10 +46,10 @@ describe('Blender V57 final production asset contract', () => {
     const { gltf } = readGlbJson(ASSET_PATH);
     const names = new Set(gltf.nodes.map((node) => node.name));
     [
-      'EXCAVATOR-01', 'TRUCK-01', 'TRUCK-02', 'TRUCK-03',
+      'EXCAVATOR-01', 'TRUCK-01', 'TRUCK-02', 'TRUCK-03', 'STOCKPILE-LOADER-01',
       'ROM-HOPPER_ROOT', 'APRON-FEEDER_ROOT', 'PRIMARY-CRUSHER_ROOT.001',
       'MILL-01_ROOT', 'SUMP-01_ROOT', 'SLURRY-PUMP-01_ROOT', 'PIPE-1_ROOT',
-      'CLASS-01_ROOT', 'R-01_ROOT', 'R-02_ROOT', 'R-03_ROOT', 'R-04_ROOT',
+      'CLASS-01_ROOT', 'R-01_ROOT', 'R-02_ROOT', 'R-03_ROOT', 'R-04_ROOT', 'PUMP-01_ROOT',
       'CIP-ADSORPTION_ROOT', 'ELUTION-SKID_ROOT', 'EW-CELLS_ROOT',
       'SMELTING-FURNACE_ROOT', 'DETOX_ROOT', 'TAILINGS-THICKENER_ROOT',
       'TAILINGS-PUMP_ROOT', 'TSF-CONCEPT_ROOT', 'V57_TERRAIN_INTEGRATED',
@@ -83,6 +87,112 @@ describe('Blender V57 final production asset contract', () => {
       'SMELTING-FURNACE_MOVING', 'DETOX_MOVING',
       'TAILINGS-THICKENER_MOVING', 'TAILINGS-PUMP_MOVING',
     ].forEach((name) => expect(names.has(name), `${name} must remain animated`).toBe(true));
+  });
+
+  it('keeps the exact B82 production animation families addressable for runtime repair', () => {
+    const { gltf } = readGlbJson(ASSET_PATH);
+    const channels = gltf.animations[0].channels.map((channel) => ({
+      name: gltf.nodes[channel.target.node]?.name ?? '',
+      path: channel.target.path,
+    }));
+    const count = (predicate) => channels.filter(predicate).length;
+    expect(count(({ name, path: targetPath }) => (
+      /^(?:CV-01|CV-02|CV-02A|CV-03)_.*_SPINNER$/.test(name) && targetPath === 'rotation'
+    ))).toBe(135);
+    expect(count(({ name, path: targetPath }) => (
+      /^CIP-0[1-6]_MOVING$/.test(name) && targetPath === 'rotation'
+    ))).toBe(6);
+    expect(count(({ name, path: targetPath }) => (
+      /^EW-CELL-[0-9]{2}-GOLD-DEPOSIT-/.test(name) && targetPath === 'scale'
+    ))).toBe(32);
+    expect(count(({ name, path: targetPath }) => (
+      /^(?:B53_EW_GOLD_SOLIDS|B53_CALCINE_TO_SMELTING)_/.test(name) && targetPath === 'translation'
+    ))).toBe(14);
+    expect(count(({ name }) => name === 'PRIMARY-CRUSHER_MOVING_JAW_PIVOT.001')).toBe(1);
+    expect(count(({ name }) => name.startsWith('SMELTING-FURNACE'))).toBe(8);
+    expect(count(({ name }) => /^(?:TRUCK-0[1-3]|EXCAVATOR-01|STOCKPILE-LOADER-01)(?:$|_)/.test(name))).toBe(197);
+  });
+
+  it('retains the authored V57 nodes used by B79 Inspection focus profiles', () => {
+    const { gltf } = readGlbJson(ASSET_PATH);
+    const names = gltf.nodes.map((node) => node.name ?? '');
+    ['EXCAVATOR-01', 'STOCKPILE-RECLAIM', 'CLASS-01'].forEach((id) => {
+      const profile = INSPECTION_FOCUS_PROFILES[id];
+      expect(profile, `${id} must keep a B79 focus profile`).toBeTruthy();
+      (profile.focusObjectNames ?? []).forEach((name) => {
+        expect(names.includes(name), `${id} focus node ${name} must remain in V57`).toBe(true);
+      });
+      (profile.focusObjectPrefixes ?? []).forEach((prefix) => {
+        expect(names.some((name) => name.startsWith(prefix)), `${id} focus prefix ${prefix} must remain in V57`).toBe(true);
+      });
+    });
+  });
+
+  it('retains every B80 load-bearing focus/reuse selector used for local foundations', () => {
+    const { gltf } = readGlbJson(ASSET_PATH);
+    const names = gltf.nodes.map((node) => node.name ?? '');
+    B73_FOUNDATION_SPECS.forEach((spec) => {
+      (spec.focusNames ?? []).forEach((name) => {
+        expect(names.includes(name), `${spec.id} B80 foundation focus ${name} must remain in V57`).toBe(true);
+      });
+      (spec.focusPrefixes ?? []).forEach((prefix) => {
+        expect(names.some((name) => name.startsWith(prefix)), `${spec.id} B80 foundation prefix ${prefix} must remain in V57`).toBe(true);
+      });
+      (spec.instances ?? []).forEach((instance) => {
+        (instance.focusNames ?? []).forEach((name) => {
+          expect(names.includes(name), `${spec.id}/${instance.key} B80 foundation focus ${name} must remain in V57`).toBe(true);
+        });
+        (instance.focusPrefixes ?? []).forEach((prefix) => {
+          expect(names.some((name) => name.startsWith(prefix)), `${spec.id}/${instance.key} B80 foundation prefix ${prefix} must remain in V57`).toBe(true);
+        });
+      });
+      if (spec.reuseFoundationName) {
+        expect(names.includes(spec.reuseFoundationName), `${spec.id} authored foundation ${spec.reuseFoundationName} must remain in V57`).toBe(true);
+      }
+    });
+  });
+
+  it('retains the B80 civil material names and representative authored pad bindings', () => {
+    const { gltf } = readGlbJson(ASSET_PATH);
+    const materialNames = new Set(gltf.materials.map((material) => material.name ?? ''));
+    Object.keys(B80_CIVIL_MATERIAL_PROFILES).forEach((name) => {
+      expect(materialNames.has(name), `${name} must remain available for B80 runtime repair`).toBe(true);
+    });
+
+    const materialNamesForNode = (nodeName) => {
+      const node = gltf.nodes.find((entry) => entry.name === nodeName);
+      expect(node?.mesh, `${nodeName} must remain a mesh node`).toBeTypeOf('number');
+      return new Set(
+        gltf.meshes[node.mesh].primitives
+          .map((primitive) => gltf.materials[primitive.material]?.name)
+          .filter(Boolean),
+      );
+    };
+    expect(materialNamesForNode('CIV_GRINDING_PAD').has('MAT_V57_CIVIL_COMPACTED_FILL')).toBe(true);
+    expect(materialNamesForNode('CIV_CRUSHER_FOUNDATION').has('MAT_V57_CIVIL_CONCRETE')).toBe(true);
+    expect(materialNamesForNode('V57_ROM_ENGINEERED_MANEUVER_PAD').has('MAT_V57_HAUL_ROAD_PBR')).toBe(true);
+  });
+
+  it('retains every V57 authored endpoint used by the B81 process continuity closure', () => {
+    const { gltf } = readGlbJson(ASSET_PATH);
+    const names = new Set(gltf.nodes.map((node) => node.name ?? ''));
+    B81_CONTINUITY_SPECS.forEach((spec) => {
+      expect(names.has(spec.sourceName), `${spec.id} source ${spec.sourceName} must remain in V57`).toBe(true);
+      expect(names.has(spec.targetName), `${spec.id} target ${spec.targetName} must remain in V57`).toBe(true);
+    });
+  });
+
+  it('keeps legacy dry-route duplicates out of the production V57 asset', () => {
+    const { gltf } = readGlbJson(ASSET_PATH);
+    const names = gltf.nodes.map((node) => node.name ?? '');
+    [
+      'V49_APRON_TO_CRUSHER_',
+      'V49_CV02_',
+      'V49_CV03_',
+      'V51_ROM_TO_APRON_CHUTE_BOTTOM',
+    ].forEach((prefix) => {
+      expect(names.some((name) => name.startsWith(prefix)), `${prefix} must stay absent from production V57`).toBe(false);
+    });
   });
 
   it('does not revive the superseded V57 carbon or layout helpers', () => {

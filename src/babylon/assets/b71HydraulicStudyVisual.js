@@ -3,7 +3,6 @@ import { DynamicTexture } from '@babylonjs/core/Materials/Textures/dynamicTextur
 import { Color3 } from '@babylonjs/core/Maths/math.color.js';
 import { Quaternion, Vector3 } from '@babylonjs/core/Maths/math.vector.js';
 import { CreateCylinder } from '@babylonjs/core/Meshes/Builders/cylinderBuilder.js';
-import { CreateSphere } from '@babylonjs/core/Meshes/Builders/sphereBuilder.js';
 import { TransformNode } from '@babylonjs/core/Meshes/transformNode.js';
 
 const CONCRETE_NAMES = Object.freeze(new Set([
@@ -87,23 +86,7 @@ function createMaterials(scene) {
   slurry.alpha = 0.84;
   slurry.backFaceCulling = false;
 
-  const quartz = new StandardMaterial('b71-study-quartz', scene);
-  quartz.diffuseColor = new Color3(0.72, 0.71, 0.66);
-  quartz.specularColor = new Color3(0.17, 0.17, 0.15);
-  quartz.specularPower = 18;
-
-  const pyrite = new StandardMaterial('b71-study-pyrite', scene);
-  pyrite.diffuseColor = new Color3(0.34, 0.27, 0.10);
-  pyrite.specularColor = new Color3(0.44, 0.35, 0.13);
-  pyrite.specularPower = 26;
-
-  const gold = new StandardMaterial('b71-study-disseminated-gold', scene);
-  gold.diffuseColor = new Color3(0.72, 0.49, 0.08);
-  gold.specularColor = new Color3(0.76, 0.60, 0.19);
-  gold.specularPower = 42;
-  gold.emissiveColor = new Color3(0.035, 0.022, 0.002);
-
-  return { concreteTexture, concrete, pipe, flange, slurry, quartz, pyrite, gold };
+  return { concreteTexture, concrete, pipe, flange, slurry };
 }
 
 function isTargetConcrete(node) {
@@ -208,46 +191,15 @@ function addSumpMinerals(scene, root, index, materials) {
   const slurryBounds = bounds(slurryMesh);
   if (!slurryMesh || !slurryBounds) return { minerals: [], slurryMesh: null };
   slurryMesh.material = materials.slurry;
-  slurryMesh.metadata = { ...(slurryMesh.metadata ?? {}), b71MineralSlurry: true, visualOnly: true };
-  const mineralsRoot = new TransformNode('B71_SUMP_MINERALIZATION', scene);
-  mineralsRoot.parent = root;
-  mineralsRoot.metadata = { visualOnly: true, b71HydraulicStudy: true, inspectionInterior: true };
-  const minerals = [];
-  const specs = [
-    { kind: 'quartz', count: 34, diameter: 0.065, material: materials.quartz },
-    { kind: 'pyrite', count: 22, diameter: 0.048, material: materials.pyrite },
-    { kind: 'gold', count: 8, diameter: 0.030, material: materials.gold },
-  ];
-  let sequence = 0;
-  specs.forEach((spec) => {
-    for (let i = 0; i < spec.count; i += 1) {
-      const angle = (sequence * 2.399963229728653) % (Math.PI * 2);
-      const radial = 0.18 + (((sequence * 41) % 97) / 97) * Math.max(0.25, Math.min(slurryBounds.half.x, slurryBounds.half.z) * 0.82);
-      const vertical = -slurryBounds.half.y * 0.68 + (((sequence * 29) % 89) / 89) * slurryBounds.half.y * 1.34;
-      const particle = CreateSphere(`B71_SUMP_${spec.kind.toUpperCase()}_${String(i + 1).padStart(2, '0')}`, {
-        diameter: spec.diameter,
-        segments: spec.kind === 'gold' ? 6 : 4,
-      }, scene);
-      particle.parent = mineralsRoot;
-      particle.position.set(
-        slurryBounds.center.x + Math.cos(angle) * radial,
-        slurryBounds.center.y + vertical,
-        slurryBounds.center.z + Math.sin(angle) * radial,
-      );
-      particle.material = spec.material;
-      particle.isPickable = false;
-      particle.metadata = {
-        visualOnly: true,
-        b71HydraulicStudy: true,
-        inspectionInterior: true,
-        mineral: spec.kind,
-        disseminated: spec.kind === 'gold',
-      };
-      minerals.push(particle);
-      sequence += 1;
-    }
-  });
-  return { minerals, slurryMesh };
+  slurryMesh.metadata = {
+    ...(slurryMesh.metadata ?? {}),
+    b71MineralSlurry: true,
+    b77LegacyMineralParticlesRetired: true,
+    visualOnly: true,
+  };
+  // B77: B75 now owns all mode-aware quartz/pyrite/gold tracers. Keeping the
+  // old 64 B71 particles would duplicate minerals and leak them into Normal.
+  return { minerals: [], slurryMesh };
 }
 
 export function applyB71HydraulicStudyVisual({ scene, rootNodes = [], host } = {}) {

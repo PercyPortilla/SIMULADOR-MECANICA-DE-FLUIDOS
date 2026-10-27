@@ -68,6 +68,7 @@ export const V57_INSPECTION_NODE_ALIASES = Object.freeze({
   'APRON-FEEDER': aliasSpec({ names: ['APRON-FEEDER_ROOT', 'APRON-FEEDER'] }),
   'PRIMARY-CRUSHER': aliasSpec({ names: ['PRIMARY-CRUSHER_ROOT.001', 'PRIMARY-CRUSHER'] }),
   'STOCKPILE-RECLAIM': aliasSpec({ names: ['STOCKPILE-RECLAIM_ROOT', 'STOCKPILE-RECLAIM'] }),
+  'LOADER-01': aliasSpec({ names: ['STOCKPILE-LOADER-01'] }),
   'MILL-01': aliasSpec({ names: ['MILL-01_ROOT', 'MILL-01'] }),
   'SUMP-01': aliasSpec({ names: ['SUMP-01_ROOT', 'SUMP-01'] }),
   'SLURRY-PUMP-01': aliasSpec({ names: ['SLURRY-PUMP-01_ROOT', 'SLURRY-PUMP-01'] }),
@@ -84,12 +85,14 @@ export const V57_INSPECTION_NODE_ALIASES = Object.freeze({
     names: ['ROM_TO_APRON_CHUTE', 'V51_ROM_TO_APRON_CHUTE_BOTTOM'],
   }),
   'CV-01-FEEDER-TO-CRUSHER': aliasSpec({
-    prefixes: ['CV-01_', 'V49_APRON_TO_CRUSHER_'],
+    prefixes: ['CV-01_', 'V49_APRON_TO_CRUSHER_', 'B81_CV01-TO-CRUSHER_'],
   }),
   'CV-02-CRUSHER-TO-STOCKPILE': aliasSpec({
     prefixes: ['CV-02A_', 'CV-02_', 'STOCKPILE-FEED-CONVEYOR_', 'V49_CV02_'],
   }),
-  'CV-03-STOCKPILE-TO-GRINDING': aliasSpec({ prefixes: ['CV-03_', 'V49_CV03_'] }),
+  'CV-03-STOCKPILE-TO-GRINDING': aliasSpec({
+    prefixes: ['CV-03_', 'V49_CV03_', 'B50_RECLAIM_TRANSFER_', 'TRANSFER-TOWER-03_', 'B81_CV03-TO-MILL_'],
+  }),
   'P-MILL-TO-SUMP': aliasSpec({
     names: ['V57_MILL_TO_SUMP_TRANSFER', 'V52_PIPE_MILL_TO_SUMP', 'V56_PIPE_CORE_V52_PIPE_MILL_TO_SUMP'],
     prefixes: ['V57_MILL_TO_SUMP_'],
@@ -107,29 +110,31 @@ export const V57_INSPECTION_NODE_ALIASES = Object.freeze({
   }),
   'P-CLASSIFICATION-TO-LEACH': aliasSpec({
     names: ['CLASS-01_OVERFLOW_TO_LEACH_SHELL_ROOT', 'V52_PIPE_CLASS_OVERFLOW_TO_R01'],
-    prefixes: ['CLASS-01_OVERFLOW_TO_LEACH_'],
+    prefixes: ['CLASS-01_OVERFLOW_TO_LEACH_', 'B81_CLASS-OVERFLOW-TO-R01_'],
   }),
   'P-LEACH-R01-R02': aliasSpec({ prefixes: ['LEACH_TRANSFER_1'] }),
-  'P-LEACH-R02-R03': aliasSpec({ prefixes: ['LEACH_TRANSFER_2'] }),
+  'P-LEACH-R02-R03': aliasSpec({ prefixes: ['LEACH_TRANSFER_2', 'B81_LEACH2-TO-R03_'] }),
   'P-LEACH-R03-R04': aliasSpec({ prefixes: ['LEACH_TRANSFER_3'] }),
-  // V57 removes the redundant intermediate PUMP-01 equipment from the physical
-  // route; retain its educational circuit slot as a semantic proxy at R04→CIP.
   'P-LEACHING-TO-PUMP-01': aliasSpec({
-    prefixes: ['LEACH_TO_CIP'],
-    proxySemantics: 'leach-discharge-transfer',
+    prefixes: [
+      'B52_R04_TO_PUMP_',
+      'B81_R04-TO-LEACH-TRANSFER_',
+      'B81_R04-TRANSFER-TO-PUMP01_',
+    ],
   }),
   'PUMP-01': aliasSpec({
-    semanticOnly: true,
-    bounds: { center: [345, 29.5, -105], size: [8, 5, 8] },
-    proxySemantics: 'legacy-transfer-pump-semantic',
+    names: ['PUMP-01_ROOT', 'PUMP-01'],
   }),
   'P-PUMP-01-TO-CIP': aliasSpec({
-    prefixes: ['LEACH_TO_CIP'],
-    proxySemantics: 'leach-to-cip-transfer',
+    prefixes: ['B52_PUMP_TO_CIP_', 'B81_LEACH-TRANSFER-TO-CIP01_'],
   }),
   'MT-CIP-TO-ELUTION-CARBON': aliasSpec({
     names: ['V57_CIP01_TO_ELUTION_CARBON_ROOT', 'V52_PIPE_CIP_TO_ELUTION', 'V56_PIPE_CORE_V52_PIPE_CIP_TO_ELUTION'],
-    prefixes: ['V57_CIP01_TO_ELUTION_CARBON_'],
+    prefixes: [
+      'V57_CIP01_TO_ELUTION_CARBON_',
+      'B81_CIP-TAKEOFF-TO-LOADED-CARBON-ROUTE_',
+      'B81_LOADED-CARBON-ROUTE-TO-SCREEN_',
+    ],
     proxySemantics: 'loaded-carbon-route',
   }),
   'MT-ELUTION-TO-CIP-BARREN-CARBON': aliasSpec({
@@ -142,7 +147,13 @@ export const V57_INSPECTION_NODE_ALIASES = Object.freeze({
     prefixes: ['ELUTION-TO-EW-RICH', 'V57_RICH_ELUATE_'],
   }),
   'MT-EW-TO-SMELTING-CATHODE': aliasSpec({
-    prefixes: ['V57_EW_GOLD_SOLIDS_', 'V57_CALCINE_TO_SMELTING_', 'GOLDROOM-CALCINE-SCREW'],
+    prefixes: [
+      'V57_EW_GOLD_SOLIDS_',
+      'V57_CALCINE_TO_SMELTING_',
+      'B53_CALCINE_TO_SMELTING_',
+      'GOLDROOM-CALCINE-SCREW',
+      'B81_CALCINE-TO-SMELTING_',
+    ],
     proxySemantics: 'ew-to-smelting-solids',
   }),
 });

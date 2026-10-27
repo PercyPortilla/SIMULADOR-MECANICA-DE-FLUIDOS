@@ -1,9 +1,27 @@
 export const INSPECTION_MODES = Object.freeze(['normal', 'transparent', 'cutaway', 'interior']);
 
 export const INSPECTION_FOCUS_PROFILES = Object.freeze({
+  'EXCAVATOR-01': Object.freeze({
+    focusObjectNames: Object.freeze([
+      'EXCAVATOR-01_CARBODY',
+      'EXCAVATOR-01_HOUSE',
+      'EXCAVATOR-01_CAB',
+      'EXCAVATOR-01_TRACK_FRAME_L',
+      'EXCAVATOR-01_TRACK_FRAME_R',
+    ]),
+    maxSpanM: 18,
+  }),
   'CV-02-CRUSHER-TO-STOCKPILE': Object.freeze({ routeFraction: 0.50, maxSpanM: 28 }),
-  'STOCKPILE-RECLAIM': Object.freeze({ focusObjectName: 'STOCKPILE-RECLAIM-motion' }),
+  'STOCKPILE-RECLAIM': Object.freeze({
+    focusObjectNames: Object.freeze(['STOCKPILE-RECLAIM-FEEDER_ROOT']),
+    maxSpanM: 24,
+  }),
+  'LOADER-01': Object.freeze({ maxSpanM: 16, followTarget: true }),
   'CV-03-STOCKPILE-TO-GRINDING': Object.freeze({ routeFraction: 0.58, maxSpanM: 26 }),
+  'CLASS-01': Object.freeze({
+    focusObjectPrefixes: Object.freeze(['CLASS-01_TRANS_CYCLONE_']),
+    maxSpanM: 18,
+  }),
   'P-CYCLONE-UNDERFLOW-RETURN': Object.freeze({ routeFraction: 0.52, maxSpanM: 22 }),
   'P-CLASSIFICATION-TO-LEACH': Object.freeze({ routeFraction: 0.48, maxSpanM: 22 }),
   'P-LEACHING-TO-PUMP-01': Object.freeze({ routeFraction: 0.55, maxSpanM: 24 }),

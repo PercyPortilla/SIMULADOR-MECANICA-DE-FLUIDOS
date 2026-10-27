@@ -41,6 +41,11 @@ import {
   getInspectionStage,
 } from './ui/inspectionGuide.js';
 import { getInspectionOperationalMetrics } from './ui/inspectionMetrics.js';
+import {
+  BERNOULLI_EULER_LAB_MODES,
+  formatBernoulliEulerLabValue,
+  getBernoulliEulerLabReadout,
+} from './ui/bernoulliEulerLab.js';
 import { ACADEMIC_CASES, getAcademicCase, loadAcademicCase } from './ui/academicCases.js';
 import { compareAcademicCases } from './ui/academicComparison.js';
 import {
@@ -61,6 +66,7 @@ let startPresentationTour = null;
 let lastAcademicLabEvaluation = null;
 let activeComparisonScenarioId = null;
 let refreshInspectionGuide = null;
+let refreshBernoulliEulerLab = null;
 
 loadExampleSimulation(updateState);
 
@@ -1039,13 +1045,21 @@ function render() {
     <main class="workspace">
       <nav class="mobile-workspace-jump" aria-label="Navegación móvil del simulador"><button type="button" data-scroll-target="results">Resultados / 3D</button><button type="button" data-scroll-target="parameters">Parámetros</button></nav>
       <aside class="sidebar"><div id="theme-panel" class="theme-panel" hidden><div class="theme-panel-head"><strong>Paleta de interfaz</strong><button id="theme-reset" type="button">Restablecer UI</button></div><p>La apariencia se guarda en este navegador y no modifica la física.</p><div class="theme-grid"><label>Acento<input type="color" data-theme-key="accent"></label><label>Fondo<input type="color" data-theme-key="background"></label><label>Panel<input type="color" data-theme-key="panel"></label><label>Texto<input type="color" data-theme-key="text"></label></div><div class="theme-panel-head scene-theme-head"><strong>Paleta escena 3D</strong><button id="scene-palette-reset" type="button">Restablecer 3D</button></div><p>Roles visuales semánticos. No cambian densidad, rugosidad hidráulica ni ninguna propiedad física.</p><div class="theme-grid scene-theme-grid"><label>Terreno<input type="color" data-scene-role="terrain"></label><label>Caminos<input type="color" data-scene-role="road"></label><label>Concreto<input type="color" data-scene-role="concrete"></label><label>Acero<input type="color" data-scene-role="structuralSteel"></label><label>Proceso<input type="color" data-scene-role="processSteel"></label><label>Pipe acero<input type="color" data-scene-role="pipeSteel"></label><label>Pipe HDPE<input type="color" data-scene-role="pipeHdpe"></label><label>Seguridad<input type="color" data-scene-role="safetyYellow"></label><label>Mineral<input type="color" data-scene-role="mineral"></label><label>Vehículos<input type="color" data-scene-role="vehicleYellow"></label></div></div><div class="sidebar-heading"><span>PARÁMETROS</span><small>ENTRADA SI</small></div><div class="scenario-panel"><input id="scenario-name" type="text" value="Escenario" aria-label="Nombre del escenario"><select id="scenario-select" aria-label="Escenario guardado"></select><div class="scenario-controls" aria-label="Escenarios de simulación"><button id="scenario-save" type="button">Guardar / actualizar</button><button id="scenario-load" type="button">Cargar</button><button id="scenario-compare" type="button">Comparar</button><button id="scenario-delete" type="button">Eliminar</button><button id="scenario-export-json" type="button">Exportar JSON</button><button id="scenario-export-csv" type="button">Exportar CSV</button><button id="scenario-reset" type="button">Reset parámetros</button></div></div><p id="scenario-status" class="scenario-status" data-tone="muted">Los escenarios guardan entradas físicas; materiales/tema visual no se mezclan con la física.</p><section class="academic-case-panel" aria-labelledby="academic-case-title"><div class="academic-case-heading"><div><span>CASOS DE ESTUDIO</span><strong id="academic-case-title">Casos académicos</strong></div><small>V19</small></div><select id="academic-case-select" aria-label="Caso académico"><option value="">Seleccionar caso…</option></select><div class="academic-case-actions"><button id="academic-case-load" type="button">Cargar caso</button><button id="academic-case-present" type="button" disabled>Cargar + presentar</button></div><div id="academic-case-guide" class="academic-case-guide" hidden></div><p id="academic-case-status" class="academic-case-status" aria-live="polite">Valores académicos de referencia: revisar siempre el alcance del modelo.</p><small class="academic-global-scope">Sedimentación Durand: indicador orientativo histórico, no calibrado; d50/d80 se registran pero no alimentan esa correlación.</small><details id="academic-comparator" class="academic-comparator"><summary>Comparar dos casos</summary><div class="academic-comparator-body"><div class="academic-comparator-selects"><label>A<select id="academic-compare-left" aria-label="Caso A"></select></label><label>B<select id="academic-compare-right" aria-label="Caso B"></select></label></div><button id="academic-compare-run" type="button">Comparar A vs B</button><div id="academic-comparison-result" class="academic-comparison-result" hidden></div></div></details></section><div id="sections"></div><p id="validation-message" class="validation-message" aria-live="polite"></p></aside>
-      <section class="content"><div class="content-heading"><div><p class="eyebrow">SIMULADOR UNIVERSITARIO</p><h2>Mec&aacute;nica de fluidos aplicada a transporte de pulpas</h2><p class="subtitle">Entradas f&iacute;sicas &rarr; modelo reol&oacute;gico/hidr&aacute;ulico &rarr; resultados &rarr; an&aacute;lisis. Sistema SI y alcance expl&iacute;cito por modelo.</p></div><span class="status-dot">● ESPERANDO PARÁMETROS</span></div><div class="scene-card"><div class="scene-card-head"><div><p class="eyebrow">GEMELO DIGITAL 3D</p><h3 id="view-title">Planta general</h3></div><div class="scene-controls"><div class="scene-toggles"><label class="label-toggle"><input id="labels-toggle" type="checkbox" checked><span>Mostrar etiquetas</span></label><label class="label-toggle"><input id="animations-toggle" type="checkbox" checked><span>Animaciones</span></label><label class="label-toggle geotech-toggle"><input id="geotech-toggle" type="checkbox"><span>Geotecnia / subsuelo</span></label></div><div class="inspection-toolbar" aria-label="Inspección interna"><label>Equipo<select id="inspection-target"><option value="">Seleccionar…</option></select></label><div class="inspection-stepper" role="group" aria-label="Recorrer circuito"><button id="inspection-prev" type="button" disabled>← Anterior</button><button id="inspection-next" type="button" disabled>Siguiente →</button></div><label>Modo<select id="inspection-mode" disabled><option value="normal">Normal</option><option value="transparent">Transparente</option><option value="cutaway">Corte</option><option value="interior">Interior</option></select></label></div><div id="camera-switcher" class="camera-switcher" role="group" aria-label="Vista de cámara"></div></div></div><div class="scene-viewport"><canvas id="environment-canvas" aria-label="Entorno exterior industrial V57/B64"></canvas><div id="scene-loading" class="scene-loading" role="status" aria-live="polite"><strong>Cargando Blender V57 · B64</strong><span>Preparando el entorno final, materiales y animaciones…</span></div><div id="presentation-controls" class="presentation-controls" data-active="false" aria-label="Modo presentación"><button id="presentation-toggle" class="presentation-toggle" type="button" aria-pressed="false">▶ Modo presentación</button><div id="presentation-player" class="presentation-player" hidden><button id="presentation-prev" type="button" aria-label="Parada anterior">←</button><button id="presentation-play" type="button" aria-label="Reproducir presentación" aria-pressed="false">▶</button><button id="presentation-next" type="button" aria-label="Siguiente parada">→</button><span id="presentation-progress" aria-live="polite">01 / 19</span></div></div><aside id="inspection-guide" class="inspection-guide" hidden aria-live="polite" aria-label="Ficha t&eacute;cnica del equipo seleccionado"></aside><aside id="inspection-hover-tooltip" class="inspection-hover-tooltip" role="tooltip" hidden aria-hidden="true"><span id="inspection-hover-id"></span><strong id="inspection-hover-label"></strong><small id="inspection-hover-kind"></small><em id="inspection-hover-metric" hidden></em></aside><aside id="geotech-legend" class="geotech-legend" hidden aria-label="Leyenda geotécnica"><strong>SUBSUELO CONCEPTUAL</strong><span><i data-geotech-color="natural"></i>Natural: suelo / roca</span><span><i data-geotech-color="engineered"></i>Construido: relleno / cimentación</span><span><i data-geotech-color="water"></i>Hidrogeología conceptual</span><small>No representa campaña geotécnica ni modelo hidrogeológico calibrado.</small></aside><p id="scene-error" class="scene-error" hidden></p></div></div><section class="hydraulic-summary" aria-labelledby="hydraulic-summary-title"><div class="technical-section-head"><div><p class="eyebrow">RESULTADOS PRINCIPALES</p><h3 id="hydraulic-summary-title">Estado hidr&aacute;ulico del circuito</h3></div><small>Valores del escenario activo</small></div><div class="kpi-grid"><article><span>CAUDAL Q</span><strong id="kpi-flow">&mdash;</strong><small>caudal volum&eacute;trico</small></article><article><span>VELOCIDAD V</span><strong id="kpi-velocity">&mdash;</strong><small>velocidad media</small></article><article><span id="kpi-reynolds-label">REYNOLDS Re</span><strong id="kpi-reynolds">&mdash;</strong><small id="kpi-regime-note">r&eacute;gimen pendiente</small></article><article><span>FACTOR DARCY f</span><strong id="kpi-friction-factor">&mdash;</strong><small>adimensional</small></article><article><span>&Delta;P TOTAL</span><strong id="kpi-dp">&mdash;</strong><small id="kpi-dp-note">requiere modelo aplicable</small></article><article><span>CARGA H</span><strong id="kpi-head">&mdash;</strong><small>m de fluido</small></article><article><span>POTENCIA P</span><strong id="kpi-power">&mdash;</strong><small>potencia el&eacute;ctrica</small></article><article><span>NPSH DISPONIBLE</span><strong id="kpi-npsh">&mdash;</strong><small id="kpi-npsh-note">requiere curva de bomba</small></article></div></section><div class="result-panel"><div class="result-panel-heading"><div><p class="eyebrow">VALIDACI&Oacute;N Y RESULTADOS</p><h3>Reolog&iacute;a &rarr; hidr&aacute;ulica &rarr; bombeo &rarr; proceso</h3></div></div><div class="validity-strip" aria-label="Estado de aplicabilidad"><span id="validity-hydraulic" class="validity-badge" data-state="pending">Hidr&aacute;ulica &middot; pendiente</span><span id="validity-rheology" class="validity-badge" data-state="pending">Reolog&iacute;a &middot; pendiente</span><span id="validity-pump" class="validity-badge" data-state="pending">Bomba &middot; pendiente</span><span id="validity-process" class="validity-badge" data-state="pending">Proceso &middot; pendiente</span></div><section id="engineering-comparison" class="engineering-comparison" hidden></section><div class="result-metrics"><div><span>Modelo activo</span><strong id="result-model">Pendiente de par&aacute;metros</strong></div><div><span>R&eacute;gimen</span><strong id="result-regime">&mdash;</strong></div><div><span>Densidad de pulpa</span><strong id="result-density">&mdash;</strong></div><div><span>S&oacute;lidos vol.</span><strong id="result-phi">&mdash;</strong></div><div><span id="result-wall-stress-label">Esfuerzo de pared &tau;w</span><strong id="result-wall-stress">&mdash;</strong><small id="result-wall-stress-note"></small></div><div><span>Gradiente &Delta;P/L</span><strong id="result-pressure-gradient">&mdash;</strong></div><div><span>P&eacute;rdidas locales</span><strong id="result-local-loss">&mdash;</strong></div><div><span>Componente est&aacute;tica</span><strong id="result-static">&mdash;</strong></div><div><span>Energ&iacute;a anual</span><strong id="result-energy">&mdash;</strong></div><div><span>Costo anual</span><strong id="result-cost">&mdash;</strong></div><div><span>Residencia lixiviaci&oacute;n</span><strong id="result-residence">&mdash;</strong></div><div><span>Recuperaci&oacute;n global</span><strong id="result-recovery">&mdash;</strong></div></div><details class="equations-panel"><summary>Ecuaciones / Supuestos</summary><div class="equations-grid"><article><span>Continuidad</span><strong>Q = V&middot;A</strong><small>A = &pi;D<sup>2</sup>/4</small></article><article><span>Reynolds</span><strong>Re = &rho;VD/&mu;</strong><small>Newtoniano; no newtoniano usa Reynolds generalizado.</small></article><article><span>Darcy&ndash;Weisbach</span><strong>&Delta;P<sub>f</sub> = f(L/D)(&rho;V<sup>2</sup>/2)</strong><small>Factor Darcy seg&uacute;n r&eacute;gimen y rugosidad.</small></article><article><span>P&eacute;rdidas locales</span><strong>&Delta;P<sub>m</sub> = &Sigma;K(&rho;V<sup>2</sup>/2)</strong><small>Accesorios expl&iacute;citos + K adicional.</small></article><article><span>Componente est&aacute;tica</span><strong>&Delta;P<sub>z</sub> = &rho;g&Delta;z</strong><small>&Delta;z positivo cuando descarga est&aacute; m&aacute;s alta.</small></article><article><span>Carga total</span><strong>H = &Delta;P/(&rho;g)</strong><small>Conversi&oacute;n de presi&oacute;n requerida a metros de fluido.</small></article><article><span>Potencia</span><strong>P<sub>e</sub> = Q&Delta;P/(&eta;<sub>p</sub>&eta;<sub>m</sub>)</strong><small>Eficiencias de bomba y motor expl&iacute;citas.</small></article><article><span>NPSH disponible</span><strong>NPSH<sub>A</sub> = (P<sub>a</sub>-P<sub>v</sub>)/(&rho;g)+z<sub>s</sub>-h<sub>fs</sub></strong><small>Comparaci&oacute;n de margen; no predice cavitaci&oacute;n.</small></article></div><p class="equation-scope">Modelo activo: <strong id="equation-active-model">pendiente</strong>. Los resultados fuera del dominio implementado se identifican expl&iacute;citamente como estimaci&oacute;n educativa o no calculable.</p></details><div class="chart-grid"><div id="rheology-chart" class="result-chart"></div><div id="pressure-chart" class="result-chart"></div></div><p id="model-status" class="model-status">Sin advertencias de aplicabilidad.</p><p class="result-note">El bloque hidr&aacute;ulico/reol&oacute;gico es el n&uacute;cleo de Mec&aacute;nica de Fluidos. Lixiviaci&oacute;n, recuperaci&oacute;n y fundici&oacute;n permanecen como contexto del proceso minero y se reportan por separado.</p></div></section>
+      <section class="content"><div class="content-heading"><div><p class="eyebrow">SIMULADOR UNIVERSITARIO</p><h2>Mec&aacute;nica de fluidos aplicada a transporte de pulpas</h2><p class="subtitle">Entradas f&iacute;sicas &rarr; modelo reol&oacute;gico/hidr&aacute;ulico &rarr; resultados &rarr; an&aacute;lisis. Sistema SI y alcance expl&iacute;cito por modelo.</p></div><span class="status-dot">● ESPERANDO PARÁMETROS</span></div><div class="scene-card"><div class="scene-card-head"><div><p class="eyebrow">GEMELO DIGITAL 3D</p><h3 id="view-title">Planta general</h3></div><div class="scene-controls"><div class="scene-toggles"><label class="label-toggle"><input id="labels-toggle" type="checkbox" checked><span>Mostrar etiquetas</span></label><label class="label-toggle"><input id="animations-toggle" type="checkbox" checked><span>Animaciones</span></label><label class="label-toggle geotech-toggle"><input id="geotech-toggle" type="checkbox"><span>Geotecnia / subsuelo</span></label></div><div class="inspection-toolbar" aria-label="Inspección interna"><label>Equipo<select id="inspection-target"><option value="">Seleccionar…</option></select></label><div class="inspection-stepper" role="group" aria-label="Recorrer circuito"><button id="inspection-prev" type="button" disabled>← Anterior</button><button id="inspection-next" type="button" disabled>Siguiente →</button></div><label>Modo<select id="inspection-mode" disabled><option value="normal">Normal</option><option value="transparent">Transparente</option><option value="cutaway">Corte</option><option value="interior">Interior</option></select></label></div><div id="camera-switcher" class="camera-switcher" role="group" aria-label="Vista de cámara"></div></div></div><div class="scene-viewport"><canvas id="environment-canvas" aria-label="Entorno exterior industrial V57/B64"></canvas><div id="scene-loading" class="scene-loading" role="status" aria-live="polite"><strong>Cargando Blender V57 · B64</strong><span>Preparando el entorno final, materiales y animaciones…</span></div><div id="presentation-controls" class="presentation-controls" data-active="false" aria-label="Modo presentación"><button id="presentation-toggle" class="presentation-toggle" type="button" aria-pressed="false">▶ Modo presentación</button><div id="presentation-player" class="presentation-player" hidden><button id="presentation-prev" type="button" aria-label="Parada anterior">←</button><button id="presentation-play" type="button" aria-label="Reproducir presentación" aria-pressed="false">▶</button><button id="presentation-next" type="button" aria-label="Siguiente parada">→</button><span id="presentation-progress" aria-live="polite">01 / 19</span></div></div><aside id="bernoulli-lab-panel" class="bernoulli-lab-panel" data-mode="realistic" hidden aria-label="Laboratorio Bernoulli Euler"><header><span>LABORATORIO HIDR&Aacute;ULICO &middot; SUMP &rarr; BOMBA &rarr; CICLONES</span><strong>Bernoulli + Euler</strong></header><div id="bernoulli-lab-modes" class="bernoulli-lab-modes" role="group" aria-label="Modo del laboratorio"></div><div class="bernoulli-lab-focus" role="group" aria-label="Enfoque de c&aacute;mara"><button type="button" data-lab-focus="overview">General</button><button type="button" data-lab-focus="sump">Sump</button><button type="button" data-lab-focus="pump">Bomba</button><button type="button" data-lab-focus="cyclones">Ciclones</button></div><div id="bernoulli-lab-readout" class="bernoulli-lab-readout"></div></aside><aside id="inspection-guide" class="inspection-guide" hidden aria-live="polite" aria-label="Ficha t&eacute;cnica del equipo seleccionado"></aside><aside id="inspection-hover-tooltip" class="inspection-hover-tooltip" role="tooltip" hidden aria-hidden="true"><span id="inspection-hover-id"></span><strong id="inspection-hover-label"></strong><small id="inspection-hover-kind"></small><em id="inspection-hover-metric" hidden></em></aside><aside id="geotech-legend" class="geotech-legend" hidden aria-label="Leyenda geotécnica"><strong>SUBSUELO CONCEPTUAL</strong><span><i data-geotech-color="natural"></i>Natural: suelo / roca</span><span><i data-geotech-color="engineered"></i>Construido: relleno / cimentación</span><span><i data-geotech-color="water"></i>Hidrogeología conceptual</span><small>No representa campaña geotécnica ni modelo hidrogeológico calibrado.</small></aside><p id="scene-error" class="scene-error" hidden></p></div></div><section class="hydraulic-summary" aria-labelledby="hydraulic-summary-title"><div class="technical-section-head"><div><p class="eyebrow">RESULTADOS PRINCIPALES</p><h3 id="hydraulic-summary-title">Estado hidr&aacute;ulico del circuito</h3></div><small>Valores del escenario activo</small></div><div class="kpi-grid"><article><span>CAUDAL Q</span><strong id="kpi-flow">&mdash;</strong><small>caudal volum&eacute;trico</small></article><article><span>VELOCIDAD V</span><strong id="kpi-velocity">&mdash;</strong><small>velocidad media</small></article><article><span id="kpi-reynolds-label">REYNOLDS Re</span><strong id="kpi-reynolds">&mdash;</strong><small id="kpi-regime-note">r&eacute;gimen pendiente</small></article><article><span>FACTOR DARCY f</span><strong id="kpi-friction-factor">&mdash;</strong><small>adimensional</small></article><article><span>&Delta;P TOTAL</span><strong id="kpi-dp">&mdash;</strong><small id="kpi-dp-note">requiere modelo aplicable</small></article><article><span>CARGA H</span><strong id="kpi-head">&mdash;</strong><small>m de fluido</small></article><article><span>POTENCIA P</span><strong id="kpi-power">&mdash;</strong><small>potencia el&eacute;ctrica</small></article><article><span>NPSH DISPONIBLE</span><strong id="kpi-npsh">&mdash;</strong><small id="kpi-npsh-note">requiere curva de bomba</small></article></div></section><div class="result-panel"><div class="result-panel-heading"><div><p class="eyebrow">VALIDACI&Oacute;N Y RESULTADOS</p><h3>Reolog&iacute;a &rarr; hidr&aacute;ulica &rarr; bombeo &rarr; proceso</h3></div></div><div class="validity-strip" aria-label="Estado de aplicabilidad"><span id="validity-hydraulic" class="validity-badge" data-state="pending">Hidr&aacute;ulica &middot; pendiente</span><span id="validity-rheology" class="validity-badge" data-state="pending">Reolog&iacute;a &middot; pendiente</span><span id="validity-pump" class="validity-badge" data-state="pending">Bomba &middot; pendiente</span><span id="validity-process" class="validity-badge" data-state="pending">Proceso &middot; pendiente</span></div><section id="engineering-comparison" class="engineering-comparison" hidden></section><div class="result-metrics"><div><span>Modelo activo</span><strong id="result-model">Pendiente de par&aacute;metros</strong></div><div><span>R&eacute;gimen</span><strong id="result-regime">&mdash;</strong></div><div><span>Densidad de pulpa</span><strong id="result-density">&mdash;</strong></div><div><span>S&oacute;lidos vol.</span><strong id="result-phi">&mdash;</strong></div><div><span id="result-wall-stress-label">Esfuerzo de pared &tau;w</span><strong id="result-wall-stress">&mdash;</strong><small id="result-wall-stress-note"></small></div><div><span>Gradiente &Delta;P/L</span><strong id="result-pressure-gradient">&mdash;</strong></div><div><span>P&eacute;rdidas locales</span><strong id="result-local-loss">&mdash;</strong></div><div><span>Componente est&aacute;tica</span><strong id="result-static">&mdash;</strong></div><div><span>Energ&iacute;a anual</span><strong id="result-energy">&mdash;</strong></div><div><span>Costo anual</span><strong id="result-cost">&mdash;</strong></div><div><span>Residencia lixiviaci&oacute;n</span><strong id="result-residence">&mdash;</strong></div><div><span>Recuperaci&oacute;n global</span><strong id="result-recovery">&mdash;</strong></div></div><details class="equations-panel"><summary>Ecuaciones / Supuestos</summary><div class="equations-grid"><article><span>Continuidad</span><strong>Q = V&middot;A</strong><small>A = &pi;D<sup>2</sup>/4</small></article><article><span>Reynolds</span><strong>Re = &rho;VD/&mu;</strong><small>Newtoniano; no newtoniano usa Reynolds generalizado.</small></article><article><span>Darcy&ndash;Weisbach</span><strong>&Delta;P<sub>f</sub> = f(L/D)(&rho;V<sup>2</sup>/2)</strong><small>Factor Darcy seg&uacute;n r&eacute;gimen y rugosidad.</small></article><article><span>P&eacute;rdidas locales</span><strong>&Delta;P<sub>m</sub> = &Sigma;K(&rho;V<sup>2</sup>/2)</strong><small>Accesorios expl&iacute;citos + K adicional.</small></article><article><span>Componente est&aacute;tica</span><strong>&Delta;P<sub>z</sub> = &rho;g&Delta;z</strong><small>&Delta;z positivo cuando descarga est&aacute; m&aacute;s alta.</small></article><article><span>Carga total</span><strong>H = &Delta;P/(&rho;g)</strong><small>Conversi&oacute;n de presi&oacute;n requerida a metros de fluido.</small></article><article><span>Potencia</span><strong>P<sub>e</sub> = Q&Delta;P/(&eta;<sub>p</sub>&eta;<sub>m</sub>)</strong><small>Eficiencias de bomba y motor expl&iacute;citas.</small></article><article><span>NPSH disponible</span><strong>NPSH<sub>A</sub> = (P<sub>a</sub>-P<sub>v</sub>)/(&rho;g)+z<sub>s</sub>-h<sub>fs</sub></strong><small>Comparaci&oacute;n de margen; no predice cavitaci&oacute;n.</small></article></div><p class="equation-scope">Modelo activo: <strong id="equation-active-model">pendiente</strong>. Los resultados fuera del dominio implementado se identifican expl&iacute;citamente como estimaci&oacute;n educativa o no calculable.</p></details><div class="chart-grid"><div id="rheology-chart" class="result-chart"></div><div id="pressure-chart" class="result-chart"></div></div><p id="model-status" class="model-status">Sin advertencias de aplicabilidad.</p><p class="result-note">El bloque hidr&aacute;ulico/reol&oacute;gico es el n&uacute;cleo de Mec&aacute;nica de Fluidos. Lixiviaci&oacute;n, recuperaci&oacute;n y fundici&oacute;n permanecen como contexto del proceso minero y se reportan por separado.</p></div></section>
     </main>
   </div>`;
   app.append(shell);
   installWorkspaceTabs(shell);
   renderParameterSections();
   const cameraSwitcher = shell.querySelector('#camera-switcher');
+  const labButton = document.createElement('button');
+  labButton.id = 'bernoulli-lab-toggle';
+  labButton.type = 'button';
+  labButton.className = 'bernoulli-lab-toggle';
+  labButton.setAttribute('aria-pressed', 'false');
+  labButton.disabled = true;
+  labButton.innerHTML = '<span>NUEVO</span> &middot; LAB BERNOULLI&ndash;EULER';
+  cameraSwitcher.append(labButton);
   CAMERA_PRESET_ORDER.forEach((cameraId) => {
     const button = document.createElement('button');
     button.type = 'button';
@@ -1069,6 +1083,7 @@ render();
 const unsubscribeResultsRender = subscribeResults((results) => {
   renderResultsPanel(results, getState());
   refreshInspectionGuide?.();
+  refreshBernoulliEulerLab?.();
   if (activeComparisonScenarioId) {
     const scenario = loadNamedScenario(activeComparisonScenarioId);
     if (scenario) renderScenarioComparison(scenario);
@@ -1083,10 +1098,33 @@ async function initializeEnvironment(canvas) {
     const environment = createBaseEnvironment({ canvas });
     environmentHandle = environment;
     environment.setScenePalette(paletteHexToNumbers(activeScenePalette));
-    const applyProcessMetrics = (results) => environment.setProcessMetrics({
-      flowRateM3s: results.transport?.flowRateM3s ?? 0,
-      pressurePa: results.transport?.requiredPressurePa ?? 0,
-    });
+    const applyProcessMetrics = (results) => {
+      const state = getState();
+      const labReadout = getBernoulliEulerLabReadout(state, results);
+      const imposedFlowRateM3s = results.transport?.flowRateM3s ?? 0;
+      const operatingFlowRateM3s = results.pump?.operatingFlowRateM3s;
+      const useOperatingPoint = Number.isFinite(operatingFlowRateM3s) && operatingFlowRateM3s >= 0;
+      return environment.setProcessMetrics({
+        flowRateM3s: useOperatingPoint ? operatingFlowRateM3s : imposedFlowRateM3s,
+        imposedFlowRateM3s,
+        pressurePa: results.pump?.operatingRequiredPressurePa
+          ?? results.transport?.requiredPressurePa
+          ?? 0,
+        velocityMps: state.transport?.pipe1?.velocityMps ?? 0,
+        solidsMassFraction: state.slurry?.solidsMassFraction ?? 0,
+        solidVolumeFraction: results.slurry?.solidVolumeFraction ?? 0,
+        densityKgM3: results.slurry?.densityKgM3 ?? 0,
+        feedGoldKgH: state.recovery?.feedGoldKgH ?? 0,
+        pressureDropPa: labReadout.pressureDropPa ?? 0,
+        pumpHeadM: labReadout.pumpHeadM ?? 0,
+        distributedHeadM: labReadout.distributedHeadM ?? 0,
+        minorLossHeadM: labReadout.minorLossHeadM ?? 0,
+        staticHeadM: labReadout.staticHeadM ?? 0,
+        totalLossHeadM: labReadout.totalLossHeadM ?? 0,
+        rheologyModel: labReadout.rheologyModel,
+        basis: useOperatingPoint ? 'pump-operating-point' : 'transport-imposed-flow',
+      });
+    };
     applyProcessMetrics(getResults());
     unsubscribeProcessMetrics = subscribeResults(applyProcessMetrics);
     const labelsToggle = document.querySelector('#labels-toggle');
@@ -1128,6 +1166,8 @@ async function initializeEnvironment(canvas) {
           if (v57Ready) environment.setGeotechnicsVisible(false);
         }
         if (geotechLegend) geotechLegend.hidden = v57Ready || !persistedGeotech;
+        const labButton = document.querySelector('#bernoulli-lab-toggle');
+        if (labButton) labButton.disabled = !v57Ready;
       };
       const loadCompleted = await Promise.race([
         syncSiteVisualUi().then(() => true),
@@ -1162,6 +1202,11 @@ async function initializeEnvironment(canvas) {
     const presentationPlay = document.querySelector('#presentation-play');
     const presentationNext = document.querySelector('#presentation-next');
     const presentationProgress = document.querySelector('#presentation-progress');
+    const labToggle = document.querySelector('#bernoulli-lab-toggle');
+    const labPanel = document.querySelector('#bernoulli-lab-panel');
+    const labModesHost = document.querySelector('#bernoulli-lab-modes');
+    const labReadout = document.querySelector('#bernoulli-lab-readout');
+    const labFocusButtons = [...document.querySelectorAll('[data-lab-focus]')];
     const presentationStops = PRESENTATION_STOP_IDS
       .map((id) => inspectionTargets.find((item) => item.id === id))
       .filter(Boolean);
@@ -1172,6 +1217,19 @@ async function initializeEnvironment(canvas) {
     let presentationTimer = null;
     let presentationSelecting = false;
     let presentationPreviousLabelsVisible = null;
+    let labActive = false;
+    let labMode = 'realistic';
+    let labPreviousLabelsVisible = null;
+    let labPreviousInspectionId = '';
+    let labPreviousInspectionMode = 'normal';
+    let labPreviousInspectionModeDisabled = true;
+    const labInspectionTargets = new Set([
+      'SUMP-01',
+      'P-SUMP-TO-PUMP',
+      'SLURRY-PUMP-01',
+      'P-PUMP-TO-CYCLONES',
+      'CLASS-01',
+    ]);
     inspectionTargets.forEach(({ id, label }, index) => {
       const option = document.createElement('option');
       option.value = id;
@@ -1287,7 +1345,164 @@ async function initializeEnvironment(canvas) {
       updatePresentationControls();
       selectPresentationStop(presentationIndex);
     };
+
+    BERNOULLI_EULER_LAB_MODES.forEach(({ id, label }) => {
+      if (!labModesHost) return;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.dataset.labMode = id;
+      button.textContent = label;
+      button.classList.toggle('active', id === labMode);
+      labModesHost.append(button);
+    });
+
+    const renderBernoulliEulerLab = () => {
+      if (!labPanel || !labReadout) return;
+      labPanel.hidden = !labActive;
+      labPanel.dataset.mode = labMode;
+      if (!labActive) return;
+      const readout = getBernoulliEulerLabReadout(getState(), getResults());
+      const pointCard = (key) => {
+        const point = readout.points[key];
+        return `
+          <article data-lab-point="${key}">
+            <span>PUNTO ${key}</span>
+            <strong>${point.label}</strong>
+            <small>V = ${formatBernoulliEulerLabValue(point.velocityMps, 'm/s')}</small>
+            <small>z = ${formatBernoulliEulerLabValue(point.elevationM, 'm')}</small>
+            <em>P: referencia nodal no resuelta</em>
+          </article>
+        `;
+      };
+      labReadout.innerHTML = `
+        <section class="bernoulli-lab-equations">
+          <div><span>EULER · línea de corriente</span><strong>${readout.equations.euler}</strong></div>
+          <div><span>BERNOULLI · con bomba y pérdidas</span><strong>${readout.equations.bernoulli}</strong></div>
+        </section>
+        <section class="bernoulli-lab-points">
+          ${pointCard('A')}
+          <i>→</i>
+          ${pointCard('B')}
+          <i>→</i>
+          ${pointCard('C')}
+        </section>
+        <section class="bernoulli-lab-energy">
+          <div><span>Q activo</span><strong>${formatBernoulliEulerLabValue(readout.flowRateM3s === null ? null : readout.flowRateM3s * 3600, 'm³/h')}</strong></div>
+          <div><span>H<sub>b</sub></span><strong>${formatBernoulliEulerLabValue(readout.pumpHeadM, 'm')}</strong></div>
+          <div><span>h<sub>f</sub></span><strong>${formatBernoulliEulerLabValue(readout.totalLossHeadM, 'm')}</strong></div>
+          <div><span>ΔP circuito</span><strong>${formatBernoulliEulerLabValue(readout.pressureDropPa === null ? null : readout.pressureDropPa / 1000, 'kPa')}</strong></div>
+        </section>
+        <section class="bernoulli-lab-euler-cues" aria-label="Fuerzas de Euler">
+          <span data-euler-cue="pressure">∇P · gradiente de presión</span>
+          <span data-euler-cue="gravity">g · gravedad</span>
+          <span data-euler-cue="acceleration">a · aceleración del flujo</span>
+        </section>
+        <p class="bernoulli-lab-scope">${readout.scopeNote}</p>
+      `;
+    };
+    refreshBernoulliEulerLab = renderBernoulliEulerLab;
+
+    const syncLabModeButtons = () => {
+      labPanel?.setAttribute('data-mode', labMode);
+      document.querySelectorAll('[data-lab-mode]').forEach((button) => {
+        button.classList.toggle('active', button.dataset.labMode === labMode);
+      });
+    };
+
+    const setLabMode = (mode) => {
+      labMode = BERNOULLI_EULER_LAB_MODES.some((entry) => entry.id === mode)
+        ? mode
+        : 'realistic';
+      environment.setLabViewMode?.(labMode);
+      syncLabModeButtons();
+      renderBernoulliEulerLab();
+    };
+
+    const setLabActive = (value) => {
+      const next = Boolean(value);
+      if (next === labActive) return labActive;
+      if (next) {
+        if (presentationActive) setPresentationActive(false);
+        labPreviousLabelsVisible = labelsToggle?.checked ?? environment.labelsVisible;
+        labPreviousInspectionId = inspectionTarget?.value || environment.inspectionTargetId || '';
+        labPreviousInspectionMode = inspectionMode?.value || environment.inspectionMode || 'normal';
+        labPreviousInspectionModeDisabled = inspectionMode?.disabled ?? true;
+        if (labelsToggle) labelsToggle.checked = false;
+        environment.setLabelsVisible(false);
+        if (inspectionMode) {
+          inspectionMode.value = 'normal';
+          inspectionMode.disabled = true;
+        }
+        if (inspectionTarget) inspectionTarget.value = '';
+        environment.setInspectionMode('normal');
+        environment.setInspectionTarget(null);
+        labActive = true;
+        environment.setLabViewActive?.(true, { mode: labMode, focus: 'overview' });
+      } else {
+        environment.setInspectionMode('normal');
+        if (labPreviousInspectionId) {
+          environment.setInspectionTarget(labPreviousInspectionId, { smooth: false });
+          if (labPreviousInspectionMode !== 'normal') {
+            environment.setInspectionMode(labPreviousInspectionMode);
+          }
+        } else {
+          environment.setInspectionTarget(null);
+        }
+        environment.setLabViewActive?.(false, { mode: labMode });
+        labActive = false;
+        if (inspectionTarget) inspectionTarget.value = labPreviousInspectionId;
+        if (inspectionMode) {
+          inspectionMode.value = labPreviousInspectionMode;
+          inspectionMode.disabled = labPreviousInspectionModeDisabled;
+        }
+        labPreviousInspectionId = '';
+        labPreviousInspectionMode = 'normal';
+        labPreviousInspectionModeDisabled = true;
+        if (labPreviousLabelsVisible !== null) {
+          if (labelsToggle) labelsToggle.checked = labPreviousLabelsVisible;
+          environment.setLabelsVisible(labPreviousLabelsVisible);
+        }
+        labPreviousLabelsVisible = null;
+      }
+      if (labToggle) {
+        labToggle.setAttribute('aria-pressed', String(labActive));
+        labToggle.classList.toggle('active', labActive);
+        labToggle.innerHTML = labActive
+          ? '<span>ACTIVO</span> &middot; SALIR LAB'
+          : '<span>NUEVO</span> &middot; LAB BERNOULLI&ndash;EULER';
+      }
+      if (labPanel) labPanel.hidden = !labActive;
+      if (labActive) {
+        document.querySelector('#view-title').textContent = 'Laboratorio Bernoulli–Euler';
+        document.querySelectorAll('[data-camera]').forEach((item) => item.classList.remove('active'));
+      } else {
+        document.querySelector('#view-title').textContent = CAMERA_PRESET_LABELS[environment.activeCamera] ?? 'Planta general';
+        document.querySelectorAll('[data-camera]').forEach((item) => {
+          item.classList.toggle('active', item.dataset.camera === environment.activeCamera);
+        });
+      }
+      syncLabModeButtons();
+      renderBernoulliEulerLab();
+      updateInspectionStepper();
+      refreshInspectionGuide?.();
+      return labActive;
+    };
+
+    labToggle?.addEventListener('click', () => setLabActive(!labActive));
+    document.querySelectorAll('[data-lab-mode]').forEach((button) => {
+      button.addEventListener('click', () => setLabMode(button.dataset.labMode));
+    });
+    labFocusButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        if (!labActive) return;
+        environment.frameLabView?.(button.dataset.labFocus);
+        labFocusButtons.forEach((item) => item.classList.toggle('active', item === button));
+      });
+    });
+    labFocusButtons.find((button) => button.dataset.labFocus === 'overview')?.classList.add('active');
+
     startPresentationTour = (startId = null) => {
+      if (labActive) setLabActive(false);
       setPresentationActive(true);
       const requestedIndex = startId
         ? presentationStops.findIndex((item) => item.id === startId)
@@ -1403,6 +1618,7 @@ async function initializeEnvironment(canvas) {
     refreshInspectionGuide = renderInspectionGuide;
     const selectInspectionTarget = (id, { applyEnvironment = true, smoothCamera = false } = {}) => {
       const selectedId = id || '';
+      if (labActive && selectedId && !labInspectionTargets.has(selectedId)) setLabActive(false);
       if (inspectionTarget && inspectionTarget.value !== selectedId) inspectionTarget.value = selectedId;
       if (presentationActive && !presentationSelecting) {
         const rank = presentationStops.findIndex((item) => item.id === selectedId);
@@ -1420,14 +1636,20 @@ async function initializeEnvironment(canvas) {
       }
       if (inspectionMode) {
         const selectedInspection = inspectionTargets.find((item) => item.id === selectedId);
-        inspectionMode.disabled = !selectedId || selectedInspection?.supportsModes === false;
+        inspectionMode.disabled = !selectedId
+          || selectedInspection?.supportsModes === false
+          || (labActive && !labInspectionTargets.has(selectedId));
         inspectionMode.value = 'normal';
       }
       updateInspectionStepper();
       if (selectedId) {
         if (environment.activeCamera !== 'inspection') environment.setCamera('inspection');
-        document.querySelector('#view-title').textContent = CAMERA_PRESET_LABELS.inspection;
-        document.querySelectorAll('[data-camera]').forEach((item) => item.classList.toggle('active', item.dataset.camera === 'inspection'));
+        document.querySelector('#view-title').textContent = labActive
+          ? 'Laboratorio Bernoulli–Euler'
+          : CAMERA_PRESET_LABELS.inspection;
+        document.querySelectorAll('[data-camera]').forEach((item) => {
+          item.classList.toggle('active', !labActive && item.dataset.camera === 'inspection');
+        });
       }
       renderInspectionGuide();
     };
@@ -1477,7 +1699,10 @@ async function initializeEnvironment(canvas) {
     updateInspectionStepper();
     renderInspectionGuide();
     inspectionMode?.addEventListener('change', () => environment.setInspectionMode(inspectionMode.value));
-    presentationToggle?.addEventListener('click', () => setPresentationActive(!presentationActive));
+    presentationToggle?.addEventListener('click', () => {
+      if (labActive) setLabActive(false);
+      setPresentationActive(!presentationActive);
+    });
     presentationPrev?.addEventListener('click', () => selectPresentationStop(presentationIndex - 1));
     presentationNext?.addEventListener('click', () => selectPresentationStop(presentationIndex + 1));
     presentationPlay?.addEventListener('click', () => setPresentationPlaying(!presentationPlaying));
@@ -1485,6 +1710,7 @@ async function initializeEnvironment(canvas) {
 
     document.querySelectorAll('[data-camera]').forEach((button) => {
       button.addEventListener('click', () => {
+        if (labActive) setLabActive(false);
         if (presentationActive && button.dataset.camera !== 'inspection') setPresentationActive(false);
         else if (presentationActive && presentationPlaying) setPresentationPlaying(false);
         environment.setCamera(button.dataset.camera);
@@ -1512,6 +1738,7 @@ if (canvas) initializeEnvironment(canvas);
 
 window.addEventListener('beforeunload', () => {
   refreshInspectionGuide = null;
+  refreshBernoulliEulerLab = null;
   unsubscribeResultsRender?.();
   unsubscribeProcessMetrics?.();
   environmentHandle?.dispose?.();

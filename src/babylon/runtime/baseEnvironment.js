@@ -160,6 +160,53 @@ export function applyBabylonInspectionCameraFraming(camera, framing, {
   return Object.freeze({ distance, requiredDistance, radius });
 }
 
+export function followBabylonInspectionCameraTarget(camera, previousCenter, framing) {
+  if (!camera || !previousCenter || !framing?.center || framing.followTarget !== true) return null;
+  const previous = previousCenter instanceof Vector3 ? previousCenter : Vector3.FromArray(previousCenter);
+  const center = framing.center instanceof Vector3 ? framing.center : Vector3.FromArray(framing.center);
+  const delta = center.subtract(previous);
+  if (delta.lengthSquared() <= 1e-10) return center.clone();
+  const currentTarget = camera.target?.clone?.() ?? center.clone();
+  const alpha = Number(camera.alpha);
+  const beta = Number(camera.beta);
+  const radius = Number(camera.radius);
+  camera.setTarget?.(currentTarget.add(delta));
+  if (Number.isFinite(alpha)) camera.alpha = alpha;
+  if (Number.isFinite(beta)) camera.beta = beta;
+  if (Number.isFinite(radius)) camera.radius = radius;
+  return center.clone();
+}
+
+export function captureBabylonOrbitCameraState(camera) {
+  if (!camera) return null;
+  return Object.freeze({
+    target: Object.freeze(camera.target?.asArray?.() ?? [0, 0, 0]),
+    position: Object.freeze(camera.position?.asArray?.() ?? [0, 0, 0]),
+    alpha: Number(camera.alpha),
+    beta: Number(camera.beta),
+    radius: Number(camera.radius),
+    lowerRadiusLimit: Number(camera.lowerRadiusLimit),
+    upperRadiusLimit: Number(camera.upperRadiusLimit),
+    minZ: Number(camera.minZ),
+    maxZ: Number(camera.maxZ),
+  });
+}
+
+export function restoreBabylonOrbitCameraState(camera, snapshot) {
+  if (!camera || !snapshot) return false;
+  clearBabylonInspectionCameraInertia(camera);
+  camera.setTarget?.(Vector3.FromArray(snapshot.target));
+  camera.setPosition?.(Vector3.FromArray(snapshot.position));
+  if (Number.isFinite(snapshot.alpha)) camera.alpha = snapshot.alpha;
+  if (Number.isFinite(snapshot.beta)) camera.beta = snapshot.beta;
+  if (Number.isFinite(snapshot.radius)) camera.radius = snapshot.radius;
+  camera.lowerRadiusLimit = Number.isFinite(snapshot.lowerRadiusLimit) ? snapshot.lowerRadiusLimit : null;
+  camera.upperRadiusLimit = Number.isFinite(snapshot.upperRadiusLimit) ? snapshot.upperRadiusLimit : null;
+  if (Number.isFinite(snapshot.minZ)) camera.minZ = snapshot.minZ;
+  if (Number.isFinite(snapshot.maxZ)) camera.maxZ = snapshot.maxZ;
+  return true;
+}
+
 export function resolveBabylonInspectionPick({
   scene,
   inspectionSystem,
@@ -185,6 +232,13 @@ export function resolveBabylonInspectionPick({
   } catch {
     return null;
   }
+}
+
+export function shouldSuppressBabylonInspectionHoverDuringDrag({
+  buttons = 0,
+  pointerActive = false,
+} = {}) {
+  return !pointerActive && Number(buttons) !== 0;
 }
 
 export function activateBabylonInspectionPick({
@@ -530,6 +584,12 @@ export function createBabylonRuntime({
   let previousFrameMs = null;
   let labelsEnabled = true;
   let presentationMode = false;
+  let labViewActive = false;
+  let labViewMode = 'realistic';
+  let labViewFocus = 'overview';
+  let labPreviousCamera = null;
+  let labInspectionCameraSnapshot = null;
+  let inspectionFollowCenter = null;
   let lastDecorationRefreshMs = -Infinity;
   let processFlowScale = 1;
   let processMetrics = Object.freeze({ flowRateM3s: 0, pressurePa: 0 });
@@ -767,6 +827,16 @@ export function createBabylonRuntime({
   function moveInspectionPointer(event) {
     if (activeCamera === INSPECTION_CAMERA_ID) invalidateRender(180);
     const pointer = inspectionPointerDown;
+    // B77: ArcRotateCamera owns RMB/middle-button drag. Do not ray-pick hover
+    // targets while any non-selection drag is in progress; that raycast made
+    // fast panning feel sticky even after increasing panning sensitivity.
+    if (shouldSuppressBabylonInspectionHoverDuringDrag({
+      buttons: event?.buttons ?? 0,
+      pointerActive: Boolean(pointer),
+    })) {
+      clearInspectionHover();
+      return;
+    }
     if (pointer) {
       if (pointer.pointerId !== null && event?.pointerId !== undefined && event.pointerId !== pointer.pointerId) return;
       const point = pointerCoordinates(event);
@@ -912,6 +982,20 @@ export function createBabylonRuntime({
   function refreshViewDecorations(force = false) {
     const now = nowMs();
     if (!force && now - lastDecorationRefreshMs < BABYLON_VIEW_DECORATION_REFRESH_INTERVAL_MS) return false;
+    if (activeCamera === INSPECTION_CAMERA_ID && base.equipmentInspection?.targetId) {
+      const framing = base.equipmentInspection.getFraming?.(base.equipmentInspection.targetId);
+      if (framing?.followTarget === true) {
+        inspectionFollowCenter = followBabylonInspectionCameraTarget(
+          base.cameras.inspection,
+          inspectionFollowCenter,
+          framing,
+        ) ?? (framing.center?.clone?.() ?? Vector3.FromArray(framing.center));
+      } else {
+        inspectionFollowCenter = null;
+      }
+    } else {
+      inspectionFollowCenter = null;
+    }
     base.plantLabels?.updatePositions?.();
     base.plantLabels?.updateForCamera?.(base.cameras[activeCamera]);
     if (base.geotechnicalSystem?.visible) {
@@ -995,7 +1079,7 @@ export function createBabylonRuntime({
     if (animationsEnabled) {
       const deltaSeconds = previousFrameMs === null ? 0 : Math.min(0.1, Math.max(0, (now - previousFrameMs) / 1000));
       previousFrameMs = now;
-      void deltaSeconds;
+      base.v57SiteVisual?.update?.(deltaSeconds);
     } else {
       previousFrameMs = null;
     }
@@ -1032,6 +1116,77 @@ export function createBabylonRuntime({
     return presentationMode;
   }
 
+  function frameLabView(focus = 'overview') {
+    const framings = base.v57SiteVisual?.labFramings;
+    const framing = framings?.[focus] ?? framings?.overview;
+    if (!framing) return null;
+    labViewFocus = framings?.[focus] ? focus : 'overview';
+    const camera = base.cameras.inspection;
+    const center = Vector3.FromArray(framing.center);
+    const position = Vector3.FromArray(framing.position);
+    clearBabylonInspectionCameraInertia(camera);
+    inspectionCameraTransition = null;
+    camera.setTarget(center);
+    camera.setPosition(position);
+    const radius = Math.max(1, Vector3.Distance(position, center));
+    camera.lowerRadiusLimit = Math.max(1.5, radius * 0.18);
+    camera.upperRadiusLimit = Math.max(140, radius * 5.5);
+    camera.minZ = Math.max(0.04, radius / 420);
+    refreshViewDecorations(true);
+    invalidateRender(260);
+    return Object.freeze({
+      focus: labViewFocus,
+      center: Object.freeze([...framing.center]),
+      position: Object.freeze([...framing.position]),
+      radius,
+    });
+  }
+
+  function setLabViewMode(mode = 'realistic') {
+    labViewMode = ['realistic', 'didactic', 'presentation'].includes(mode)
+      ? mode
+      : 'realistic';
+    base.v57SiteVisual?.setLabViewState?.({
+      active: labViewActive,
+      mode: labViewMode,
+    });
+    if (labViewActive && labViewMode === 'presentation') frameLabView('overview');
+    refreshViewDecorations(true);
+    invalidateRender(180);
+    return labViewMode;
+  }
+
+  function setLabViewActive(active, { mode = labViewMode, focus = 'overview' } = {}) {
+    const next = Boolean(active);
+    if (next && !labViewActive) {
+      labPreviousCamera = activeCamera;
+      labInspectionCameraSnapshot = captureBabylonOrbitCameraState(base.cameras.inspection);
+    }
+    labViewMode = ['realistic', 'didactic', 'presentation'].includes(mode)
+      ? mode
+      : 'realistic';
+    labViewActive = next;
+    base.v57SiteVisual?.setLabViewState?.({
+      active: labViewActive,
+      mode: labViewMode,
+    });
+    if (labViewActive) {
+      if (activeCamera !== INSPECTION_CAMERA_ID) setCamera(INSPECTION_CAMERA_ID);
+      frameLabView(focus);
+    } else {
+      restoreBabylonOrbitCameraState(base.cameras.inspection, labInspectionCameraSnapshot);
+      labInspectionCameraSnapshot = null;
+      const restoreCamera = labPreviousCamera;
+      labPreviousCamera = null;
+      if (restoreCamera && restoreCamera !== activeCamera) setCamera(restoreCamera);
+      else {
+        refreshViewDecorations(true);
+        invalidateRender(180);
+      }
+    }
+    return labViewActive;
+  }
+
   function setGeotechnicsVisible(visible) {
     const allowed = !base.v57SiteVisual;
     const nextVisible = Boolean(visible) && allowed;
@@ -1042,13 +1197,60 @@ export function createBabylonRuntime({
     return Boolean(base.geotechnicalSystem?.visible);
   }
 
-  function setProcessMetrics({ flowRateM3s = 0, pressurePa = 0 } = {}) {
+  function setProcessMetrics({
+    flowRateM3s = 0,
+    imposedFlowRateM3s = flowRateM3s,
+    pressurePa = 0,
+    velocityMps = 0,
+    solidsMassFraction = 0,
+    solidVolumeFraction = 0,
+    densityKgM3 = 0,
+    feedGoldKgH = 0,
+    pressureDropPa = 0,
+    pumpHeadM = 0,
+    distributedHeadM = 0,
+    minorLossHeadM = 0,
+    staticHeadM = 0,
+    totalLossHeadM = 0,
+    rheologyModel = '',
+    basis = 'transport-imposed-flow',
+  } = {}) {
     const normalizedFlow = Number.isFinite(flowRateM3s) && flowRateM3s > 0 ? flowRateM3s : 0;
+    const normalizedImposedFlow = Number.isFinite(imposedFlowRateM3s) && imposedFlowRateM3s > 0
+      ? imposedFlowRateM3s
+      : 0;
     const normalizedPressure = Number.isFinite(pressurePa) ? pressurePa : 0;
+    const normalizedVelocity = Number.isFinite(velocityMps) ? velocityMps : 0;
+    const normalizedSolids = Number.isFinite(solidsMassFraction)
+      ? Math.max(0, Math.min(1, solidsMassFraction))
+      : 0;
+    const normalizedSolidVolume = Number.isFinite(solidVolumeFraction)
+      ? Math.max(0, Math.min(1, solidVolumeFraction))
+      : 0;
+    const normalizedDensity = Number.isFinite(densityKgM3) && densityKgM3 > 0 ? densityKgM3 : 0;
+    const normalizedGold = Number.isFinite(feedGoldKgH) && feedGoldKgH > 0 ? feedGoldKgH : 0;
     processFlowScale = normalizedFlow === 0
       ? 0
       : Math.max(0.25, Math.min(3, normalizedFlow / 0.03));
-    processMetrics = Object.freeze({ flowRateM3s: normalizedFlow, pressurePa: normalizedPressure });
+    processMetrics = Object.freeze({
+      flowRateM3s: normalizedFlow,
+      imposedFlowRateM3s: normalizedImposedFlow,
+      pressurePa: normalizedPressure,
+      velocityMps: normalizedVelocity,
+      solidsMassFraction: normalizedSolids,
+      solidVolumeFraction: normalizedSolidVolume,
+      densityKgM3: normalizedDensity,
+      feedGoldKgH: normalizedGold,
+      pressureDropPa: Number.isFinite(pressureDropPa) ? pressureDropPa : 0,
+      pumpHeadM: Number.isFinite(pumpHeadM) ? pumpHeadM : 0,
+      distributedHeadM: Number.isFinite(distributedHeadM) ? distributedHeadM : 0,
+      minorLossHeadM: Number.isFinite(minorLossHeadM) ? minorLossHeadM : 0,
+      staticHeadM: Number.isFinite(staticHeadM) ? staticHeadM : 0,
+      totalLossHeadM: Number.isFinite(totalLossHeadM) ? totalLossHeadM : 0,
+      rheologyModel: String(rheologyModel || ''),
+      basis: String(basis || 'transport-imposed-flow'),
+    });
+    base.v57SiteVisual?.setProcessMetrics?.(processMetrics);
     if (base.pipingSystem?.root) {
       base.pipingSystem.root.metadata = {
         ...(base.pipingSystem.root.metadata ?? {}),
@@ -1087,6 +1289,7 @@ export function createBabylonRuntime({
   function setInspectionTarget(id, { smooth = false } = {}) {
     if (!base.equipmentInspection) return null;
     const target = base.equipmentInspection.setTarget(id);
+    base.v57SiteVisual?.setInspectionState?.({ targetId: id || null, mode: 'normal' });
     base.equipmentInspection.contextOverlay?.setEnabled?.(
       activeCamera === INSPECTION_CAMERA_ID && Boolean(target),
     );
@@ -1099,6 +1302,9 @@ export function createBabylonRuntime({
       ? base.equipmentInspection.getTargets().find((item) => item.id === id)
       : null;
     const framing = target ? base.equipmentInspection.getFraming?.(id) : null;
+    inspectionFollowCenter = framing?.followTarget === true
+      ? (framing.center?.clone?.() ?? Vector3.FromArray(framing.center))
+      : null;
     base.plantLabels?.setInspectionTarget?.(target, targetMeta?.label ?? id ?? '', framing);
     base.plantLabels?.setView?.(activeCamera);
     if (target && framing) {
@@ -1129,11 +1335,15 @@ export function createBabylonRuntime({
 
   function setInspectionMode(mode) {
     if (!base.equipmentInspection) return null;
-    base.equipmentInspection.setMode(mode);
+    const appliedMode = base.equipmentInspection.setMode(mode) ?? mode;
+    base.v57SiteVisual?.setInspectionState?.({
+      targetId: base.equipmentInspection?.targetId ?? null,
+      mode: appliedMode,
+    });
     base.plantLabels?.refreshInspectionComponents?.();
     refreshViewDecorations(true);
     invalidateRender(180);
-    return mode;
+    return appliedMode;
   }
 
   function startRenderLoop() {
@@ -1195,6 +1405,9 @@ export function createBabylonRuntime({
     setAnimationsEnabled,
     setLabelsVisible,
     setPresentationMode,
+    setLabViewActive,
+    setLabViewMode,
+    frameLabView,
     setGeotechnicsVisible,
     setProcessMetrics,
     setScenePalette,
@@ -1213,6 +1426,9 @@ export function createBabylonRuntime({
     get animationsEnabled() { return animationsEnabled; },
     get labelsVisible() { return labelsEnabled; },
     get presentationMode() { return presentationMode; },
+    get labViewActive() { return labViewActive; },
+    get labViewMode() { return labViewMode; },
+    get labViewFocus() { return labViewFocus; },
     get geotechnicsVisible() { return Boolean(base.geotechnicalSystem?.visible); },
     get processMetrics() { return processMetrics; },
     get visualFlowScale() { return processFlowScale; },
