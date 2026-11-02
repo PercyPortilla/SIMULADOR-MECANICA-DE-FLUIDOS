@@ -1,0 +1,75 @@
+/* Enlarged scientific cutaway: additive, laboratory only. */
+body:not(.v57-industrial) .v57-pipe-inspector {display:none!important}
+.v57-pipe-inspector{
+  position:absolute;z-index:16;left:323px;right:313px;top:26%;bottom:128px;
+  min-height:320px;overflow:hidden;display:flex;flex-direction:column;
+  border:1px solid #4e849b;border-radius:12px;
+  background:#091b29;box-shadow:0 14px 55px #000b,0 0 28px #26658942;
+  color:#e7f4fb;isolation:isolate
+}
+.v57-pipe-bar{
+  padding:7px 11px;background:linear-gradient(100deg,#09283d,#10283a 55%,#10212f);
+  border-bottom:1px solid #3f6780;display:flex;align-items:center;justify-content:space-between;
+  gap:10px;min-height:44px
+}
+.v57-pipe-bar>div:first-child{display:grid;gap:3px}
+.v57-pipe-kicker{color:#73daf5;font-size:9px;font-weight:750;letter-spacing:.10em}
+.v57-pipe-bar strong{font-size:14px;font-weight:750;letter-spacing:.01em}
+.v57-pipe-actions{display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.v57-pipe-actions button{background:#183246;color:#b7d3e3;border:1px solid #39586b;
+  border-radius:6px;padding:8px 9px;font-size:10px;cursor:pointer}
+.v57-pipe-actions button.active{background:#105573;border-color:#46c8ed;color:#ecfcff}
+.v57-pipe-actions button:hover{border-color:#88dcf6}
+.v57-pipe-actions #v57ClosePipe{font-size:15px;padding:5px 10px}
+.v57-pipe-hero{position:relative;flex:1;min-height:100px;overflow:hidden;background:#172735}
+.v57-pipe-hero canvas{width:100%;height:100%;display:block}
+.v57-pipe-hud{position:absolute;pointer-events:none;font-size:9px;letter-spacing:.04em;
+  color:#e1f2f4;background:#0a202dcc;border:1px solid #375c67;border-radius:5px;padding:5px 9px}
+.v57-pipe-hud-top{top:8px;left:11px}
+.v57-pipe-hud-bottom{bottom:7px;left:11px;color:#f3d7a0}
+.v57-pipe-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;
+  background:#0d2434;padding:4px 9px;border-top:1px solid #3e5d70;border-bottom:1px solid #39586c}
+.v57-pipe-metrics>div{display:grid;gap:4px;padding:5px 8px;border-radius:6px;background:#153346;min-width:0}
+.v57-pipe-metrics small{font-size:9px;line-height:1.3;color:#a6c6d4}
+.v57-pipe-metrics b{font-size:13px;color:#71daf5;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v57-pipe-diagnostics{height:24%;min-height:90px;max-height:155px;
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:7px;background:#0b1d2b}
+.v57-pipe-diagnostic{background:linear-gradient(#112e40,#0b1d2d);min-width:0;min-height:0;
+  border:1px solid #3e657b;border-radius:7px;padding:7px;overflow:hidden;display:flex;flex-direction:column}
+.v57-pipe-diagnostic span{font-size:10px;font-weight:700;line-height:1.25;color:#c7e8f6}
+.v57-pipe-diagnostic canvas{display:block;width:100%;min-height:0;flex:1}
+.v57-pipe-diagnosis strong{margin:8px 0 2px;color:#f5c183;font-size:12px;line-height:1.4}
+.v57-pipe-diagnosis p{font-size:10px;line-height:1.4;color:#a9c8d5;margin:2px 0 0;overflow:auto}
+.v57-pipe-risk .v57-pipe-diagnosis{border-color:#c87a3d}
+.v57-pipe-inspector footer{border-top:1px solid #2f5063;background:#0a1b29;
+  color:#90b4c6;padding:6px 10px;font-size:9px;line-height:1.35}
+#v57OpenPipeInspector{border-color:#2983a9;background:#0e4d69;color:#e9fcff}
+body.v57-pipe-open #v57OpenPipeInspector{background:#216b70;border-color:#5edfe6}
+body.v57-pipe-open .v57-dock{max-height:117px}
+body.v57-pipe-open .v57-dock-header{padding:5px 10px}
+body.v57-pipe-open .v57-control-body{padding:5px 10px;gap:3px 12px}
+body.v57-pipe-open .v57-dock-help{display:none}
+@media (max-width:1500px) {
+  .v57-pipe-inspector{left:316px;right:305px}
+  .v57-pipe-bar{padding:7px}
+  .v57-pipe-bar strong{font-size:12px}
+  .v57-pipe-actions button{font-size:9px;padding:6px}
+  .v57-pipe-diagnostic span{font-size:9px}
+  .v57-pipe-metrics b{font-size:11px}
+}
+@media (max-width:1150px){
+  .v57-pipe-inspector{left:10px;right:10px;top:36%;bottom:128px;z-index:17}
+  .v57-pipe-diagnostics{min-height:90px}
+}
+@media (max-width:800px){
+  .v57-pipe-inspector{position:absolute;top:76px;bottom:113px;left:6px;right:6px;min-height:0;z-index:23;overflow-y:auto}
+  .v57-pipe-bar{align-items:start;flex-direction:column}
+  .v57-pipe-kicker{font-size:8px}
+  .v57-pipe-actions{width:100%;justify-content:space-between}
+  .v57-pipe-actions button{font-size:9px}
+  .v57-pipe-hero{min-height:155px}
+  .v57-pipe-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .v57-pipe-diagnostics{grid-template-columns:repeat(2,minmax(0,1fr));height:auto;min-height:225px;max-height:none}
+  .v57-pipe-diagnostic{min-height:106px}
+  .v57-pipe-diagnosis p{font-size:9px}
+}

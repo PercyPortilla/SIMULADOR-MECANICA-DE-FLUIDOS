@@ -55,7 +55,10 @@ export function createBernoulliEulerScope(environment) {
     const camera = environment.cameras?.inspection;
     if (!camera) return false;
     const key = {
-      all: ['MILL-01_', 'SUMP-01_', 'SLURRY-PUMP-01_', 'CLASS-01_'],
+      // The long CLASS feed lines have distant/extreme bounding boxes.
+      // Frame from the central verified equipment while keeping the entire
+      // studied set visible and selectable; avoid an empty far-away overview.
+      all: ['SUMP-01_', 'SLURRY-PUMP-01_'],
       mill: ['MILL-01_', 'SUMP-01_INLET'],
       sump: ['SUMP-01_', 'SLURRY-PUMP-01_'],
       pump: ['SLURRY-PUMP-01_', 'SUMP-01_SUCTION', 'CLASS-01_FEED_LINE_SEG01'],
@@ -78,7 +81,7 @@ export function createBernoulliEulerScope(environment) {
     const center=min.map((x,i)=>(x+max[i])/2);
     // Offset the all-in-one view slightly toward the cyclone end so every
     // studied component fits between the foldable left/right control panels.
-    if(view==='all')center[0]+=5;
+    if(view==='all')center[0]+=7;
     const span=Math.hypot(...min.map((x,i)=>max[i]-x));
     environment.setCamera('inspection');
     const target=camera.target?.clone?.() ?? camera.getTarget().clone();
@@ -87,7 +90,7 @@ export function createBernoulliEulerScope(environment) {
     camera.alpha=view==='all' ? 1.02 : 1.13;
     camera.beta=1.04;
     // Tight framing of the four studied units, not the whole mine.
-    camera.radius=Math.max(view==='all'?62:6, span*(view==='all'?.85:1.5));
+    camera.radius=Math.max(view==='all'?45:6, span*(view==='all'?2.45:1.5));
     environment.equipmentInspection?.contextOverlay?.setEnabled?.(false);
     environment.invalidateRender?.(240);
     return true;

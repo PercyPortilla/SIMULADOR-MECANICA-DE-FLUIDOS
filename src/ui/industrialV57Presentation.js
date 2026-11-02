@@ -2,6 +2,7 @@
  * the EXISTING V57 controller, never from invented gauges or laboratory proxies. */
 import {createV57FaultEffects} from './industrialV57FaultEffects.js';
 import {createBernoulliEulerScope} from './bernoulliEulerScope.js';
+import {mountSlurryPipeInspector} from './slurryPipeInspector.js';
 export function mountIndustrialV57Presentation({
  document:doc,getState,getResults,updateState,resetState,cameras,labels
 }){
@@ -19,7 +20,7 @@ export function mountIndustrialV57Presentation({
  enterLabButton.textContent='Laboratorio Bernoulli–Euler';
  header.append(enterLabButton);
  const top=document.createElement('div');top.className='v57-top-actions';
- top.innerHTML='<button id="v57ExitEulerLab">← Mina completa</button><label>Tramo estudiado <select id="v57View"></select></label><button id="v57GoParameters">Parámetros</button><button id="v57GoResults">Resultados</button><button id="v57Help">?</button><button id="v57Fullscreen">⛶</button>';
+ top.innerHTML='<button id="v57ExitEulerLab">← Mina completa</button><label>Tramo estudiado <select id="v57View"></select></label><button id="v57OpenPipeInspector">◉ Inspección de pulpa</button><button id="v57GoParameters">Parámetros</button><button id="v57GoResults">Resultados</button><button id="v57Help">?</button><button id="v57Fullscreen">⛶</button>';
  header.append(top);
  for(const [value,title] of [
   ['all','Circuito Bernoulli–Euler'],
@@ -34,6 +35,7 @@ export function mountIndustrialV57Presentation({
  }
  top.querySelector('#v57View').addEventListener('change',e=>{
   if(!labActive)return;
+  if(pipeInspector.status.open)pipeInspector.close();
   const value=e.target.value;
   setMode(value==='all'?'realista':'transparencia');
   scope?.focus(value);
@@ -88,11 +90,14 @@ export function mountIndustrialV57Presentation({
  viewport.append(scenarioCard);
  const dock=doc.createElement('section');dock.className='v57-dock';dock.id='v57ControlDock';
  dock.innerHTML='<div class="v57-dock-header"><strong>TRAMO DE PULPA · BERNOULLI–EULER</strong>'+
+ '<label>Reología <select id="v57Rheology"><option value="newtonian">Newtoniana</option><option value="bingham">Bingham</option><option value="hb">Herschel–Bulkley</option><option value="power">Power Law</option></select></label>'+
  '<label>Escenario <select id="v57Scenario"><option value="current">Actual</option><option value="normal">Referencia</option><option value="headloss">Pérdidas mayores</option><option value="suction">Succión desfavorable</option><option value="energy">Demanda elevada</option><option value="settle">Tendencia a sedimentar</option></select></label>'+
  '<button id="v57TransportToggle">Transporte ON</button><button id="v57Reset">↺ Restablecer</button><button id="v57HideDock">Ocultar −</button></div>'+
  '<div class="v57-control-body"><label>Velocidad de pulpa <b id="v57VelocityValue"></b><input id="v57Velocity" type="range" min="0" max="4" step=".05"></label>'+
  '<label>Sólidos (% masa) <b id="v57SolidsValue"></b><input id="v57Solids" type="range" min="0" max="80" step="1"></label>'+
- '<label>Viscosidad Newtoniana <b id="v57MuValue"></b><input id="v57Mu" type="range" min=".005" max=".2" step=".005"></label>'+
+ '<label id="v57MuControl"><span id="v57MuLabel">Viscosidad / consistencia</span> <b id="v57MuValue"></b><input id="v57Mu" type="range" min=".005" max=".2" step=".005"></label>'+
+ '<label id="v57YieldControl"><span>Esfuerzo de fluencia τ₀</span> <b id="v57YieldValue"></b><input id="v57Yield" type="range" min="0" max="80" step=".5"></label>'+
+ '<label id="v57NControl"><span>Índice de flujo n</span> <b id="v57NValue"></b><input id="v57N" type="range" min=".2" max="1.7" step=".05"></label>'+
  '<label>d50 (descriptivo) <b id="v57D50Value"></b><input id="v57D50" type="range" min="0" max="3" step=".05"></label>'+
  '<div class="v57-dock-help" id="v57Cause">Mover un parámetro actualiza el solver V57 cuando el modelo admite el cambio.</div></div>';
  viewport.append(dock);
@@ -101,6 +106,40 @@ export function mountIndustrialV57Presentation({
  const help=doc.createElement('section');help.id='v57Helper';help.className='v57-helper';help.hidden=true;
  help.textContent='Opciones controlan herramientas existentes de V57. Los indicadores no son sensores; si un cálculo no es aplicable se muestra N/D. La transparencia depende del equipo seleccionado.';
  viewport.append(help);
+ let previousPipeCameraPose=null;
+ function shiftSceneAbovePipe(open){
+  const camera=env?.cameras?.inspection;
+  if(!camera)return;
+  if(open&&!previousPipeCameraPose){
+   previousPipeCameraPose={
+    target:camera.getTarget().clone(),
+    alpha:camera.alpha,beta:camera.beta,radius:camera.radius
+   };
+   const shifted=previousPipeCameraPose.target.clone();
+   // Make the STUDIED equipment occupy the upper scene viewport instead of
+   // hiding behind the enlarged cutaway. This is a camera-only reversible pan.
+   shifted.y-=Math.max(12,Number(camera.radius||45)*.30);
+   camera.setTarget(shifted);
+   camera.alpha=previousPipeCameraPose.alpha;
+   camera.beta=previousPipeCameraPose.beta;
+   camera.radius=previousPipeCameraPose.radius;
+  }else if(!open&&previousPipeCameraPose){
+   camera.setTarget(previousPipeCameraPose.target);
+   camera.alpha=previousPipeCameraPose.alpha;
+   camera.beta=previousPipeCameraPose.beta;
+   camera.radius=previousPipeCameraPose.radius;
+   previousPipeCameraPose=null;
+  }
+  env?.invalidateRender?.(240);
+ }
+ const pipeInspector=mountSlurryPipeInspector({
+  document:doc,viewport,getState,getResults,onOpenChange:shiftSceneAbovePipe
+ });
+ top.querySelector('#v57OpenPipeInspector').addEventListener('click',()=>{
+  if(pipeInspector.status.open){pipeInspector.close();return;}
+  pipeInspector.open();
+  cleanInspectionBoxes();
+ });
  let env=null,scope=null,labActive=false,playing=true,previousVelocity=null,mode='realista',faultFx=null;
  let generalViewPreferences=null;
  let labReady=false;
@@ -110,6 +149,7 @@ export function mountIndustrialV57Presentation({
   if(on===labActive)return true;
   if(on&&!labReady)return false;
   labActive=Boolean(on);
+  pipeInspector.setLabActive(labActive);
   doc.body.classList.toggle('v57-industrial',labActive);
   doc.body.classList.remove('v57-show-advanced','v57-show-results');
   enterLabButton.hidden=labActive;
@@ -129,6 +169,7 @@ export function mountIndustrialV57Presentation({
    setMode('realista');
    scope.focus('all');
    faultFx?.setPlaying(el('v57GuideAnimation').checked);
+   pipeInspector.setPlaying(el('v57GuideAnimation').checked);
   }else{
    faultFx?.setPlaying(false);
    env?.setInspectionMode('normal');
@@ -267,6 +308,7 @@ export function mountIndustrialV57Presentation({
   el('animations-toggle').checked=el('v57GuideAnimation').checked;
   el('animations-toggle').dispatchEvent(new Event('change'));
   faultFx?.setPlaying(el('v57GuideAnimation').checked);
+  pipeInspector.setPlaying(el('v57GuideAnimation').checked);
  };
  el('v57GuideCav').onchange=()=>{faultFx?.setCavitationVisible(el('v57GuideCav').checked)};
  el('v57GuideSettling').onchange=()=>{faultFx?.setSedimentationVisible(el('v57GuideSettling').checked)};
@@ -287,12 +329,45 @@ export function mountIndustrialV57Presentation({
   const source=el('field-slurry-solidsMassFraction');if(source)source.value=String(v);
   setCause('Sólidos porcentuales en MASA: modifican densidad y evaluaciones del modelo activo.');
  };
+ el('v57Rheology').onchange=e=>{
+  const model=e.target.value;
+  const original=getState().rheology;
+  const patchData={model};
+  if(model==='newtonian'&&!original.newtonianViscosityPaS)patchData.newtonianViscosityPaS=.05;
+  if(model==='bingham'&&!original.plasticViscosityPaS)patchData.plasticViscosityPaS=.05;
+  if((model==='hb'||model==='power')){
+   if(!original.consistencyIndex)patchData.consistencyIndex=.45;
+   if(!original.flowIndex)patchData.flowIndex=.7;
+  }
+  patch(()=>({rheology:patchData}));
+  setCause('Se cambió a '+e.target.selectedOptions[0].text+
+   '. Parámetros iniciales didácticos cuando faltaban: verificar con ensayos de laboratorio.');
+ };
  el('v57Mu').oninput=e=>{
-  if(getState().rheology.model!=='newtonian')return;
+  const model=getState().rheology.model;
+  const key={newtonian:'newtonianViscosityPaS',bingham:'plasticViscosityPaS',
+   hb:'consistencyIndex',power:'consistencyIndex'}[model];
+  if(!key)return;
   const v=Number(e.target.value);
-  patch(value=>({rheology:{newtonianViscosityPaS:value}}),v);
-  const source=el('field-rheology-newtonianViscosityPaS');if(source)source.value=String(v);
-  setCause('Viscosidad Newtoniana afecta Re y la resistencia, no una animación CFD.');
+  patch(value=>({rheology:{[key]:value}}),v);
+  const source=el('field-rheology-'+key);if(source)source.value=String(v);
+  setCause('Parámetro '+key+': el solver actualiza las pérdidas y el perfil radial cuando es aplicable.');
+ };
+ el('v57Yield').oninput=e=>{
+  const model=getState().rheology.model;
+  if(model!=='bingham'&&model!=='hb')return;
+  const v=Number(e.target.value);
+  patch(()=>({rheology:{yieldStressPa:v}}));
+  const source=el('field-rheology-yieldStressPa');if(source)source.value=String(v);
+  setCause('τ₀ es el esfuerzo de fluencia; modifica el núcleo tapón del perfil laminar del solver.');
+ };
+ el('v57N').oninput=e=>{
+  const model=getState().rheology.model;
+  if(model!=='hb'&&model!=='power')return;
+  const v=Number(e.target.value);
+  patch(()=>({rheology:{flowIndex:v}}));
+  const source=el('field-rheology-flowIndex');if(source)source.value=String(v);
+  setCause('Índice de flujo n: modifica la ley constitutiva. El perfil mostrado viene del solver existente.');
  };
  el('v57D50').oninput=e=>{
   const v=Number(e.target.value);
@@ -306,7 +381,8 @@ export function mountIndustrialV57Presentation({
   else{updateState({transport:{pipe1:{velocityMps:previousVelocity??1}}});
    env?.setAnimationsEnabled(true);playing=true;}
   el('v57TransportToggle').textContent=playing?'Transporte ON':'Ensayo transporte OFF';
-  setCause('Ensayo pedagógico: OFF impone velocidad=0 al escenario y detiene animaciones. No es una señal PLC de bomba.');
+  pipeInspector.setPlaying(el('v57GuideAnimation').checked);
+  setCause('Ensayo pedagógico: OFF impone velocidad=0 al circuito; la deposición didáctica puede continuar sin advección. No es una señal PLC de bomba.');
   refresh();
  };
  el('v57Scenario').onchange=e=>{
@@ -365,11 +441,13 @@ export function mountIndustrialV57Presentation({
   resetState();playing=true;previousVelocity=null;env?.setAnimationsEnabled(true);
   el('v57TransportToggle').textContent='Transporte ON';
   el('v57Scenario').value='current';refresh();
+  pipeInspector.setPlaying(true);
   scenarioCard.hidden=true;
   setCause('Parámetros reiniciados. Usa la configuración de ejemplo o el panel avanzado para completar entradas.');
  };
  function refresh(){
   const s=getState(),r=getResults();
+  pipeInspector.refresh();
   const q=r.transport?.flowRateM3s;
   const dp=r.transport?.requiredPressurePa;
   const power=r.energy?.electricalPowerW;
@@ -385,7 +463,34 @@ export function mountIndustrialV57Presentation({
     ?'Durand orientativo no calibrado · Vcrit='+asNumber(settling.criticalVelocityMps)+' m/s · V/Vcrit='+asNumber(settling.velocityRatio,3)
     :'No existe evaluación de sedimentación aplicable';
   el('v57SettlingRow').classList.toggle('v57-alert-risk',settling?.status==='risk');
-  const visc=s.rheology.model==='newtonian';
+  const rheology=s.rheology.model;
+  const options={
+   newtonian:{key:'newtonianViscosityPaS',label:'Viscosidad dinámica μ · Pa·s',min:.005,max:.2,step:.005,unit:'Pa·s'},
+   bingham:{key:'plasticViscosityPaS',label:'Viscosidad plástica μp · Pa·s',min:.005,max:.2,step:.005,unit:'Pa·s'},
+   hb:{key:'consistencyIndex',label:'Consistencia K · Pa·sⁿ',min:.05,max:3,step:.05,unit:'Pa·sⁿ'},
+   power:{key:'consistencyIndex',label:'Consistencia K · Pa·sⁿ',min:.05,max:3,step:.05,unit:'Pa·sⁿ'}
+  };
+  const selected=options[rheology];
+  const activeYield=rheology==='bingham'||rheology==='hb';
+  const activeN=rheology==='hb'||rheology==='power';
+  el('v57Rheology').value=selected?rheology:'newtonian';
+  el('v57MuControl').hidden=!selected;
+  el('v57YieldControl').hidden=!activeYield;
+  el('v57NControl').hidden=!activeN;
+  if(selected){
+   el('v57MuLabel').textContent=selected.label;
+   for(const [prop,val] of Object.entries({min:selected.min,max:selected.max,step:selected.step})){
+    el('v57Mu')[prop]=String(val);
+   }
+   el('v57Mu').disabled=false;
+   el('v57Mu').title=selected.label;
+   el('v57Mu').value=String(s.rheology[selected.key]);
+   el('v57MuValue').textContent=asNumber(s.rheology[selected.key],3)+' '+selected.unit;
+  }
+  el('v57Yield').value=String(s.rheology.yieldStressPa);
+  el('v57YieldValue').textContent=asNumber(s.rheology.yieldStressPa,1)+' Pa';
+  el('v57N').value=String(s.rheology.flowIndex);
+  el('v57NValue').textContent=asNumber(s.rheology.flowIndex,2);
   faultFx?.refresh();
   if(faultFx){
    const x=faultFx.status;
@@ -398,13 +503,10 @@ export function mountIndustrialV57Presentation({
      'Visualización educativa: '+warnings.join(' · '):
      'Efectos educativos según parámetros; sin falla crítica ilustrada.';
   }
-  el('v57Mu').disabled=!visc;
-  el('v57Mu').title=visc?'Viscosidad Newtoniana activa':'La reología activa no es Newtoniana';
   for(const [id,value,text] of [
    ['v57Velocity',s.transport.pipe1.velocityMps,asNumber(s.transport.pipe1.velocityMps)+' m/s'],
    ['v57Solids',s.slurry.solidsMassFraction*100,asNumber(s.slurry.solidsMassFraction*100,0)+' % masa'],
-   ['v57Mu',s.rheology.newtonianViscosityPaS,visc?asNumber(s.rheology.newtonianViscosityPaS,3)+' Pa·s':'N/D ('+s.rheology.model+')'],
-   ['v57D50',s.slurry.d50M*1000,asNumber(s.slurry.d50M*1000,2)+' mm']]){
+   ['v57D50',s.slurry.d50M*1000,s.slurry.d50M>0?asNumber(s.slurry.d50M*1000,2)+' mm':'N/D']]){
    el(id).value=String(value);el(id+'Value').textContent=text;
   }
  }
@@ -429,6 +531,7 @@ export function mountIndustrialV57Presentation({
   enterLab(){return setLabActive(true)},
   leaveLab(){return setLabActive(false)},
   refresh,get status(){return {mainMine:true,model:'V57',controlsBound:4,
+   pipeInspector:pipeInspector.status,
    indicators:5,options:5,mode,productionModified:false,
    labActive,labReady,scope:scope?.status??null,
    currentV57Flow:el('v57Flow').textContent,environmentReady:Boolean(env),

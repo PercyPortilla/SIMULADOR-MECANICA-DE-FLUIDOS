@@ -79,7 +79,8 @@ body.v57-industrial.v57-show-results .result-panel{top:42vh}
 .v57-dock-header select{padding:6px;background:#203849;border:1px solid #466b81;color:#e7f3f7;border-radius:6px;max-width:160px}
 .v57-dock-header button{background:#1c3446;color:#d1e5ed;border:1px solid #527088;border-radius:8px;padding:8px 11px;font-size:11px}
 #v57TransportToggle{background:#175b3f;color:#e6fff3;border-color:#4b9b78}
-.v57-control-body{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px 15px;padding:10px 13px}
+.v57-control-body{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px 12px;padding:10px 13px}
+.v57-control-body label[hidden]{display:none!important}
 .v57-control-body label{display:flex;gap:6px;flex-wrap:wrap;align-items:baseline;font-size:11px;min-width:0}
 .v57-control-body b{margin-left:auto;color:#ffca85}
 .v57-control-body input{flex:0 0 100%;width:100%;accent-color:#62aeef}
@@ -90,6 +91,7 @@ body.v57-industrial.v57-show-results .result-panel{top:42vh}
 .v57-dock.minimized .v57-dock-header,.v57-dock.minimized .v57-control-body{display:none}
 .v57-dock.minimized{border:0}
 .v57-helper{position:absolute;z-index:20;right:18px;top:20px;max-width:350px;padding:13px;border:1px solid #5a94b1;border-radius:9px;background:#153046f5;font-size:12px;line-height:1.5}
+@media(max-width:1300px){.v57-control-body{grid-template-columns:repeat(3,minmax(0,1fr))}}
 [hidden]{display:none!important}
 @media(max-width:800px){
  body.v57-industrial .topbar{height:58px;padding:0 6px}
@@ -98,7 +100,7 @@ body.v57-industrial.v57-show-results .result-panel{top:42vh}
  body.v57-industrial .workspace{height:calc(100dvh - 58px)}
  body.v57-industrial .scene-card{position:fixed!important;left:0;right:0;top:58px;bottom:0;width:100vw;height:auto!important;overflow:hidden}
  body.v57-industrial .scene-viewport{position:absolute!important;inset:0!important;height:100%!important;width:100%!important;min-height:0!important;max-height:none!important}
- body.v57-industrial .scene-viewport canvas{height:100%!important;width:100%!important}
+ body.v57-industrial .scene-viewport #environment-canvas{height:100%!important;width:100%!important}
  .v57-top-actions{gap:4px}
  .v57-top-actions label{padding:5px;max-width:36vw}
  .v57-top-actions select{max-width:26vw;font-size:10px}
