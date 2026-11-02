@@ -7,6 +7,7 @@ body:not(.v57-industrial) .v57-reopen,
 body:not(.v57-industrial) .v57-dock,
 body:not(.v57-industrial) .v57-process-ribbon,
 body:not(.v57-industrial) .v57-scenario-explanation,
+body:not(.v57-industrial) .v57-p3p4-audit,
 body:not(.v57-industrial) .v57-helper{display:none!important}
 .v57-lab-entry{border:1px solid #367aaf;background:#123b5a;color:#e3f5ff;
  border-radius:9px;padding:10px 14px;font-weight:750;cursor:pointer;margin-left:12px}
@@ -38,6 +39,17 @@ body.v57-industrial.v57-show-results .result-panel{top:42vh}
 .v57-top-actions label{display:flex;gap:8px;align-items:center;color:#c5d6e0;font-size:11px;border:1px solid #4b6377;padding:7px 10px;background:#1b2d3f;border-radius:8px}
 .v57-top-actions select{max-width:min(270px,23vw);background:#1b2d3f;border:0;color:#edf7fd;min-width:0;font-size:12px}
 .v57-top-actions button{border:1px solid #3e617b;border-radius:8px;background:#1b3143;color:#cde9f7;padding:9px 12px;cursor:pointer}
+.v57-top-actions #v57InspectP3P4{border-color:#b57d47;color:#ffcf9d}
+.v57-top-actions #v57InspectP3P4.active{background:#684025;border-color:#ffc16e;color:#fff0d4}
+.v57-p3p4-audit{position:absolute;z-index:19;left:calc(50% - min(410px,28vw));top:54px;
+ width:min(820px,calc(100% - 650px));min-width:360px;padding:10px 13px;
+ border:1px solid #e89d64;border-radius:9px;background:#241f22f2;
+ color:#f5dfcd;box-shadow:0 11px 30px #000b;font-size:11px;line-height:1.42}
+.v57-p3p4-title{display:flex;gap:12px;align-items:center;justify-content:space-between;color:#ffc083}
+.v57-p3p4-title button{background:transparent;border:0;color:#ffe0c5;font-size:18px;cursor:pointer}
+.v57-p3p4-audit p{margin:6px 0 0}.v57-p3p4-audit strong{color:#ffc889}
+.v57-p3p4-audit small{display:block;margin-top:6px;color:#dfbca6;font-size:10px}
+@media(max-width:1150px){.v57-p3p4-audit{left:10px;right:10px;top:70px;width:auto;min-width:0}}
 .v57-side{position:absolute;z-index:12;background:#0b1c2bea;border:1px solid #44667a;border-radius:13px;box-shadow:0 13px 40px #000a;backdrop-filter:blur(10px);padding:13px;color:#e5f3f8;overflow-y:auto}
 .v57-side-left{left:15px;top:17px;width:310px;max-height:calc(100% - 195px)}
 .v57-side-right{right:15px;top:135px;width:300px;max-height:calc(100% - 280px)}

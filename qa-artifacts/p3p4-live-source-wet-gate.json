@@ -1,0 +1,36 @@
+{
+  "first": {
+    "lab": true,
+    "panelOpen": true,
+    "panelText": "⚠ P3→P4 · SUCCIÓN Y DESCARGA · NO-GO HIDRÁULICO\n×\n\nTramo SEG02→hub: separación geométrica documentada 1,514 m, desfase angular 1,157°. Ojo del hub original cerrado y descarga bloqueada por tapa.\n\nGLB firmado: 4/4 mallas de fluido localizadas; 3 tramos rectos con trazadores detenidos antes de las discontinuidades.\n\nRevelado reversible de mallas originales y trazadores ilustrativos. Los puntos rojos señalan discontinuidades; NO existe una cámara húmeda continua ni certificación de presión/CFD (auditorías L127/L346/L347).",
+    "main": true,
+    "data": {
+      "active": true,
+      "verified": false,
+      "certifiedWetMate": false,
+      "source": "signed L127/L346/L347",
+      "signedGapM": 1.5139007568359375,
+      "blockedSuction": true,
+      "blockedDischarge": true,
+      "authoredFluidMeshesFound": 4,
+      "authoredFluidMeshesExpected": 4,
+      "straightFluidSegmentsAnimated": 3,
+      "missing": [],
+      "overlayOnly": true,
+      "sourceCadModified": false,
+      "solverModified": false,
+      "geometryMoved": false
+    }
+  },
+  "after": {
+    "hidden": true,
+    "inactive": true
+  },
+  "restored": {
+    "labOff": true,
+    "p3p4Off": true,
+    "sceneRestored": true
+  },
+  "exceptions": [],
+  "pass": true
+}

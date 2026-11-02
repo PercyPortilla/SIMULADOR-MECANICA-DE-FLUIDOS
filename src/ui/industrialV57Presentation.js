@@ -3,6 +3,7 @@
 import {createV57FaultEffects} from './industrialV57FaultEffects.js';
 import {createBernoulliEulerScope} from './bernoulliEulerScope.js';
 import {mountSlurryPipeInspector} from './slurryPipeInspector.js';
+import {createPumpP3P4Inspection,P3P4_SIGNED_GATE} from './pumpP3P4Inspection.js';
 export function mountIndustrialV57Presentation({
  document:doc,getState,getResults,updateState,resetState,cameras,labels
 }){
@@ -20,7 +21,7 @@ export function mountIndustrialV57Presentation({
  enterLabButton.textContent='Laboratorio Bernoulli–Euler';
  header.append(enterLabButton);
  const top=document.createElement('div');top.className='v57-top-actions';
- top.innerHTML='<button id="v57ExitEulerLab">← Mina completa</button><label>Tramo estudiado <select id="v57View"></select></label><button id="v57OpenPipeInspector">◉ Inspección de pulpa</button><button id="v57GoParameters">Parámetros</button><button id="v57GoResults">Resultados</button><button id="v57Help">?</button><button id="v57Fullscreen">⛶</button>';
+ top.innerHTML='<button id="v57ExitEulerLab">← Mina completa</button><label>Tramo estudiado <select id="v57View"></select></label><button id="v57InspectP3P4">⚠ P3→P4</button><button id="v57OpenPipeInspector">◉ Inspección de pulpa</button><button id="v57GoParameters">Parámetros</button><button id="v57GoResults">Resultados</button><button id="v57Help">?</button><button id="v57Fullscreen">⛶</button>';
  header.append(top);
  for(const [value,title] of [
   ['all','Circuito Bernoulli–Euler'],
@@ -35,6 +36,7 @@ export function mountIndustrialV57Presentation({
  }
  top.querySelector('#v57View').addEventListener('change',e=>{
   if(!labActive)return;
+  setPumpInspection(false);
   if(pipeInspector.status.open)pipeInspector.close();
   const value=e.target.value;
   setMode(value==='all'?'realista':'transparencia');
@@ -106,6 +108,15 @@ export function mountIndustrialV57Presentation({
  const help=doc.createElement('section');help.id='v57Helper';help.className='v57-helper';help.hidden=true;
  help.textContent='Opciones controlan herramientas existentes de V57. Los indicadores no son sensores; si un cálculo no es aplicable se muestra N/D. La transparencia depende del equipo seleccionado.';
  viewport.append(help);
+ const pumpAuditPanel=doc.createElement('section');
+ pumpAuditPanel.id='v57PumpP3P4Audit';
+ pumpAuditPanel.className='v57-p3p4-audit';
+ pumpAuditPanel.hidden=true;
+ pumpAuditPanel.innerHTML='<div class="v57-p3p4-title"><b>⚠ P3→P4 · SUCCIÓN Y DESCARGA · NO-GO HIDRÁULICO</b><button id="v57CloseP3P4Audit" aria-label="Cerrar inspección P3 a P4">×</button></div>'+
+ '<p>Tramo SEG02→hub: separación geométrica documentada <strong>1,514 m</strong>, desfase angular <strong>1,157°</strong>. Ojo del hub original cerrado y descarga bloqueada por tapa.</p>'+
+ '<p id="v57P3P4AuditLive">Localizando fluidos reales del GLB V57…</p>'+
+ '<small>Revelado reversible de mallas originales y trazadores ilustrativos. Los puntos rojos señalan discontinuidades; NO existe una cámara húmeda continua ni certificación de presión/CFD (auditorías L127/L346/L347).</small>';
+ viewport.append(pumpAuditPanel);
  let previousPipeCameraPose=null;
  function shiftSceneAbovePipe(open){
   const camera=env?.cameras?.inspection;
@@ -136,13 +147,64 @@ export function mountIndustrialV57Presentation({
   document:doc,viewport,getState,getResults,onOpenChange:shiftSceneAbovePipe
  });
  top.querySelector('#v57OpenPipeInspector').addEventListener('click',()=>{
+  setPumpInspection(false);
   if(pipeInspector.status.open){pipeInspector.close();return;}
   pipeInspector.open();
   cleanInspectionBoxes();
  });
- let env=null,scope=null,labActive=false,playing=true,previousVelocity=null,mode='realista',faultFx=null;
+ let env=null,scope=null,labActive=false,playing=true,previousVelocity=null,mode='realista',faultFx=null,pumpInspection=null,pumpCameraPose=null;
  let generalViewPreferences=null;
  let labReady=false;
+ function setPumpInspection(on){
+  if(!env?.scene||!labActive)on=false;
+  if(on&&!pumpInspection){
+   pumpInspection=createPumpP3P4Inspection({
+    scene:env.scene,
+    getVelocity:()=>getState().transport.pipe1.velocityMps,
+    invalidate:t=>env.invalidateRender?.(t),
+   });
+  }
+  pumpInspection?.setActive(on);
+  const camera=env?.cameras?.inspection;
+  if(on&&camera&&!pumpCameraPose){
+   pumpCameraPose={target:camera.getTarget().clone(),
+    radius:camera.radius,alpha:camera.alpha,beta:camera.beta};
+   const focus=camera.getTarget().clone();
+   focus.set(203.8,22.8,-90);
+   camera.setTarget(focus);
+   camera.radius=12.9;
+   camera.alpha=1.05;
+   camera.beta=1.03;
+   env.invalidateRender?.(240);
+  }else if(!on&&pumpCameraPose&&camera){
+   camera.setTarget(pumpCameraPose.target);
+   camera.radius=pumpCameraPose.radius;
+   camera.alpha=pumpCameraPose.alpha;
+   camera.beta=pumpCameraPose.beta;
+   pumpCameraPose=null;
+   env.invalidateRender?.(240);
+  }
+  pumpAuditPanel.hidden=!on;
+  top.querySelector('#v57InspectP3P4').classList.toggle('active',Boolean(on));
+  if(on){
+   const s=pumpInspection.status;
+   el('v57P3P4AuditLive').textContent='GLB firmado: '+s.authoredFluidMeshesFound+'/'+s.authoredFluidMeshesExpected+
+    ' mallas de fluido localizadas; '+s.straightFluidSegmentsAnimated+
+    ' tramos rectos con trazadores detenidos antes de las discontinuidades.';
+  }
+ }
+ top.querySelector('#v57InspectP3P4').addEventListener('click',()=>{
+  if(!labActive)return;
+  const on=!pumpInspection?.status.active;
+  if(on){
+   if(pipeInspector.status.open)pipeInspector.close();
+   setMode('transparencia');
+   scope?.focus('pump');
+   cleanInspectionBoxes();
+  }
+  setPumpInspection(on);
+ });
+ pumpAuditPanel.querySelector('#v57CloseP3P4Audit').addEventListener('click',()=>setPumpInspection(false));
  enterLabButton.disabled=true;
  enterLabButton.title='Preparando escena V57 y geometría del tramo de pulpa';
  function setLabActive(on){
@@ -171,6 +233,7 @@ export function mountIndustrialV57Presentation({
    faultFx?.setPlaying(el('v57GuideAnimation').checked);
    pipeInspector.setPlaying(el('v57GuideAnimation').checked);
   }else{
+   setPumpInspection(false);
    faultFx?.setPlaying(false);
    env?.setInspectionMode('normal');
    scope?.leave();
@@ -309,6 +372,7 @@ export function mountIndustrialV57Presentation({
   el('animations-toggle').dispatchEvent(new Event('change'));
   faultFx?.setPlaying(el('v57GuideAnimation').checked);
   pipeInspector.setPlaying(el('v57GuideAnimation').checked);
+  pumpInspection?.setPlaying(el('v57GuideAnimation').checked);
  };
  el('v57GuideCav').onchange=()=>{faultFx?.setCavitationVisible(el('v57GuideCav').checked)};
  el('v57GuideSettling').onchange=()=>{faultFx?.setSedimentationVisible(el('v57GuideSettling').checked)};
@@ -532,6 +596,10 @@ export function mountIndustrialV57Presentation({
   leaveLab(){return setLabActive(false)},
   refresh,get status(){return {mainMine:true,model:'V57',controlsBound:4,
    pipeInspector:pipeInspector.status,
+   p3p4:pumpInspection?.status??{
+    active:false,certifiedWetMate:false,signedGapM:P3P4_SIGNED_GATE.measuredGapM,
+    source:'signed L127/L346/L347',overlayOnly:true
+   },
    indicators:5,options:5,mode,productionModified:false,
    labActive,labReady,scope:scope?.status??null,
    currentV57Flow:el('v57Flow').textContent,environmentReady:Boolean(env),
