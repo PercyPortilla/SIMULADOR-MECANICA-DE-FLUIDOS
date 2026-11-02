@@ -62,6 +62,8 @@ export function mountSlurryPipeInspector({document: doc, viewport, getState, get
       <div><span class="v57-pipe-kicker">LABORATORIO BERNOULLI–EULER · SECCIÓN AMPLIADA</span>
       <strong>Dinámica interna de pulpa · línea de transporte</strong></div>
       <div class="v57-pipe-actions">
+        <button id="v57PipeDimension" class="active" title="Alternar inspección tridimensional y esquema bidimensional">3D activo</button>
+        <button id="v57ExpandPipe" title="Ampliar el corte sin modificar las dimensiones del circuito">⛶ Ampliar</button>
         <button data-pipe-tab="flow" class="active">Partículas y depósito</button>
         <button data-pipe-tab="profile">Velocidad y reología</button>
         <button data-pipe-tab="wear">Zonas de desgaste</button>
@@ -69,8 +71,9 @@ export function mountSlurryPipeInspector({document: doc, viewport, getState, get
       </div>
     </div>
     <div class="v57-pipe-hero">
+      <canvas id="v57Pipe3DCanvas" aria-label="Modelo tridimensional educativo de una tubería seccionada con pulpa y sedimento"></canvas>
       <canvas id="v57PipeCutCanvas" role="img" aria-label="Corte didáctico animado de tubería con pulpa, partículas gruesas y sedimento"></canvas>
-      <div class="v57-pipe-hud v57-pipe-hud-top">CORTE LONGITUDINAL · DIÁMETRO AUMENTADO SOLO EN PANTALLA</div>
+      <div class="v57-pipe-hud v57-pipe-hud-top" id="v57PipeHeroDescription">CORTE 3D EDUCATIVO · GEOMETRÍA DE INSPECCIÓN, NO CAD FIRMADO</div>
       <div class="v57-pipe-hud v57-pipe-hud-bottom" id="v57PipeFlowLabel"></div>
     </div>
     <div class="v57-pipe-metrics">
@@ -92,8 +95,11 @@ export function mountSlurryPipeInspector({document: doc, viewport, getState, get
     <footer>Representación didáctica vinculada a parámetros del escenario. Partículas, gradientes, erosión y cuatro regímenes NO provienen de CFD. Cálculos Q, ΔP y V/V crítica solo cuando los aporta el solver existente. No modifica geometría CAD ni diámetro hidráulico.</footer>`;
   viewport.append(panel);
   const $ = id => panel.querySelector('#' + id);
+  const canvas3D=$('v57Pipe3DCanvas'), canvas2D=$('v57PipeCutCanvas');
   const canvases = [$('v57PipeCutCanvas'), $('v57PipeCross'), $('v57PipeVelocity'), $('v57PipeWear')];
-  let active = false, labActive = false, playing = true, tab = 'flow', raf = 0, previousFrameTime = null;
+  let active = false, labActive = false, playing = true, tab = 'flow', raf = 0,
+    previousFrameTime = null, lastRenderedFrame = 0;
+  let render3D=true, expanded=false, threeD=null, threeDLoading=false, threeDError=null;
   let lastModel = slurryInspectorModel(getState(), getResults());
   let visualBed = lastModel.bed;
   const particles = Array.from({length: 420}, (_, i) => {
@@ -306,9 +312,43 @@ export function mountSlurryPipeInspector({document: doc, viewport, getState, get
     panel.classList.toggle('v57-pipe-risk',risk);
     if(active)paint(doc.defaultView.performance?.now?.() ?? 0);
   }
-  function paint(t) {
+  function updateDimensions(){
+    const showing3D=render3D&&Boolean(threeD);
+    canvas3D.hidden=!showing3D;
+    canvas2D.hidden=showing3D;
+    const toggle=$('v57PipeDimension');
+    toggle.textContent=render3D?'3D activo':'Esquema 2D';
+    toggle.classList.toggle('active',render3D);
+    $('v57PipeHeroDescription').textContent=showing3D
+      ?'MAQUETA 3D SECCIONADA · ESCALA VISUAL AUMENTADA, NO PIEZA CAD'
+      :threeDLoading?'PREPARANDO VISTA 3D · ESQUEMA 2D TEMPORAL'
+      :threeDError?'VISTA 3D NO DISPONIBLE · ESQUEMA 2D DE RESPALDO'
+      :'ESQUEMA 2D · DIÁMETRO AUMENTADO SOLO EN PANTALLA';
+    if(showing3D)threeD.resize();
+  }
+  async function ensure3D(){
+    if(threeD||threeDLoading||threeDError||!render3D)return;
+    threeDLoading=true;updateDimensions();
+    try{
+      const {createSlurryPipe3DScene}=await import('./slurryPipe3D.js');
+      if(!active||!labActive){threeDLoading=false;return;}
+      threeD=createSlurryPipe3DScene({canvas:canvas3D});
+      threeD.resize();
+    }catch(error){
+      threeDError=error?.message??String(error);
+      render3D=false;
+      console.warn('Inspección 3D no disponible; mostrando esquema 2D:',error);
+    }finally{
+      threeDLoading=false;updateDimensions();paint(0);
+    }
+  }
+  function paint(t,dt=0) {
     if(!active||!labActive)return;
-    drawHero(t,lastModel);drawCross(lastModel);drawVelocity(lastModel);drawWear(lastModel);
+    if(render3D&&threeD){
+      threeD.render({nextModel:lastModel,bedLevel:visualBed,
+        tab,animate:playing,dt});
+    }else drawHero(t,lastModel);
+    drawCross(lastModel);drawVelocity(lastModel);drawWear(lastModel);
   }
   function frame(t) {
     raf=0;if(!active||!labActive)return;
@@ -318,27 +358,56 @@ export function mountSlurryPipeInspector({document: doc, viewport, getState, get
     // from an unvalidated deposition kinetics model.
     const rate=visualBed<lastModel.bed ? .72 : 1.1;
     visualBed+=(lastModel.bed-visualBed)*clamp(dt*rate);
-    paint(t);if(playing)raf=doc.defaultView.requestAnimationFrame(frame);
+    // One scene for the entire V57 mine already renders on this browser.
+    // Limit this optional secondary 3D window to ~30 FPS for GPU headroom.
+    if(t-lastRenderedFrame>=32){lastRenderedFrame=t;paint(t,dt);}
+    if(playing)raf=doc.defaultView.requestAnimationFrame(frame);
   }
   function run() {if(raf)doc.defaultView.cancelAnimationFrame(raf);raf=0;
-    previousFrameTime=null;
+    previousFrameTime=null;lastRenderedFrame=0;
     if(active&&labActive){paint(0);if(playing)raf=doc.defaultView.requestAnimationFrame(frame);}
   }
   function setOpen(value) {active=Boolean(value)&&labActive;
+    if(!active){
+      expanded=false;
+      $('v57ExpandPipe').textContent='⛶ Ampliar';
+    }
     panel.hidden=!active;doc.body.classList.toggle('v57-pipe-open',active);
-    onOpenChange?.(active);run();return active;}
+    doc.body.classList.toggle('v57-pipe-expanded',expanded);
+    panel.classList.toggle('expanded',expanded);
+    onOpenChange?.(active);
+    if(active&&render3D)void ensure3D();
+    if(!active&&threeD){threeD.dispose();threeD=null;}
+    updateDimensions();run();return active;}
   panel.querySelector('#v57ClosePipe').addEventListener('click',()=>setOpen(false));
+  $('v57ExpandPipe').addEventListener('click',()=>{
+    expanded=!expanded;panel.classList.toggle('expanded',expanded);
+    doc.body.classList.toggle('v57-pipe-expanded',expanded);
+    $('v57ExpandPipe').textContent=expanded?'↙ Reducir':'⛶ Ampliar';
+    updateDimensions();run();
+  });
+  $('v57PipeDimension').addEventListener('click',()=>{
+    if(threeDError){render3D=false;return;}
+    render3D=!render3D;
+    if(render3D)void ensure3D();
+    updateDimensions();run();
+  });
   panel.querySelectorAll('[data-pipe-tab]').forEach(btn=>btn.addEventListener('click',()=>{
     tab=btn.dataset.pipeTab;
     panel.querySelectorAll('[data-pipe-tab]').forEach(node=>node.classList.toggle('active',node===btn));
     paint(0);
   }));
   refresh();
+  canvas3D.hidden=true;updateDimensions();
+  const onResize=()=>{if(active&&threeD)threeD.resize();};
+  doc.defaultView.addEventListener('resize',onResize);
   return {
     open:()=>setOpen(true),close:()=>setOpen(false),
     setLabActive(value){labActive=Boolean(value);if(!labActive)setOpen(false);},
     setPlaying(value){playing=Boolean(value);run();},
-    refresh, get status(){return {open:active,model:lastModel,visualization:'educational canvas cutaway',cfd:false,sourceGeometryChanged:false}},
-    dispose(){setOpen(false);panel.remove();}
+    refresh, get status(){return {open:active,expanded,model:lastModel,visualization:threeD?'babylon 3D educational cutaway':'2D fallback',
+      render3D,render3DReady:!!threeD,render3DError:threeDError,scene3D:threeD?.status??null,
+      cfd:false,sourceGeometryChanged:false}},
+    dispose(){setOpen(false);doc.defaultView.removeEventListener('resize',onResize);panel.remove();}
   };
 }

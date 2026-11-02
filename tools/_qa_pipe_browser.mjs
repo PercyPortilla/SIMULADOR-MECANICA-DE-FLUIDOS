@@ -51,10 +51,13 @@ const outcome=await evaluate(`({
  ready: !!document.querySelector("#v57EnterEulerLab")&&!document.querySelector("#v57EnterEulerLab").disabled,
  lab:document.body.classList.contains("v57-industrial"),
  inspectorOpen:!document.querySelector("#v57PipeInspector")?.hidden,
- pipeWidth:document.querySelector("#v57PipeCutCanvas")?.clientWidth,
- pipeHeight:document.querySelector("#v57PipeCutCanvas")?.clientHeight,
+ pipeWidth:document.querySelector(document.querySelector("#v57Pipe3DCanvas")?.hidden?"#v57PipeCutCanvas":"#v57Pipe3DCanvas")?.clientWidth,
+ pipeHeight:document.querySelector(document.querySelector("#v57Pipe3DCanvas")?.hidden?"#v57PipeCutCanvas":"#v57Pipe3DCanvas")?.clientHeight,
  pipeSpeed:document.querySelector("#v57PipeSpeed")?.textContent,
  pipeRatio:document.querySelector("#v57PipeRatio")?.textContent,
+ pipe3DStatus:(()=>{const d=window.__PULPA_MAIN_PRESENTATION_QA__?.().pipeInspector;return d?{
+  render3D:d.render3D,ready:d.render3DReady,error:d.render3DError,scene:d.scene3D
+ }:null})(),
  diagnostic:document.querySelector("#v57PipeInterpretation")?.textContent,
  sceneStatus:(()=>{const s=window.__PULPA_MAIN_PRESENTATION_QA__?.();return s?{
   siteVisualLoaded:s.siteVisualLoaded,siteMeshCount:s.siteMeshCount,
@@ -65,6 +68,32 @@ const outcome=await evaluate(`({
 const screenshot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
 const path='qa-artifacts/pipe-inspector-visual-smoke.png';
 fs.writeFileSync(path,Buffer.from(screenshot.data,'base64'));
+let fallback=null;
+if(outcome.inspectorOpen&&outcome.pipe3DStatus?.ready){
+ await evaluate('document.querySelector("#v57PipeDimension")?.click()');
+ await new Promise(r=>setTimeout(r,400));
+ fallback=await evaluate(`({
+  dimensionLabel:document.querySelector("#v57PipeDimension")?.textContent,
+  canvas2DVisible:!document.querySelector("#v57PipeCutCanvas")?.hidden,
+  canvas3DHidden:!!document.querySelector("#v57Pipe3DCanvas")?.hidden
+ })`);
+ const shot2d=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
+ fs.writeFileSync('qa-artifacts/pipe-inspector-fallback-2d.png',Buffer.from(shot2d.data,'base64'));
+ await evaluate('document.querySelector("#v57PipeDimension")?.click()');
+}
+let expanded=null;
+if(outcome.inspectorOpen&&outcome.pipe3DStatus?.ready){
+ await evaluate('document.querySelector("#v57ExpandPipe")?.click()');
+ await new Promise(r=>setTimeout(r,550));
+ expanded=await evaluate(`({
+  enabled:!!window.__PULPA_MAIN_PRESENTATION_QA__?.().pipeInspector?.expanded,
+  heroHeight:document.querySelector("#v57Pipe3DCanvas")?.clientHeight,
+  heroWidth:document.querySelector("#v57Pipe3DCanvas")?.clientWidth
+ })`);
+ const largeShot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
+ fs.writeFileSync('qa-artifacts/pipe-inspector-expanded-3d.png',Buffer.from(largeShot.data,'base64'));
+ await evaluate('document.querySelector("#v57ExpandPipe")?.click()');
+}
 const focusShots=[];
 if(outcome.inspectorOpen){
  await evaluate('document.querySelector("#v57ClosePipe")?.click()');
@@ -87,7 +116,7 @@ const changed=await evaluate(`({
  pipeSpeed:document.querySelector("#v57PipeSpeed")?.textContent,
  pipeSolids:document.querySelector("#v57PipeSolids")?.textContent,
  pipeRatio:document.querySelector("#v57PipeRatio")?.textContent,
- pipeHeight:document.querySelector("#v57PipeCutCanvas")?.clientHeight,
+ pipeHeight:document.querySelector(document.querySelector("#v57Pipe3DCanvas")?.hidden?"#v57PipeCutCanvas":"#v57Pipe3DCanvas")?.clientHeight,
  pipeRegime:document.querySelector("#v57PipeRegime")?.textContent
 })`);
 const after=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
@@ -122,6 +151,16 @@ const hbAfter=await evaluate(`({
 })`);
 const rheologyScreenshot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
 fs.writeFileSync('qa-artifacts/pipe-inspector-rheology-hb.png',Buffer.from(rheologyScreenshot.data,'base64'));
+await evaluate('(()=>{document.querySelector("[data-pipe-tab=wear]")?.click(); const v=document.querySelector("#v57Velocity");v.value="3.5";v.dispatchEvent(new Event("input",{bubbles:true}));const s=document.querySelector("#v57Solids");s.value="70";s.dispatchEvent(new Event("input",{bubbles:true}));})()');
+await new Promise(r=>setTimeout(r,950));
+const abrasion=await evaluate(`({
+  mode:window.__PULPA_MAIN_PRESENTATION_QA__?.().pipeInspector?.scene3D?.mode,
+  wearExposureVisual:window.__PULPA_MAIN_PRESENTATION_QA__?.().pipeInspector?.model?.wearExposureVisual,
+  velocity:document.querySelector("#v57PipeSpeed")?.textContent,
+  solids:document.querySelector("#v57PipeSolids")?.textContent
+})`);
+const abrasionScreenshot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
+fs.writeFileSync('qa-artifacts/pipe-inspector-abrasion-3d.png',Buffer.from(abrasionScreenshot.data,'base64'));
 await evaluate('document.querySelector("#v57ExitEulerLab")?.click()');
 await new Promise(r=>setTimeout(r,450));
 const restored=await evaluate(`({
@@ -129,7 +168,7 @@ const restored=await evaluate(`({
  inspectorHidden:!!document.querySelector("#v57PipeInspector")?.hidden,
  studyScopeDisabled:window.__PULPA_MAIN_PRESENTATION_QA__?.().scope?.active===false
 })`);
-const qa={path,before:outcome,after:changed,
+const qa={path,before:outcome,fallback,expanded,after:changed,abrasion,
  rheology:{before:rheologyBefore,binghamAfter,hbAfter,
   yieldReacted:rheologyBefore.yieldText!==binghamAfter.yieldText,
   modelReacted:hbAfter.model==='hb'&&hbAfter.nVisible&&hbAfter.nText?.startsWith('0.55'),
@@ -141,4 +180,11 @@ const qa={path,before:outcome,after:changed,
  changeScreenshot:'qa-artifacts/pipe-inspector-parameter-change.png'};
 fs.writeFileSync('qa-artifacts/pipe-inspector-visual-smoke.json',JSON.stringify(qa,null,2));
 console.log(JSON.stringify(qa,null,2));
+if(!outcome.ready||!outcome.inspectorOpen||!outcome.pipe3DStatus?.ready||
+ outcome.pipe3DStatus.error||!qa.velocityReacted||!qa.pipeHeightAccepted||
+ !qa.mineRestored||!qa.rheology.yieldReacted||!qa.rheology.modelReacted||
+ !fallback?.canvas2DVisible||!fallback?.canvas3DHidden||
+ !expanded?.enabled||!(expanded?.heroHeight>outcome.pipeHeight+120)||
+ !Number.isFinite(abrasion?.wearExposureVisual)||abrasion.mode!=='wear'||
+ exceptions.length)process.exitCode=1;
 socket.close();
