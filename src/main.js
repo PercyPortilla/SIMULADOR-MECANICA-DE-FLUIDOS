@@ -1,4 +1,8 @@
 import './styles.css';
+import './ui/industrialV57Presentation.css';
+import { mountIndustrialV57Presentation } from './ui/industrialV57Presentation.js';
+import { attachNativeClassFeedL349 } from './babylon/assets/nativeClassFeedL349.js';
+import { attachNativeClassHeaderL352 } from './babylon/assets/nativeClassHeaderL352.js';
 import { getInitialState, getState, resetState, updateState } from './state/simulationState.js';
 import { calculateSimulationResults, getResults, subscribe as subscribeResults } from './controller/simulationController.js';
 import { CAMERA_PRESET_LABELS, CAMERA_PRESET_ORDER } from './ui/cameraMetadata.js';
@@ -55,6 +59,9 @@ const app = document.querySelector('#app');
 let activeTheme = applyTheme(loadTheme());
 let activeScenePalette = loadScenePalette();
 let environmentHandle = null;
+let eulerPresentationUi = null;
+let eulerNativeFeed = null;
+let eulerNativeHeader = null;
 let unsubscribeProcessMetrics = null;
 let activeWorkspaceTab = 'circuit';
 let startPresentationTour = null;
@@ -1066,8 +1073,16 @@ function render() {
 }
 
 render();
+eulerPresentationUi = mountIndustrialV57Presentation({
+  document,
+  getState,getResults,updateState,
+  resetState:()=>{resetState();loadExampleSimulation(updateState);},
+  cameras:CAMERA_PRESET_ORDER,
+  labels:CAMERA_PRESET_LABELS,
+});
 const unsubscribeResultsRender = subscribeResults((results) => {
   renderResultsPanel(results, getState());
+  eulerPresentationUi?.refresh();
   refreshInspectionGuide?.();
   if (activeComparisonScenarioId) {
     const scenario = loadNamedScenario(activeComparisonScenarioId);
@@ -1493,6 +1508,31 @@ async function initializeEnvironment(canvas) {
         renderInspectionGuide();
       });
     });
+    // L353: optional Bernoulli–Euler view. Outside it, the B72 mine and its
+    // original navigation remain in control. CAD add-ons self-validate poses.
+    eulerPresentationUi?.setEnvironment(environment);
+    eulerNativeFeed = attachNativeClassFeedL349({ environment });
+    eulerNativeHeader = attachNativeClassHeaderL352({ environment });
+    eulerNativeFeed.ready.then((result) => {
+      const indicator = document.getElementById('v57NativeStatus');
+      if (indicator) indicator.textContent = result.state === 'PASS_NATIVE_SHELLS_VISUAL_ONLY'
+        ? 'CLASS-01: 4 codos CAD nativos, visualización educativa, sin certificación hidráulica.'
+        : 'CLASS-01: geometría original conservada; no se validó sustitución CAD.';
+    });
+    eulerNativeHeader.ready.then((result) => {
+      const indicator = document.getElementById('v57HeaderStatus');
+      if (indicator) indicator.textContent = result.geometryCertified
+        ? 'Colector CLASS-01: 8 perforaciones CAD, uniones hidráulicas sin certificar.'
+        : 'Colector CLASS-01: se conserva geometría original B64.';
+    });
+    Promise.allSettled([eulerNativeFeed.ready, eulerNativeHeader.ready]).then(() => {
+      if (environment.v57SiteVisual?.loaded) eulerPresentationUi?.enableLabEntry();
+    });
+    window.__PULPA_MAIN_PRESENTATION_QA__ = () => ({
+      ...(eulerPresentationUi?.status ?? {}),
+      nativeClassFeedL349: eulerNativeFeed?.status ?? null,
+      nativeClassHeaderL352: eulerNativeHeader?.status ?? null,
+    });
   } catch (error) {
     const sceneError = document.querySelector('#scene-error');
     const sceneLoading = document.querySelector('#scene-loading');
@@ -1512,6 +1552,8 @@ if (canvas) initializeEnvironment(canvas);
 
 window.addEventListener('beforeunload', () => {
   refreshInspectionGuide = null;
+  eulerNativeFeed?.dispose();
+  eulerNativeHeader?.dispose();
   unsubscribeResultsRender?.();
   unsubscribeProcessMetrics?.();
   environmentHandle?.dispose?.();
