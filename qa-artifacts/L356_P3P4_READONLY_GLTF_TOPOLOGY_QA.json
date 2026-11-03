@@ -1,0 +1,310 @@
+{
+  "block": "L356",
+  "stage": "INDEPENDENT_READ_ONLY_SOURCE_GLTF_GEOMETRY",
+  "input": {
+    "sourceGlb": "public/models/pulpa-v57/PULPA_LAB_V57_FULL_SITE_FINAL.glb",
+    "sha256": "73826d5cb777ed08cd9f20a9dd3171c1964f1f8de8c570edfb9f4a802538e306",
+    "gltfNodes": 6181,
+    "gltfMeshes": 2021,
+    "tool": "node-js GLB positions ray/edge gate"
+  },
+  "measured": {
+    "SLURRY-PUMP-01_SUCTION_SEG02": {
+      "nodeIndex": 4550,
+      "vertexCount": 240,
+      "triangleCount": 156,
+      "edges": {
+        "boundary": 0,
+        "nonmanifold": 0,
+        "watertightSurface": true
+      },
+      "boundsBlenderWorldM": {
+        "min": [
+          192.98889132371556,
+          89.44999879994701,
+          21.4501146942716
+        ],
+        "max": [
+          202.9111025727688,
+          90.55000120005299,
+          22.749886068667852
+        ]
+      },
+      "rayTests": [
+        {
+          "label": "suctionHubFromX203",
+          "triangleIntersections": 0,
+          "nearestDistanceM": null,
+          "nearestBlenderWorldM": null
+        },
+        {
+          "label": "upwardDischargeFromZ22",
+          "triangleIntersections": 0,
+          "nearestDistanceM": null,
+          "nearestBlenderWorldM": null
+        }
+      ]
+    },
+    "SLURRY-PUMP-01_SUCTION_FLUID_SEG02": {
+      "nodeIndex": 4546,
+      "vertexCount": 192,
+      "triangleCount": 124,
+      "edges": {
+        "boundary": 0,
+        "nonmanifold": 0,
+        "watertightSurface": true
+      },
+      "boundsBlenderWorldM": {
+        "min": [
+          192.99151699844637,
+          89.57999882681992,
+          21.58008820241525
+        ],
+        "max": [
+          202.908476898038,
+          90.42000117318008,
+          22.619912560524202
+        ]
+      },
+      "rayTests": [
+        {
+          "label": "suctionHubFromX203",
+          "triangleIntersections": 0,
+          "nearestDistanceM": null,
+          "nearestBlenderWorldM": null
+        },
+        {
+          "label": "upwardDischargeFromZ22",
+          "triangleIntersections": 0,
+          "nearestDistanceM": null,
+          "nearestBlenderWorldM": null
+        }
+      ]
+    },
+    "SLURRY-PUMP-01_VOLUTE": {
+      "nodeIndex": 4525,
+      "vertexCount": 2688,
+      "triangleCount": 1344,
+      "edges": {
+        "boundary": 0,
+        "nonmanifold": 0,
+        "watertightSurface": true
+      },
+      "boundsBlenderWorldM": {
+        "min": [
+          204.51999978769314,
+          88.3400000333786,
+          20.540000573282356
+        ],
+        "max": [
+          205.48000021230686,
+          91.6599999666214,
+          23.86000095259655
+        ]
+      },
+      "rayTests": [
+        {
+          "label": "suctionHubFromX203",
+          "triangleIntersections": 0,
+          "nearestDistanceM": null,
+          "nearestBlenderWorldM": null
+        },
+        {
+          "label": "upwardDischargeFromZ22",
+          "triangleIntersections": 2,
+          "nearestDistanceM": 0.9000008072293217,
+          "nearestBlenderWorldM": [
+            205,
+            90,
+            22.900000807229322
+          ]
+        }
+      ]
+    },
+    "SLURRY-PUMP-01_VOLUTE_TRANS": {
+      "nodeIndex": 4542,
+      "vertexCount": 2688,
+      "triangleCount": 1344,
+      "edges": {
+        "boundary": 0,
+        "nonmanifold": 0,
+        "watertightSurface": true
+      },
+      "boundsBlenderWorldM": {
+        "min": [
+          204.51999978769314,
+          88.3400000333786,
+          20.540000573282356
+        ],
+        "max": [
+          205.48000021230686,
+          91.6599999666214,
+          23.86000095259655
+        ]
+      },
+      "rayTests": [
+        {
+          "label": "suctionHubFromX203",
+          "triangleIntersections": 0,
+          "nearestDistanceM": null,
+          "nearestBlenderWorldM": null
+        },
+        {
+          "label": "upwardDischargeFromZ22",
+          "triangleIntersections": 2,
+          "nearestDistanceM": 0.9000008072293217,
+          "nearestBlenderWorldM": [
+            205,
+            90,
+            22.900000807229322
+          ]
+        }
+      ]
+    },
+    "SLURRY-PUMP-01_DISCHARGE_PIPE": {
+      "nodeIndex": 4524,
+      "vertexCount": 288,
+      "triangleCount": 188,
+      "edges": {
+        "boundary": 0,
+        "nonmanifold": 0,
+        "watertightSurface": true
+      },
+      "boundsBlenderWorldM": {
+        "min": [
+          204.52000001072884,
+          89.52000001072884,
+          23.399998664855957
+        ],
+        "max": [
+          205.47999998927116,
+          90.47999998927116,
+          26.699999809265137
+        ]
+      },
+      "rayTests": [
+        {
+          "label": "suctionHubFromX203",
+          "triangleIntersections": 0,
+          "nearestDistanceM": null,
+          "nearestBlenderWorldM": null
+        },
+        {
+          "label": "upwardDischargeFromZ22",
+          "triangleIntersections": 2,
+          "nearestDistanceM": 1.399998664855957,
+          "nearestBlenderWorldM": [
+            205,
+            90,
+            23.399998664855957
+          ]
+        }
+      ]
+    },
+    "SLURRY-PUMP-01_DISCHARGE_FLUID": {
+      "nodeIndex": 4520,
+      "vertexCount": 240,
+      "triangleCount": 156,
+      "edges": {
+        "boundary": 0,
+        "nonmanifold": 0,
+        "watertightSurface": true
+      },
+      "boundsBlenderWorldM": {
+        "min": [
+          204.63999998569489,
+          89.63999998569489,
+          23.399998664855957
+        ],
+        "max": [
+          205.36000001430511,
+          90.36000001430511,
+          26.699999809265137
+        ]
+      },
+      "rayTests": [
+        {
+          "label": "suctionHubFromX203",
+          "triangleIntersections": 0,
+          "nearestDistanceM": null,
+          "nearestBlenderWorldM": null
+        },
+        {
+          "label": "upwardDischargeFromZ22",
+          "triangleIntersections": 2,
+          "nearestDistanceM": 1.3999986648559568,
+          "nearestBlenderWorldM": [
+            205,
+            90,
+            23.399998664855957
+          ]
+        }
+      ]
+    },
+    "SLURRY-PUMP-01_IMPELLER_HUB": {
+      "nodeIndex": 4518,
+      "vertexCount": 192,
+      "triangleCount": 124,
+      "edges": {
+        "boundary": 0,
+        "nonmanifold": 0,
+        "watertightSurface": true
+      },
+      "boundsBlenderWorldM": {
+        "min": [
+          204.67499992525947,
+          89.68000000715256,
+          21.880000683430552
+        ],
+        "max": [
+          205.32500007474053,
+          90.31999999284744,
+          22.520000842448354
+        ]
+      },
+      "rayTests": [
+        {
+          "label": "suctionHubFromX203",
+          "triangleIntersections": 2,
+          "nearestDistanceM": 1.6749999682541892,
+          "nearestBlenderWorldM": [
+            204.67499996825418,
+            90,
+            22.2
+          ]
+        },
+        {
+          "label": "upwardDischargeFromZ22",
+          "triangleIntersections": 2,
+          "nearestDistanceM": 0.520000798781734,
+          "nearestBlenderWorldM": [
+            205,
+            90,
+            22.520000798781734
+          ]
+        }
+      ]
+    }
+  },
+  "independentOldEvidence": {
+    "signedGapM": 1.5139007568359375,
+    "suctionSkewDegrees": 1.1573121503220216,
+    "eyeNotOpenSource": true,
+    "dischargeBlockedSource": true,
+    "priorSource": "L127/L346/L347 signed QA"
+  },
+  "cannotAssertWetMateFromGlb": true,
+  "nativeBRepStepNeeded": true,
+  "originalCappedApproxRay": true,
+  "originalDischargeBlockedApproxRay": true,
+  "passReadOnlySourceAudit": true,
+  "wetDomainPass": false,
+  "isCertifiedHydraulicConnection": false,
+  "solverModified": false,
+  "productionModified": false,
+  "notes": [
+    "Surface watertightness of individual meshes is NOT evidence of wet passage.",
+    "World ray probes detect original visual blockers, not SW volume interference/Check2.",
+    "Any hypothetical CAD connector requires independent native BRep and wet connected-domain gate."
+  ]
+}
