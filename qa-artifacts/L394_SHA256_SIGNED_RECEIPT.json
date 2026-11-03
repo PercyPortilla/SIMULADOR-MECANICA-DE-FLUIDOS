@@ -1,0 +1,63 @@
+{
+  "block": "L394_EULER_FULL_L384_GLTF_BABYLON_20261103",
+  "signed_utc": "2026-11-03T06:11:28.054544+00:00",
+  "status": "PASS_GENUINE_L384_BABYLON_NULLENGINE_34_ANIM_13_CAM_4_CAD_V57_CACHE_RESTORED__NO_GO_GPU_BROWSER_ORIGINAL_B64_WET",
+  "feature_branch": "feature/euler-pulpa-inspector-20261102",
+  "source_L384_original_sha256": "3ea34050240b310a6fe8663d6b66c8f1f07b69b23c4e2473f93819ead33fcf3e",
+  "original_V57_site_full_glb_sha256": "73826d5cb777ed08cd9f20a9dd3171c1964f1f8de8c570edfb9f4a802538e306",
+  "genuine_nullengine_authored_clips": 34,
+  "genuine_nullengine_cameras": 13,
+  "real_NullEngine_four_CAD_verified": true,
+  "real_NullEngine_V57_camera_host_restored": true,
+  "real_NullEngine_cached_Euler_double_entry_one_load": true,
+  "L394_vitest_mock_case_pass": 13,
+  "L394_vitest_mock_case_fail": 0,
+  "optional_four_native_CAD_transparency_only_mock_test_PASS": true,
+  "main_ui_wired_by_prime": false,
+  "real_browser_webgl_screenshot_verified": false,
+  "signed_original_V57_modified": false,
+  "signed_original_B64_wet_mates_certified": false,
+  "solver_endpoints_originals_modified": false,
+  "new_files": {
+    "source_module": {
+      "bytes": 12853,
+      "sha256": "c6ce38bc78fd5d5fa6f3232aa4cf43edbb7ac0199087c031905307b87b51eda3",
+      "path_relative_to_repo": "src/babylon/assets/l394EulerFullLab.js"
+    },
+    "new_unit_tests": {
+      "bytes": 10728,
+      "sha256": "16563090e5690713cfe98418cea18bbaa936615aa3c71a32efd23fd0a8a4bc92",
+      "path_relative_to_repo": "tests/ui/l394EulerFullLab.test.js"
+    },
+    "genuine_full_L384_GLB": {
+      "bytes": 21018796,
+      "sha256": "3ea34050240b310a6fe8663d6b66c8f1f07b69b23c4e2473f93819ead33fcf3e",
+      "path_relative_to_repo": "public/models/euler/L394_L384_EULER_34_ANIM_FULL_LAB.glb"
+    },
+    "one_real_babylon_nullengine_runner": {
+      "bytes": 5433,
+      "sha256": "686278612188d100e1046da1dc91a231025a231b60e5a8b67ae9750d3e716865",
+      "path_relative_to_repo": "tools/_qa_l394_real_babylon_full_l384.mjs"
+    },
+    "first_real_babylon_qa": {
+      "bytes": 1196,
+      "sha256": "2206e261a01263f754cd5b5e5f72b2ae4a8e975022ba671e5f80d84b9367d428",
+      "path_relative_to_repo": "qa-artifacts/L394_REAL_BABYLON_NULLENGINE_QA.json"
+    },
+    "repeat_cache_reentry_real_babylon_qa": {
+      "bytes": 1301,
+      "sha256": "afdfa16ea8ec8f97fa4f8366a231af1291dbd1bb9b22a4165c627dd74ee701e1",
+      "path_relative_to_repo": "qa-artifacts/L394_REAL_BABYLON_NULLENGINE_CACHE_QA.json"
+    },
+    "final_report": {
+      "bytes": 5496,
+      "sha256": "80d7ef43928bebace9448db947229f575e3e97692871a9a47f97dfe631dc1573",
+      "path_relative_to_repo": "qa-artifacts/L394_FINAL_NATIVE_GLTF_EULER_ONLY_NO_WET_GATE.md"
+    },
+    "receipt_script": {
+      "bytes": 4604,
+      "sha256": "51373945d5ef0cffc72ea7f561fc5f95091842a00c47c0fe102b78ac9c854626",
+      "path_relative_to_repo": "tools/_sign_l394_real_euler_full_lab.py"
+    }
+  }
+}

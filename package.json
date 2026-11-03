@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "predev": "node scripts/prepare-v57-production.mjs",
+    "predev": "node scripts/prepare-v57-production.mjs && node scripts/l393-build-vendor.mjs",
     "dev": "vite",
-    "prebuild": "node scripts/prepare-v57-production.mjs",
+    "prebuild": "node scripts/prepare-v57-production.mjs && node scripts/l393-build-vendor.mjs",
     "build": "vite build",
     "postbuild": "node scripts/prepare-v57-production.mjs --prune-dist",
     "pretest": "node scripts/prepare-v57-production.mjs",

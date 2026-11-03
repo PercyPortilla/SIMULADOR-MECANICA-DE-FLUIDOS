@@ -1,0 +1,39 @@
+{
+  "status": "PASS_GENUINE_BABYLON_NULLENGINE_L384_34_ANIM_13_CAMS_FOUR_CAD_EULER_ONLY_V57_RESTORED",
+  "authenticL384GLBSHA256": "3ea34050240b310a6fe8663d6b66c8f1f07b69b23c4e2473f93819ead33fcf3e",
+  "bytes": 21018796,
+  "actualImportedAnimationGroups": 34,
+  "actualImportedCameras": 13,
+  "actualFourNativeCadMeshDetails": [
+    {
+      "name": "L375_L370_REAL_NATIVE_OPEN_SEG02_NOT_B64_MATED",
+      "vertices": 459,
+      "triangles": 304
+    },
+    {
+      "name": "L382_NATIVE_SW2026_L358_SOURCE_ANGLE_VISUAL_STAGING_NO_B64_WET_GO",
+      "vertices": 1692,
+      "triangles": 564
+    },
+    {
+      "name": "L382_NATIVE_SW2026_L364_SHORT_NECK_VISUAL_STAGING_NO_B64_WET_GO",
+      "vertices": 1392,
+      "triangles": 464
+    },
+    {
+      "name": "L378_REAL_SW2026_L374B_TWO_PORT_VOLUTE_VERTICAL_RISER_NOT_B64_MATED",
+      "vertices": 2727,
+      "triangles": 1538
+    }
+  ],
+  "beforeEulerV57Meshes": 1,
+  "afterEulerV57Meshes": 1,
+  "actualNullEngineGLBLoadInvocations": 1,
+  "actualCachedL384SecondEulerEntryAndExitPassed": true,
+  "originalL384ContainerNotReDownloaded": true,
+  "sourceV57HostPreserved": true,
+  "sourceV57CameraPreserved": true,
+  "EulerContainerRemovedFromBabylon": true,
+  "originalV57GLB_or_solver_modified": false,
+  "originalB64IndustrialWetMateCertified": false
+}

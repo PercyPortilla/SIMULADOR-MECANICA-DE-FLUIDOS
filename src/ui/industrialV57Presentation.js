@@ -4,6 +4,8 @@ import {createV57FaultEffects} from './industrialV57FaultEffects.js';
 import {createBernoulliEulerScope} from './bernoulliEulerScope.js';
 import {mountSlurryPipeInspector} from './slurryPipeInspector.js';
 import {createPumpP3P4Inspection,P3P4_SIGNED_GATE} from './pumpP3P4Inspection.js';
+import {createEulerNativeCadOverlay} from '../babylon/assets/l392EulerNativeCadOverlay.js';
+import {createEulerFullLabL394} from '../babylon/assets/l394EulerFullLab.js';
 export function mountIndustrialV57Presentation({
  document:doc,getState,getResults,updateState,resetState,cameras,labels
 }){
@@ -81,6 +83,10 @@ export function mountIndustrialV57Presentation({
  nativeStatus.id='v57NativeStatus';
  nativeStatus.textContent='Codos CLASS-01: comprobando geometría CAD firmada…';
  right.append(nativeStatus);
+ const pumpCadStatus=doc.createElement('p');pumpCadStatus.className='v57-small-note';
+ pumpCadStatus.id='v57EulerPumpCadStatus';
+ pumpCadStatus.textContent='Bomba P3→P4: CAD nativo L392 disponible solo en Euler. La fuente V57/B64 permanece NO-GO hidráulico.';
+ right.append(pumpCadStatus);
  const headerStatus=doc.createElement('p');headerStatus.className='v57-small-note';
  headerStatus.id='v57HeaderStatus';
  headerStatus.textContent='Colector de ocho ciclones: comprobando perforaciones CAD…';
@@ -224,10 +230,54 @@ export function mountIndustrialV57Presentation({
   cleanInspectionBoxes();
  });
  let env=null,scope=null,labActive=false,playing=true,previousVelocity=null,mode='realista',faultFx=null,pumpInspection=null,pumpCameraPose=null;
+ let eulerNativeCad=null,eulerFullLab=null;
  let generalViewPreferences=null;
  let labReady=false;
+ function syncNativeCad(enabled){
+  if(!eulerNativeCad)return;
+  Promise.resolve(eulerNativeCad.setActive(enabled)).then(ready=>{
+   if(ready&&labActive&&!pumpInspection?.status.active&&!eulerFullLab?.status.active){
+    // Scope restores its captured source visibility on reapply; keep the
+    // original capped pump shells hidden again only while the L392 CAD is on.
+    scope?.reapply();
+    eulerNativeCad.reapplyVisibility();
+    if(el('v57View').value==='pump')scope?.focus('pump');
+   }
+   const status=eulerNativeCad.status;
+   if(eulerFullLab?.status.active){
+    pumpCadStatus.textContent='L394 Euler: 4 piezas SOLIDWORKS y 34 animaciones de origen. CAD educativo, fuente B64 y juntas industriales NO-GO.';
+    return;
+   }
+   pumpCadStatus.textContent=status.loadState==='error'
+    ?'L392 CAD no cargó: '+status.loadError+' · Se conserva la geometría V57 original. NO-GO hidráulico.'
+    :status.active
+     ?'P3→P4: 4 piezas reales SOLIDWORKS L370/L358/L364/L374B (educativo). Ensamble L388 verificado; fuente B64 y sellos industriales NO-GO.'
+     :'P3→P4: fuente B64 original o vista Mina completa. CAD educativo L392 no activo; NO-GO hidráulico.';
+  });
+ }
+ function syncFullEulerLab(enabled){
+  if(!eulerFullLab)return;
+  Promise.resolve(eulerFullLab.setActive(enabled)).then(ready=>{
+   // Source audit deliberately disables full lab before revealing B64 caps.
+   if(!ready||!labActive||pumpInspection?.status.active)return;
+   // A validated full 34-action/13-camera L384 asset now owns the view.
+   // Do not render the smaller L392 replacement over the same CAD components.
+   eulerNativeCad?.setActive(false);
+   eulerFullLab.setPlaying(el('v57GuideAnimation').checked);
+   pumpCadStatus.textContent='L394 Euler: 4 piezas SOLIDWORKS, 34 animaciones y 13 cámaras auténticas. Modelo educativo; B64 original y estanqueidad industrial NO-GO.';
+  }).catch(error=>{
+   pumpCadStatus.textContent='L394 no se pudo cargar ('+String(error?.message??error)+'). Se conserva alternativa L392 y NO-GO hidráulico.';
+  });
+ }
  function setPumpInspection(on){
   if(!env?.scene||!labActive)on=false;
+  // Before revealing the ORIGINAL source caps/fluids for P3→P4 audit,
+  // restore their source visibility. Reversing these calls would undo the
+  // inspector's own transparent fluid material/visibility adjustments.
+  if(on&&labActive){
+   eulerFullLab?.setActive(false);
+   syncNativeCad(false);
+  }
   if(on&&!pumpInspection){
    pumpInspection=createPumpP3P4Inspection({
     scene:env.scene,
@@ -236,6 +286,11 @@ export function mountIndustrialV57Presentation({
    });
   }
   pumpInspection?.setActive(on);
+  // After inspection stops, show educational CAD again (never both models).
+  if(!on&&labActive){
+   syncNativeCad(true);
+   syncFullEulerLab(true);
+  }
   const camera=env?.cameras?.inspection;
   if(on&&camera&&!pumpCameraPose){
    pumpCameraPose={target:camera.getTarget().clone(),
@@ -322,10 +377,14 @@ export function mountIndustrialV57Presentation({
    top.querySelector('#v57View').value='all';
    setMode('realista');
    scope.focus('all');
+   syncNativeCad(true);
+   syncFullEulerLab(true);
    faultFx?.setPlaying(el('v57GuideAnimation').checked);
    pipeInspector.setPlaying(el('v57GuideAnimation').checked);
   }else{
+   eulerFullLab?.setActive(false);
    setPumpInspection(false);
+   eulerNativeCad?.setActive(false);
    faultFx?.setPlaying(false);
    env?.setInspectionMode('normal');
    scope?.leave();
@@ -478,6 +537,10 @@ export function mountIndustrialV57Presentation({
    env.setInspectionMode('transparent');
   }else env.setInspectionMode('normal');
   cleanInspectionBoxes();
+  // Switching Realista/Transparencia must not reveal the original capped
+  // V57 pump meshes above the authentic educational L392 CAD overlay.
+  eulerNativeCad?.reapplyVisibility();
+  eulerFullLab?.setTransparency?.(next==='transparencia');
  }
  el('v57GuideFlow').onchange=()=>{ribbon.hidden=!el('v57GuideFlow').checked};
  el('v57GuideLabels').onchange=()=>{
@@ -490,6 +553,7 @@ export function mountIndustrialV57Presentation({
   faultFx?.setPlaying(el('v57GuideAnimation').checked);
   pipeInspector.setPlaying(el('v57GuideAnimation').checked);
   pumpInspection?.setPlaying(el('v57GuideAnimation').checked);
+  eulerFullLab?.setPlaying(el('v57GuideAnimation').checked);
  };
  el('v57GuideCav').onchange=()=>{faultFx?.setCavitationVisible(el('v57GuideCav').checked)};
  el('v57GuideSettling').onchange=()=>{faultFx?.setSedimentationVisible(el('v57GuideSettling').checked)};
@@ -694,8 +758,21 @@ export function mountIndustrialV57Presentation({
  refresh();
  if(doc.defaultView.innerWidth<780){showOptions(false);showIndicators(false)}
  return {setEnvironment(value){
+   eulerFullLab?.dispose();
+   eulerFullLab=null;
+   eulerNativeCad?.dispose();
+   eulerNativeCad=null;
    env=value;
    if(env?.scene){
+    eulerNativeCad=createEulerNativeCadOverlay({
+     scene:env.scene,invalidate:time=>env.invalidateRender?.(time),
+    });
+    if(env.v57SiteVisual?.host){
+     eulerFullLab=createEulerFullLabL394({
+      scene:env.scene,v57SiteVisual:env.v57SiteVisual,
+      invalidate:time=>env.invalidateRender?.(time),
+     });
+    }
     faultFx?.dispose();
     faultFx=createV57FaultEffects(env.scene,{getState,getResults});
     faultFx.setPlaying(false);
@@ -712,6 +789,8 @@ export function mountIndustrialV57Presentation({
   enterLab(){return setLabActive(true)},
   leaveLab(){return setLabActive(false)},
   refresh,get status(){return {mainMine:true,model:'V57',controlsBound:4,
+   nativeEulerCad:eulerNativeCad?.status??null,
+   fullEulerLab:eulerFullLab?.status??null,
    uiLayout:{rightPanel:currentRightPanel,rightOpen:rightWorkspaceOpen,
     leftOpen:leftOptionsOpen,exposition:doc.body.classList.contains('v57-exposition'),
     moreControls:dock.classList.contains('v57-more-expanded'),
