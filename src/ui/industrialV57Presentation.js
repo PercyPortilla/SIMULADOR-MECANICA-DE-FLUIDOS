@@ -20,7 +20,7 @@ export function mountIndustrialV57Presentation({
  enterLabButton.className='v57-lab-entry';
  enterLabButton.textContent='Laboratorio Bernoulli–Euler';
  header.append(enterLabButton);
- const top=document.createElement('div');top.className='v57-top-actions';
+ const top=doc.createElement('div');top.className='v57-top-actions';
  top.innerHTML='<button id="v57ExitEulerLab">← Mina completa</button><label>Tramo estudiado <select id="v57View"></select></label><button id="v57InspectP3P4">⚠ P3→P4</button><button id="v57OpenPipeInspector">◉ Inspección de pulpa</button><button id="v57GoParameters">Parámetros</button><button id="v57GoResults">Resultados</button><button id="v57Help">?</button><button id="v57Fullscreen">⛶</button>';
  header.append(top);
  for(const [value,title] of [
@@ -57,6 +57,14 @@ export function mountIndustrialV57Presentation({
  viewport.append(left);
  const leftReopen=doc.createElement('button');leftReopen.className='v57-reopen v57-reopen-left';
  leftReopen.id='v57ReopenOptions';leftReopen.textContent='⚙ Opciones';leftReopen.hidden=true;viewport.append(leftReopen);
+ const toolrail=doc.createElement('nav');
+ toolrail.className='v57-toolrail';
+ toolrail.setAttribute('aria-label','Herramientas del laboratorio');
+ toolrail.innerHTML='<button type="button" id="v57RailOptions" title="Opciones de visualización" aria-label="Opciones de visualización">⚙<small>Opciones</small></button>'+
+ '<button type="button" id="v57RailPipe" title="Inspección interna de pulpa" aria-label="Inspección interna de pulpa">◉<small>Pulpa</small></button>'+
+ '<button type="button" id="v57RailPump" title="Auditoría P3 a P4" aria-label="Auditoría P3 a P4">⚠<small>P3→P4</small></button>'+
+ '<button type="button" id="v57RailFocus" title="Modo exposición" aria-label="Alternar modo exposición">⛶<small>Exponer</small></button>';
+ viewport.append(toolrail);
  const right=doc.createElement('aside');right.className='v57-side v57-side-right';
  right.innerHTML='<div class="v57-side-title"><b>◉ Indicadores del sistema</b><button id="v57HideIndicators">−</button></div>'+
  '<div class="v57-gauge"><span>◉</span><div>Caudal calculado<small>Q del modelo activo</small></div><strong id="v57Flow">N/D</strong></div>'+
@@ -80,6 +88,67 @@ export function mountIndustrialV57Presentation({
  viewport.append(right);
  const rightReopen=doc.createElement('button');rightReopen.id='v57ReopenIndicators';
  rightReopen.className='v57-reopen v57-reopen-right';rightReopen.textContent='◉ Indicadores';rightReopen.hidden=true;viewport.append(rightReopen);
+ // One right-hand workspace replaces three overlapping drawers. The existing
+ // input/result DOM nodes retain every original ID, listener, and solver link.
+ const rightWorkspace=doc.createElement('aside');
+ rightWorkspace.id='v57RightWorkspace';
+ rightWorkspace.className='v57-right-workspace';
+ rightWorkspace.setAttribute('aria-label','Panel científico contextual');
+ rightWorkspace.innerHTML='<div class="v57-right-tabs" role="tablist" aria-label="Panel de laboratorio">'+
+ '<button type="button" data-euler-panel="indicators" role="tab" aria-selected="true">Indicadores</button>'+
+ '<button type="button" data-euler-panel="parameters" role="tab" aria-selected="false">Parámetros</button>'+
+ '<button type="button" data-euler-panel="results" role="tab" aria-selected="false">Análisis</button>'+
+ '<button type="button" id="v57CloseRightWorkspace" title="Ocultar panel derecho" aria-label="Ocultar panel derecho">×</button></div>'+
+ '<div class="v57-right-stage" data-euler-stage="indicators"></div>'+
+ '<div class="v57-right-stage" data-euler-stage="parameters" hidden></div>'+
+ '<div class="v57-right-stage" data-euler-stage="results" hidden></div>';
+ viewport.append(rightWorkspace);
+ rightWorkspace.querySelector('[data-euler-stage="indicators"]').append(right);
+ const originalRegions=[
+  doc.querySelector('.workspace > .sidebar'),
+  doc.querySelector('.content .hydraulic-summary'),
+  doc.querySelector('.content .result-panel'),
+ ].filter(Boolean).map(node=>({node,parent:node.parentNode,next:node.nextSibling}));
+ const parameterRegion=originalRegions.find(x=>x.node.classList.contains('sidebar'));
+ const summaryRegion=originalRegions.find(x=>x.node.classList.contains('hydraulic-summary'));
+ const resultsRegion=originalRegions.find(x=>x.node.classList.contains('result-panel'));
+ function relocateRegions(toLab){
+  for(const {node,parent,next} of originalRegions){
+   if(toLab){
+    const stage=rightWorkspace.querySelector(
+     '[data-euler-stage="'+(node===parameterRegion?.node?'parameters':'results')+'"]');
+    stage?.append(node);
+   }else parent?.insertBefore(node,next?.parentNode===parent?next:null);
+  }
+ }
+ let currentRightPanel='indicators',rightWorkspaceOpen=true,leftOptionsOpen=false;
+ function showRightPanel(panel='indicators'){
+  currentRightPanel=panel;
+  rightWorkspaceOpen=true;
+  rightWorkspace.hidden=false;
+  doc.body.classList.add('v57-right-open');
+  doc.body.classList.remove('v57-show-advanced','v57-show-results');
+  rightWorkspace.querySelectorAll('[data-euler-stage]').forEach(stage=>{
+   stage.hidden=stage.dataset.eulerStage!==panel;
+  });
+  rightWorkspace.querySelectorAll('[data-euler-panel]').forEach(button=>{
+   const selected=button.dataset.eulerPanel===panel;
+   button.setAttribute('aria-selected',String(selected));
+   button.classList.toggle('selected',selected);
+  });
+  rightReopen.hidden=true;
+  doc.defaultView.requestAnimationFrame?.(()=>env?.resize?.());
+ }
+ function hideRightPanel(){
+  rightWorkspaceOpen=false;rightWorkspace.hidden=true;
+  rightReopen.hidden=false;rightReopen.textContent='◉ Panel';
+  doc.body.classList.remove('v57-right-open');
+  doc.defaultView.requestAnimationFrame?.(()=>env?.resize?.());
+ }
+ rightWorkspace.querySelectorAll('[data-euler-panel]').forEach(btn=>{
+  btn.addEventListener('click',()=>showRightPanel(btn.dataset.eulerPanel));
+ });
+ rightWorkspace.querySelector('#v57CloseRightWorkspace').addEventListener('click',hideRightPanel);
  const ribbon=doc.createElement('div');ribbon.id='v57ProcessRibbon';ribbon.className='v57-process-ribbon';
  ribbon.textContent='LABORATORIO BERNOULLI–EULER  ·  MOLINO → SUMP → BOMBA → 8 CICLONES';
  viewport.append(ribbon);
@@ -94,13 +163,15 @@ export function mountIndustrialV57Presentation({
  dock.innerHTML='<div class="v57-dock-header"><strong>TRAMO DE PULPA · BERNOULLI–EULER</strong>'+
  '<label>Reología <select id="v57Rheology"><option value="newtonian">Newtoniana</option><option value="bingham">Bingham</option><option value="hb">Herschel–Bulkley</option><option value="power">Power Law</option></select></label>'+
  '<label>Escenario <select id="v57Scenario"><option value="current">Actual</option><option value="normal">Referencia</option><option value="headloss">Pérdidas mayores</option><option value="suction">Succión desfavorable</option><option value="energy">Demanda elevada</option><option value="settle">Tendencia a sedimentar</option></select></label>'+
- '<button id="v57TransportToggle">Transporte ON</button><button id="v57Reset">↺ Restablecer</button><button id="v57HideDock">Ocultar −</button></div>'+
+ '<button id="v57TransportToggle">Transporte ON</button><button id="v57Reset">↺ Restablecer</button>'+
+ '<button id="v57MoreControls" aria-expanded="false">Más parámetros ▾</button>'+
+ '<button id="v57HideDock">Ocultar −</button></div>'+
  '<div class="v57-control-body"><label>Velocidad de pulpa <b id="v57VelocityValue"></b><input id="v57Velocity" type="range" min="0" max="4" step=".05"></label>'+
  '<label>Sólidos (% masa) <b id="v57SolidsValue"></b><input id="v57Solids" type="range" min="0" max="80" step="1"></label>'+
  '<label id="v57MuControl"><span id="v57MuLabel">Viscosidad / consistencia</span> <b id="v57MuValue"></b><input id="v57Mu" type="range" min=".005" max=".2" step=".005"></label>'+
  '<label id="v57YieldControl"><span>Esfuerzo de fluencia τ₀</span> <b id="v57YieldValue"></b><input id="v57Yield" type="range" min="0" max="80" step=".5"></label>'+
- '<label id="v57NControl"><span>Índice de flujo n</span> <b id="v57NValue"></b><input id="v57N" type="range" min=".2" max="1.7" step=".05"></label>'+
- '<label>d50 (descriptivo) <b id="v57D50Value"></b><input id="v57D50" type="range" min="0" max="3" step=".05"></label>'+
+ '<label id="v57NControl" data-euler-extra="true"><span>Índice de flujo n</span> <b id="v57NValue"></b><input id="v57N" type="range" min=".2" max="1.7" step=".05"></label>'+
+ '<label data-euler-extra="true">d50 (descriptivo) <b id="v57D50Value"></b><input id="v57D50" type="range" min="0" max="3" step=".05"></label>'+
  '<div class="v57-dock-help" id="v57Cause">Mover un parámetro actualiza el solver V57 cuando el modelo admite el cambio.</div></div>';
  viewport.append(dock);
  const dockReopen=doc.createElement('button');dockReopen.className='v57-reopen v57-reopen-dock';
@@ -213,6 +284,27 @@ export function mountIndustrialV57Presentation({
   labActive=Boolean(on);
   pipeInspector.setLabActive(labActive);
   doc.body.classList.toggle('v57-industrial',labActive);
+  if(labActive){
+   relocateRegions(true);
+   showOptions(false);
+   showRightPanel('indicators');
+   doc.body.classList.add('v57-layout-compact');
+  }else{
+   relocateRegions(false);
+   doc.body.classList.remove('v57-right-open','v57-left-open','v57-layout-compact',
+    'v57-exposition','v57-more-open');
+   rightWorkspace.hidden=true;
+   rightReopen.hidden=true;
+   left.hidden=false;
+   leftReopen.hidden=true;
+   dock.classList.remove('v57-more-expanded');
+   dock.classList.remove('minimized');
+   dockReopen.hidden=true;
+   el('v57MoreControls').setAttribute('aria-expanded','false');
+   el('v57MoreControls').textContent='Más parámetros ▾';
+   el('v57RailFocus').classList.remove('selected');
+   el('v57RailFocus').setAttribute('aria-pressed','false');
+  }
   doc.body.classList.remove('v57-show-advanced','v57-show-results');
   enterLabButton.hidden=labActive;
   if(labActive){
@@ -296,15 +388,32 @@ export function mountIndustrialV57Presentation({
   env?.equipmentInspection?.contextOverlay?.setEnabled?.(false);
  }
  const el=id=>doc.getElementById(id);
- const showOptions=on=>{left.hidden=!on;leftReopen.hidden=on};
- const showIndicators=on=>{right.hidden=!on;rightReopen.hidden=on};
+ const showOptions=on=>{
+  leftOptionsOpen=Boolean(on);
+  left.hidden=!on;
+  leftReopen.hidden=true;
+  doc.body.classList.toggle('v57-left-open',Boolean(on));
+  toolrail.querySelector('#v57RailOptions')?.classList.toggle('selected',Boolean(on));
+ };
+ const showIndicators=on=>on?showRightPanel('indicators'):hideRightPanel();
  el('v57HideOptions').onclick=()=>showOptions(false);
  el('v57ReopenOptions').onclick=()=>showOptions(true);
  el('v57HideIndicators').onclick=()=>showIndicators(false);
  el('v57ReopenIndicators').onclick=()=>showIndicators(true);
- el('v57Advanced').onclick=()=>doc.body.classList.toggle('v57-show-advanced');
- el('v57GoParameters').onclick=()=>doc.body.classList.toggle('v57-show-advanced');
- el('v57GoResults').onclick=()=>doc.body.classList.toggle('v57-show-results');
+ el('v57Advanced').onclick=()=>showRightPanel('parameters');
+ el('v57GoParameters').onclick=()=>showRightPanel('parameters');
+ el('v57GoResults').onclick=()=>showRightPanel('results');
+ el('v57RailOptions').onclick=()=>showOptions(!leftOptionsOpen);
+ el('v57RailPipe').onclick=()=>top.querySelector('#v57OpenPipeInspector').click();
+ el('v57RailPump').onclick=()=>top.querySelector('#v57InspectP3P4').click();
+ el('v57RailFocus').onclick=()=>{
+  const active=doc.body.classList.toggle('v57-exposition');
+  if(active){showOptions(false);hideRightPanel();}
+  else showRightPanel(currentRightPanel);
+  el('v57RailFocus').classList.toggle('selected',active);
+  el('v57RailFocus').setAttribute('aria-pressed',String(active));
+  env?.resize?.();
+ };
  el('v57Help').onclick=()=>{help.hidden=!help.hidden};
  el('v57CloseScenarioHelp').onclick=()=>{scenarioCard.hidden=true;};
  el('v57Fullscreen').onclick=()=>doc.fullscreenElement?doc.exitFullscreen?.():doc.documentElement.requestFullscreen?.();
@@ -344,6 +453,14 @@ export function mountIndustrialV57Presentation({
  }
  el('v57HideDock').onclick=()=>{dock.classList.add('minimized');dockReopen.hidden=false};
  dockReopen.onclick=()=>{dock.classList.remove('minimized');dockReopen.hidden=true};
+ el('v57MoreControls').onclick=()=>{
+  const show=!dock.classList.contains('v57-more-expanded');
+  dock.classList.toggle('v57-more-expanded',show);
+  doc.body.classList.toggle('v57-more-open',show);
+  el('v57MoreControls').setAttribute('aria-expanded',String(show));
+  el('v57MoreControls').textContent=show?'Menos parámetros ▴':'Más parámetros ▾';
+  env?.resize?.();
+ };
  el('v57Realista').onclick=()=>setMode('realista');
  el('v57Transparencia').onclick=()=>setMode('transparencia');
  function setMode(next){
@@ -595,6 +712,10 @@ export function mountIndustrialV57Presentation({
   enterLab(){return setLabActive(true)},
   leaveLab(){return setLabActive(false)},
   refresh,get status(){return {mainMine:true,model:'V57',controlsBound:4,
+   uiLayout:{rightPanel:currentRightPanel,rightOpen:rightWorkspaceOpen,
+    leftOpen:leftOptionsOpen,exposition:doc.body.classList.contains('v57-exposition'),
+    moreControls:dock.classList.contains('v57-more-expanded'),
+    relocatedOriginalRegions:originalRegions.filter(x=>x.node.parentNode!==x.parent).length},
    pipeInspector:pipeInspector.status,
    p3p4:pumpInspection?.status??{
     active:false,certifiedWetMate:false,signedGapM:P3P4_SIGNED_GATE.measuredGapM,

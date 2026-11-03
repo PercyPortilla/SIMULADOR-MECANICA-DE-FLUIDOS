@@ -1,0 +1,1111 @@
+{
+  "states": {
+    "baseline": {
+      "title": "PULPA LAB · BERNOULLI–EULER",
+      "inspector": null,
+      "right": {
+        "x": 1370,
+        "y": 76,
+        "right": 1694,
+        "bottom": 719,
+        "width": 324,
+        "height": 643
+      },
+      "left": null,
+      "dock": {
+        "x": 66,
+        "y": 745,
+        "right": 1348,
+        "bottom": 838,
+        "width": 1282,
+        "height": 93
+      },
+      "dockBody": {
+        "x": 67,
+        "y": 785,
+        "right": 1347,
+        "bottom": 837,
+        "width": 1280,
+        "height": 52
+      },
+      "slider": {
+        "x": 77,
+        "y": 814,
+        "right": 384.5,
+        "bottom": 830,
+        "width": 307.5,
+        "height": 16
+      },
+      "viewport": {
+        "x": 0,
+        "y": 64,
+        "right": 1704,
+        "bottom": 845,
+        "width": 1704,
+        "height": 781
+      },
+      "tabs": [
+        {
+          "name": "indicators",
+          "selected": "true"
+        },
+        {
+          "name": "parameters",
+          "selected": "false"
+        },
+        {
+          "name": "results",
+          "selected": "false"
+        }
+      ],
+      "noRightOverlap": true,
+      "noLeftOverlap": true,
+      "elements": [
+        {
+          "id": "#v57Flow",
+          "present": true
+        },
+        {
+          "id": "#v57Pressure",
+          "present": true
+        },
+        {
+          "id": "#v57Power",
+          "present": true
+        },
+        {
+          "id": "#sections",
+          "present": true
+        },
+        {
+          "id": "#kpi-flow",
+          "present": true
+        },
+        {
+          "id": "#result-model",
+          "present": true
+        },
+        {
+          "id": "#v57Velocity",
+          "present": true
+        },
+        {
+          "id": "#v57Solids",
+          "present": true
+        },
+        {
+          "id": "#v57Rheology",
+          "present": true
+        },
+        {
+          "id": "#v57Pipe3DCanvas",
+          "present": true
+        }
+      ],
+      "active": true,
+      "sidebarParent": "parameters",
+      "rightPanel": "indicators",
+      "rightOpen": true,
+      "leftOpen": false,
+      "relocated": 3,
+      "velocity": 1.2,
+      "flow": "76.34 m³/h",
+      "pipe3d": false,
+      "sliderFullyVisible": true,
+      "documentScrollWidth": 1704,
+      "windowWidth": 1704,
+      "windowHeight": 845,
+      "screenshot": "qa-artifacts/euler-layout-indicators.png"
+    },
+    "inspected": {
+      "title": "PULPA LAB · BERNOULLI–EULER",
+      "inspector": {
+        "x": 66,
+        "y": 109,
+        "right": 1348,
+        "bottom": 719,
+        "width": 1282,
+        "height": 610
+      },
+      "right": {
+        "x": 1370,
+        "y": 76,
+        "right": 1694,
+        "bottom": 719,
+        "width": 324,
+        "height": 643
+      },
+      "left": null,
+      "dock": {
+        "x": 66,
+        "y": 745,
+        "right": 1348,
+        "bottom": 838,
+        "width": 1282,
+        "height": 93
+      },
+      "dockBody": {
+        "x": 67,
+        "y": 785,
+        "right": 1347,
+        "bottom": 837,
+        "width": 1280,
+        "height": 52
+      },
+      "slider": {
+        "x": 77,
+        "y": 814,
+        "right": 384.5,
+        "bottom": 830,
+        "width": 307.5,
+        "height": 16
+      },
+      "viewport": {
+        "x": 0,
+        "y": 64,
+        "right": 1704,
+        "bottom": 845,
+        "width": 1704,
+        "height": 781
+      },
+      "tabs": [
+        {
+          "name": "indicators",
+          "selected": "true"
+        },
+        {
+          "name": "parameters",
+          "selected": "false"
+        },
+        {
+          "name": "results",
+          "selected": "false"
+        }
+      ],
+      "noRightOverlap": true,
+      "noLeftOverlap": true,
+      "elements": [
+        {
+          "id": "#v57Flow",
+          "present": true
+        },
+        {
+          "id": "#v57Pressure",
+          "present": true
+        },
+        {
+          "id": "#v57Power",
+          "present": true
+        },
+        {
+          "id": "#sections",
+          "present": true
+        },
+        {
+          "id": "#kpi-flow",
+          "present": true
+        },
+        {
+          "id": "#result-model",
+          "present": true
+        },
+        {
+          "id": "#v57Velocity",
+          "present": true
+        },
+        {
+          "id": "#v57Solids",
+          "present": true
+        },
+        {
+          "id": "#v57Rheology",
+          "present": true
+        },
+        {
+          "id": "#v57Pipe3DCanvas",
+          "present": true
+        }
+      ],
+      "active": true,
+      "sidebarParent": "parameters",
+      "rightPanel": "indicators",
+      "rightOpen": true,
+      "leftOpen": false,
+      "relocated": 3,
+      "velocity": 1.2,
+      "flow": "76.34 m³/h",
+      "pipe3d": true,
+      "sliderFullyVisible": true,
+      "documentScrollWidth": 1704,
+      "windowWidth": 1704,
+      "windowHeight": 845,
+      "screenshot": "qa-artifacts/euler-layout-inspector.png"
+    },
+    "parameters": {
+      "title": "PULPA LAB · BERNOULLI–EULER",
+      "inspector": {
+        "x": 66,
+        "y": 109,
+        "right": 1348,
+        "bottom": 719,
+        "width": 1282,
+        "height": 610
+      },
+      "right": {
+        "x": 1370,
+        "y": 76,
+        "right": 1694,
+        "bottom": 719,
+        "width": 324,
+        "height": 643
+      },
+      "left": null,
+      "dock": {
+        "x": 66,
+        "y": 745,
+        "right": 1348,
+        "bottom": 838,
+        "width": 1282,
+        "height": 93
+      },
+      "dockBody": {
+        "x": 67,
+        "y": 785,
+        "right": 1347,
+        "bottom": 837,
+        "width": 1280,
+        "height": 52
+      },
+      "slider": {
+        "x": 77,
+        "y": 814,
+        "right": 384.5,
+        "bottom": 830,
+        "width": 307.5,
+        "height": 16
+      },
+      "viewport": {
+        "x": 0,
+        "y": 64,
+        "right": 1704,
+        "bottom": 845,
+        "width": 1704,
+        "height": 781
+      },
+      "tabs": [
+        {
+          "name": "indicators",
+          "selected": "false"
+        },
+        {
+          "name": "parameters",
+          "selected": "true"
+        },
+        {
+          "name": "results",
+          "selected": "false"
+        }
+      ],
+      "noRightOverlap": true,
+      "noLeftOverlap": true,
+      "elements": [
+        {
+          "id": "#v57Flow",
+          "present": true
+        },
+        {
+          "id": "#v57Pressure",
+          "present": true
+        },
+        {
+          "id": "#v57Power",
+          "present": true
+        },
+        {
+          "id": "#sections",
+          "present": true
+        },
+        {
+          "id": "#kpi-flow",
+          "present": true
+        },
+        {
+          "id": "#result-model",
+          "present": true
+        },
+        {
+          "id": "#v57Velocity",
+          "present": true
+        },
+        {
+          "id": "#v57Solids",
+          "present": true
+        },
+        {
+          "id": "#v57Rheology",
+          "present": true
+        },
+        {
+          "id": "#v57Pipe3DCanvas",
+          "present": true
+        }
+      ],
+      "active": true,
+      "sidebarParent": "parameters",
+      "rightPanel": "parameters",
+      "rightOpen": true,
+      "leftOpen": false,
+      "relocated": 3,
+      "velocity": 1.2,
+      "flow": "76.34 m³/h",
+      "pipe3d": true,
+      "sliderFullyVisible": true,
+      "documentScrollWidth": 1704,
+      "windowWidth": 1704,
+      "windowHeight": 845,
+      "screenshot": "qa-artifacts/euler-layout-parameters.png"
+    },
+    "results": {
+      "title": "PULPA LAB · BERNOULLI–EULER",
+      "inspector": {
+        "x": 66,
+        "y": 109,
+        "right": 1348,
+        "bottom": 719,
+        "width": 1282,
+        "height": 610
+      },
+      "right": {
+        "x": 1370,
+        "y": 76,
+        "right": 1694,
+        "bottom": 719,
+        "width": 324,
+        "height": 643
+      },
+      "left": null,
+      "dock": {
+        "x": 66,
+        "y": 745,
+        "right": 1348,
+        "bottom": 838,
+        "width": 1282,
+        "height": 93
+      },
+      "dockBody": {
+        "x": 67,
+        "y": 785,
+        "right": 1347,
+        "bottom": 837,
+        "width": 1280,
+        "height": 52
+      },
+      "slider": {
+        "x": 77,
+        "y": 814,
+        "right": 384.5,
+        "bottom": 830,
+        "width": 307.5,
+        "height": 16
+      },
+      "viewport": {
+        "x": 0,
+        "y": 64,
+        "right": 1704,
+        "bottom": 845,
+        "width": 1704,
+        "height": 781
+      },
+      "tabs": [
+        {
+          "name": "indicators",
+          "selected": "false"
+        },
+        {
+          "name": "parameters",
+          "selected": "false"
+        },
+        {
+          "name": "results",
+          "selected": "true"
+        }
+      ],
+      "noRightOverlap": true,
+      "noLeftOverlap": true,
+      "elements": [
+        {
+          "id": "#v57Flow",
+          "present": true
+        },
+        {
+          "id": "#v57Pressure",
+          "present": true
+        },
+        {
+          "id": "#v57Power",
+          "present": true
+        },
+        {
+          "id": "#sections",
+          "present": true
+        },
+        {
+          "id": "#kpi-flow",
+          "present": true
+        },
+        {
+          "id": "#result-model",
+          "present": true
+        },
+        {
+          "id": "#v57Velocity",
+          "present": true
+        },
+        {
+          "id": "#v57Solids",
+          "present": true
+        },
+        {
+          "id": "#v57Rheology",
+          "present": true
+        },
+        {
+          "id": "#v57Pipe3DCanvas",
+          "present": true
+        }
+      ],
+      "active": true,
+      "sidebarParent": "parameters",
+      "rightPanel": "results",
+      "rightOpen": true,
+      "leftOpen": false,
+      "relocated": 3,
+      "velocity": 1.2,
+      "flow": "76.34 m³/h",
+      "pipe3d": true,
+      "sliderFullyVisible": true,
+      "documentScrollWidth": 1704,
+      "windowWidth": 1704,
+      "windowHeight": 845,
+      "screenshot": "qa-artifacts/euler-layout-analysis.png"
+    },
+    "options": {
+      "title": "PULPA LAB · BERNOULLI–EULER",
+      "inspector": {
+        "x": 351,
+        "y": 109,
+        "right": 1348,
+        "bottom": 719,
+        "width": 997,
+        "height": 610
+      },
+      "right": {
+        "x": 1370,
+        "y": 76,
+        "right": 1694,
+        "bottom": 719,
+        "width": 324,
+        "height": 643
+      },
+      "left": {
+        "x": 64,
+        "y": 114,
+        "right": 339,
+        "bottom": 719,
+        "width": 275,
+        "height": 605
+      },
+      "dock": {
+        "x": 351,
+        "y": 745,
+        "right": 1348,
+        "bottom": 838,
+        "width": 997,
+        "height": 93
+      },
+      "dockBody": {
+        "x": 352,
+        "y": 785,
+        "right": 1347,
+        "bottom": 837,
+        "width": 995,
+        "height": 52
+      },
+      "slider": {
+        "x": 362,
+        "y": 814,
+        "right": 598.25,
+        "bottom": 830,
+        "width": 236.25,
+        "height": 16
+      },
+      "viewport": {
+        "x": 0,
+        "y": 64,
+        "right": 1704,
+        "bottom": 845,
+        "width": 1704,
+        "height": 781
+      },
+      "tabs": [
+        {
+          "name": "indicators",
+          "selected": "false"
+        },
+        {
+          "name": "parameters",
+          "selected": "false"
+        },
+        {
+          "name": "results",
+          "selected": "true"
+        }
+      ],
+      "noRightOverlap": true,
+      "noLeftOverlap": true,
+      "elements": [
+        {
+          "id": "#v57Flow",
+          "present": true
+        },
+        {
+          "id": "#v57Pressure",
+          "present": true
+        },
+        {
+          "id": "#v57Power",
+          "present": true
+        },
+        {
+          "id": "#sections",
+          "present": true
+        },
+        {
+          "id": "#kpi-flow",
+          "present": true
+        },
+        {
+          "id": "#result-model",
+          "present": true
+        },
+        {
+          "id": "#v57Velocity",
+          "present": true
+        },
+        {
+          "id": "#v57Solids",
+          "present": true
+        },
+        {
+          "id": "#v57Rheology",
+          "present": true
+        },
+        {
+          "id": "#v57Pipe3DCanvas",
+          "present": true
+        }
+      ],
+      "active": true,
+      "sidebarParent": "parameters",
+      "rightPanel": "results",
+      "rightOpen": true,
+      "leftOpen": true,
+      "relocated": 3,
+      "velocity": 1.2,
+      "flow": "76.34 m³/h",
+      "pipe3d": true,
+      "sliderFullyVisible": true,
+      "documentScrollWidth": 1704,
+      "windowWidth": 1704,
+      "windowHeight": 845,
+      "screenshot": "qa-artifacts/euler-layout-options.png"
+    },
+    "exposition": {
+      "title": "PULPA LAB · BERNOULLI–EULER",
+      "inspector": {
+        "x": 15,
+        "y": 73,
+        "right": 1677,
+        "bottom": 836,
+        "width": 1662,
+        "height": 763
+      },
+      "right": null,
+      "left": null,
+      "dock": null,
+      "dockBody": {
+        "x": 0,
+        "y": 0,
+        "right": 0,
+        "bottom": 0,
+        "width": 0,
+        "height": 0
+      },
+      "slider": {
+        "x": 0,
+        "y": 0,
+        "right": 0,
+        "bottom": 0,
+        "width": 0,
+        "height": 0
+      },
+      "viewport": {
+        "x": 0,
+        "y": 64,
+        "right": 1704,
+        "bottom": 845,
+        "width": 1704,
+        "height": 781
+      },
+      "tabs": [
+        {
+          "name": "indicators",
+          "selected": "false"
+        },
+        {
+          "name": "parameters",
+          "selected": "false"
+        },
+        {
+          "name": "results",
+          "selected": "true"
+        }
+      ],
+      "noRightOverlap": true,
+      "noLeftOverlap": true,
+      "elements": [
+        {
+          "id": "#v57Flow",
+          "present": true
+        },
+        {
+          "id": "#v57Pressure",
+          "present": true
+        },
+        {
+          "id": "#v57Power",
+          "present": true
+        },
+        {
+          "id": "#sections",
+          "present": true
+        },
+        {
+          "id": "#kpi-flow",
+          "present": true
+        },
+        {
+          "id": "#result-model",
+          "present": true
+        },
+        {
+          "id": "#v57Velocity",
+          "present": true
+        },
+        {
+          "id": "#v57Solids",
+          "present": true
+        },
+        {
+          "id": "#v57Rheology",
+          "present": true
+        },
+        {
+          "id": "#v57Pipe3DCanvas",
+          "present": true
+        }
+      ],
+      "active": true,
+      "sidebarParent": "parameters",
+      "rightPanel": "results",
+      "rightOpen": false,
+      "leftOpen": false,
+      "relocated": 3,
+      "velocity": 1.2,
+      "flow": "76.34 m³/h",
+      "pipe3d": true,
+      "sliderFullyVisible": true,
+      "documentScrollWidth": 1704,
+      "windowWidth": 1704,
+      "windowHeight": 845,
+      "screenshot": "qa-artifacts/euler-layout-exposition.png"
+    },
+    "laptop1280": {
+      "title": "PULPA LAB · BERNOULLI–EULER",
+      "inspector": {
+        "x": 66,
+        "y": 109,
+        "right": 956,
+        "bottom": 594,
+        "width": 890,
+        "height": 485
+      },
+      "right": {
+        "x": 978,
+        "y": 76,
+        "right": 1270,
+        "bottom": 594,
+        "width": 292,
+        "height": 518
+      },
+      "left": null,
+      "dock": {
+        "x": 66,
+        "y": 620,
+        "right": 956,
+        "bottom": 713,
+        "width": 890,
+        "height": 93
+      },
+      "dockBody": {
+        "x": 67,
+        "y": 660,
+        "right": 955,
+        "bottom": 712,
+        "width": 888,
+        "height": 52
+      },
+      "slider": {
+        "x": 77,
+        "y": 689,
+        "right": 286.5,
+        "bottom": 705,
+        "width": 209.5,
+        "height": 16
+      },
+      "viewport": {
+        "x": 0,
+        "y": 64,
+        "right": 1280,
+        "bottom": 720,
+        "width": 1280,
+        "height": 656
+      },
+      "tabs": [
+        {
+          "name": "indicators",
+          "selected": "false"
+        },
+        {
+          "name": "parameters",
+          "selected": "false"
+        },
+        {
+          "name": "results",
+          "selected": "true"
+        }
+      ],
+      "noRightOverlap": true,
+      "noLeftOverlap": true,
+      "elements": [
+        {
+          "id": "#v57Flow",
+          "present": true
+        },
+        {
+          "id": "#v57Pressure",
+          "present": true
+        },
+        {
+          "id": "#v57Power",
+          "present": true
+        },
+        {
+          "id": "#sections",
+          "present": true
+        },
+        {
+          "id": "#kpi-flow",
+          "present": true
+        },
+        {
+          "id": "#result-model",
+          "present": true
+        },
+        {
+          "id": "#v57Velocity",
+          "present": true
+        },
+        {
+          "id": "#v57Solids",
+          "present": true
+        },
+        {
+          "id": "#v57Rheology",
+          "present": true
+        },
+        {
+          "id": "#v57Pipe3DCanvas",
+          "present": true
+        }
+      ],
+      "active": true,
+      "sidebarParent": "parameters",
+      "rightPanel": "results",
+      "rightOpen": true,
+      "leftOpen": false,
+      "relocated": 3,
+      "velocity": 1.2,
+      "flow": "76.34 m³/h",
+      "pipe3d": true,
+      "sliderFullyVisible": true,
+      "documentScrollWidth": 1280,
+      "windowWidth": 1280,
+      "windowHeight": 720,
+      "screenshot": "qa-artifacts/euler-layout-laptop-1280.png"
+    },
+    "mobilePanel": {
+      "title": "PULPA LAB · BERNOULLI–EULER",
+      "inspector": null,
+      "right": {
+        "x": 6,
+        "y": 115,
+        "right": 754,
+        "bottom": 690,
+        "width": 748,
+        "height": 575
+      },
+      "left": null,
+      "dock": {
+        "x": 6,
+        "y": 692,
+        "right": 754,
+        "bottom": 814,
+        "width": 748,
+        "height": 122
+      },
+      "dockBody": {
+        "x": 7,
+        "y": 766,
+        "right": 753,
+        "bottom": 861,
+        "width": 746,
+        "height": 95
+      },
+      "slider": {
+        "x": 17,
+        "y": 795,
+        "right": 375,
+        "bottom": 811,
+        "width": 358,
+        "height": 16
+      },
+      "viewport": {
+        "x": 0,
+        "y": 58,
+        "right": 760,
+        "bottom": 820,
+        "width": 760,
+        "height": 762
+      },
+      "tabs": [
+        {
+          "name": "indicators",
+          "selected": "false"
+        },
+        {
+          "name": "parameters",
+          "selected": "false"
+        },
+        {
+          "name": "results",
+          "selected": "true"
+        }
+      ],
+      "noRightOverlap": true,
+      "noLeftOverlap": true,
+      "elements": [
+        {
+          "id": "#v57Flow",
+          "present": true
+        },
+        {
+          "id": "#v57Pressure",
+          "present": true
+        },
+        {
+          "id": "#v57Power",
+          "present": true
+        },
+        {
+          "id": "#sections",
+          "present": true
+        },
+        {
+          "id": "#kpi-flow",
+          "present": true
+        },
+        {
+          "id": "#result-model",
+          "present": true
+        },
+        {
+          "id": "#v57Velocity",
+          "present": true
+        },
+        {
+          "id": "#v57Solids",
+          "present": true
+        },
+        {
+          "id": "#v57Rheology",
+          "present": true
+        },
+        {
+          "id": "#v57Pipe3DCanvas",
+          "present": true
+        }
+      ],
+      "active": true,
+      "sidebarParent": "parameters",
+      "rightPanel": "results",
+      "rightOpen": true,
+      "leftOpen": false,
+      "relocated": 3,
+      "velocity": 1.2,
+      "flow": "76.34 m³/h",
+      "pipe3d": true,
+      "sliderFullyVisible": true,
+      "documentScrollWidth": 760,
+      "windowWidth": 760,
+      "windowHeight": 820,
+      "screenshot": "qa-artifacts/euler-layout-mobile-panel.png"
+    },
+    "mobileInspector": {
+      "title": "PULPA LAB · BERNOULLI–EULER",
+      "inspector": {
+        "x": 6,
+        "y": 116,
+        "right": 754,
+        "bottom": 688,
+        "width": 748,
+        "height": 572
+      },
+      "right": null,
+      "left": null,
+      "dock": {
+        "x": 6,
+        "y": 692,
+        "right": 754,
+        "bottom": 814,
+        "width": 748,
+        "height": 122
+      },
+      "dockBody": {
+        "x": 7,
+        "y": 766,
+        "right": 753,
+        "bottom": 861,
+        "width": 746,
+        "height": 95
+      },
+      "slider": {
+        "x": 17,
+        "y": 795,
+        "right": 375,
+        "bottom": 811,
+        "width": 358,
+        "height": 16
+      },
+      "viewport": {
+        "x": 0,
+        "y": 58,
+        "right": 760,
+        "bottom": 820,
+        "width": 760,
+        "height": 762
+      },
+      "tabs": [
+        {
+          "name": "indicators",
+          "selected": "false"
+        },
+        {
+          "name": "parameters",
+          "selected": "false"
+        },
+        {
+          "name": "results",
+          "selected": "true"
+        }
+      ],
+      "noRightOverlap": true,
+      "noLeftOverlap": true,
+      "elements": [
+        {
+          "id": "#v57Flow",
+          "present": true
+        },
+        {
+          "id": "#v57Pressure",
+          "present": true
+        },
+        {
+          "id": "#v57Power",
+          "present": true
+        },
+        {
+          "id": "#sections",
+          "present": true
+        },
+        {
+          "id": "#kpi-flow",
+          "present": true
+        },
+        {
+          "id": "#result-model",
+          "present": true
+        },
+        {
+          "id": "#v57Velocity",
+          "present": true
+        },
+        {
+          "id": "#v57Solids",
+          "present": true
+        },
+        {
+          "id": "#v57Rheology",
+          "present": true
+        },
+        {
+          "id": "#v57Pipe3DCanvas",
+          "present": true
+        }
+      ],
+      "active": true,
+      "sidebarParent": "parameters",
+      "rightPanel": "results",
+      "rightOpen": false,
+      "leftOpen": false,
+      "relocated": 3,
+      "velocity": 1.2,
+      "flow": "76.34 m³/h",
+      "pipe3d": true,
+      "sliderFullyVisible": true,
+      "documentScrollWidth": 760,
+      "windowWidth": 760,
+      "windowHeight": 820,
+      "screenshot": "qa-artifacts/euler-layout-mobile-inspector.png"
+    }
+  },
+  "moreControls": {
+    "opened": true,
+    "d50Visible": true,
+    "nFieldPresent": true,
+    "originalRheologyInputPresent": true
+  },
+  "sliderPropagation": {
+    "beforeVelocity": 1.2,
+    "afterVelocity": 2.2
+  },
+  "restored": {
+    "labOff": true,
+    "sidebarBack": true,
+    "summaryBack": true,
+    "resultsBack": true,
+    "scopeOff": true
+  },
+  "exceptions": [],
+  "pass": true
+}

@@ -1,6 +1,7 @@
 import './styles.css';
 import './ui/industrialV57Presentation.css';
 import './ui/slurryPipeInspector.css';
+import './ui/eulerLayoutCompact.css';
 import { mountIndustrialV57Presentation } from './ui/industrialV57Presentation.js';
 import { attachNativeClassFeedL349 } from './babylon/assets/nativeClassFeedL349.js';
 import { attachNativeClassHeaderL352 } from './babylon/assets/nativeClassHeaderL352.js';

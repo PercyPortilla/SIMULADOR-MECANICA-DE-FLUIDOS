@@ -1,0 +1,209 @@
+/*
+ * LAB EULER ONLY: spatially exclusive, reversible workbench.
+ * Existing controls, IDs, model callbacks and scientific readouts are preserved.
+ */
+body:not(.v57-industrial) .v57-toolrail,
+body:not(.v57-industrial) .v57-right-workspace{display:none!important}
+body.v57-industrial{
+ --euler-rail:66px;
+ --euler-right:344px;
+ --euler-bottom:126px;
+}
+body.v57-industrial:not(.v57-right-open){--euler-right:18px}
+body.v57-industrial.v57-left-open{--euler-rail:351px}
+body.v57-industrial.v57-more-open{--euler-bottom:190px}
+body.v57-industrial.v57-exposition{--euler-rail:15px;--euler-right:15px;--euler-bottom:16px}
+body.v57-industrial .topbar{height:64px;padding:0 14px;gap:10px;min-width:0}
+body.v57-industrial .topbar>div:not(.v57-top-actions){flex-shrink:0;min-width:172px}
+body.v57-industrial .topbar h1{font-size:18px;line-height:1.1}
+body.v57-industrial .release-tag{font-size:9px}
+body.v57-industrial .workspace{height:calc(100dvh - 64px)}
+body.v57-industrial .content{height:100%;min-height:0;padding:0!important;overflow:hidden}
+body.v57-industrial .workspace-tab-panel[data-tab-panel="circuit"]{
+ height:100%;min-height:0;max-height:100%;overflow:hidden}
+body.v57-industrial .scene-card{
+ height:100%!important;flex:1 1 auto;min-height:0;max-height:100%;
+ margin:0!important;padding:0!important}
+body.v57-industrial .scene-viewport{height:100%!important;min-height:0!important;max-height:100%}
+body.v57-industrial .v57-top-actions{gap:6px;min-width:0}
+body.v57-industrial .v57-top-actions button{font-size:11px;padding:7px 8px;white-space:nowrap}
+body.v57-industrial .v57-top-actions label{padding:5px 8px;gap:5px}
+body.v57-industrial .v57-top-actions select{max-width:176px;font-size:11px}
+body.v57-industrial #v57GoParameters,
+body.v57-industrial #v57GoResults{display:none}
+body.v57-industrial .v57-process-ribbon{top:9px;left:calc(var(--euler-rail) + 12px);
+ transform:none;max-width:calc(100% - var(--euler-right) - var(--euler-rail) - 24px);
+ padding:5px 8px;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.87}
+body.v57-industrial.v57-pipe-open .v57-process-ribbon{display:none}
+/* The side toolrail is a small, persistent navigation element, not a drawer. */
+body.v57-industrial .v57-toolrail{position:absolute;z-index:18;display:flex;flex-direction:column;
+ gap:7px;top:50px;left:8px;width:50px;padding:7px 5px;
+ border:1px solid #3b6078;border-radius:10px;background:#0c2233ed;
+ box-shadow:0 8px 24px #06121bcc}
+body.v57-industrial .v57-toolrail button{display:grid;justify-items:center;align-content:center;
+ gap:4px;min-height:50px;padding:6px 2px;background:#152f43;
+ color:#bce0ee;border:1px solid #385870;border-radius:7px;
+ font-size:20px;cursor:pointer}
+body.v57-industrial .v57-toolrail button small{font-size:8px;line-height:1.1}
+body.v57-industrial .v57-toolrail button.selected,
+body.v57-industrial .v57-toolrail button:hover{border-color:#60cbf0;background:#16516b;color:#fff}
+body.v57-industrial.v57-exposition .v57-toolrail{background:transparent;box-shadow:none;border:0;
+ left:auto;right:57px;top:14px;width:42px;z-index:26}
+body.v57-industrial.v57-exposition .v57-toolrail button:not(#v57RailFocus){display:none}
+body.v57-industrial .v57-side-left{top:50px;left:64px;bottom:var(--euler-bottom);
+ width:275px;max-height:none;padding:12px;box-shadow:0 7px 20px #020a12a8}
+body.v57-industrial .v57-side-left h3{margin:9px 0 6px}
+body.v57-industrial .v57-side-left .v57-modes button{font-size:18px;padding:8px 5px;gap:4px}
+body.v57-industrial .v57-side-left .v57-modes button b{font-size:11px}
+body.v57-industrial .v57-side-left .v57-help-list{gap:10px}
+body.v57-industrial .v57-side-left .v57-help-list label{font-size:11px}
+body.v57-industrial #v57ReopenOptions{display:none!important}
+/* Exactly one right-hand column: indicators OR the original live input DOM OR results. */
+body.v57-industrial .v57-right-workspace{position:absolute;display:flex;flex-direction:column;
+ z-index:19;top:12px;right:10px;bottom:var(--euler-bottom);width:324px;
+ min-width:0;min-height:0;border:1px solid #42687d;border-radius:11px;
+ background:#0d2030f5;box-shadow:0 10px 26px #0007;overflow:hidden;color:#e5f4fc}
+body.v57-industrial .v57-right-tabs{display:grid;grid-template-columns:1fr 1fr 1fr 28px;gap:3px;
+ padding:7px;background:#102a3a;border-bottom:1px solid #3c6073;flex:0 0 auto}
+body.v57-industrial .v57-right-tabs button{font-size:10px;cursor:pointer;
+ background:#152f43;color:#9fc0d2;border:1px solid #38576a;border-radius:6px;padding:8px 3px}
+body.v57-industrial .v57-right-tabs button.selected,
+body.v57-industrial .v57-right-tabs button[aria-selected="true"]{
+ background:#1c5571;border-color:#63c6e5;color:#f0fbff}
+body.v57-industrial .v57-right-stage{flex:1;min-height:0;min-width:0;overflow:auto;
+ padding:9px 10px;scrollbar-width:thin;scrollbar-color:#3d6a7b transparent}
+body.v57-industrial .v57-right-stage[hidden]{display:none!important}
+body.v57-industrial .v57-right-stage .v57-side-right{position:static!important;
+ display:block!important;width:100%;max-height:none;min-height:0;
+ padding:0;background:none;border:0;box-shadow:none;overflow:visible;
+ backdrop-filter:none}
+body.v57-industrial .v57-right-stage .v57-side-right .v57-side-title{display:none}
+body.v57-industrial .v57-right-stage .v57-gauge{padding:9px 7px;margin-top:6px;gap:6px}
+body.v57-industrial .v57-right-stage .v57-gauge strong{font-size:14px}
+body.v57-industrial .v57-right-stage .v57-gauge div{font-size:11px}
+body.v57-industrial .v57-right-stage .v57-gauge small{font-size:9px}
+body.v57-industrial .v57-right-stage .sidebar{display:block!important;
+ position:static!important;inset:auto!important;width:100%!important;
+ height:auto!important;max-height:none!important;overflow:visible!important;
+ padding:2px!important;margin:0!important;background:none!important;
+ border:0!important;box-shadow:none!important}
+body.v57-industrial .v57-right-stage .sidebar .sidebar-heading{margin:5px 0 10px}
+body.v57-industrial .v57-right-stage .sidebar .scenario-panel{min-width:0}
+body.v57-industrial .v57-right-stage .sidebar #sections{min-width:0}
+body.v57-industrial .v57-right-stage .sidebar input:not([type="checkbox"]),
+body.v57-industrial .v57-right-stage .sidebar select{max-width:100%;min-width:0}
+body.v57-industrial .v57-right-stage .hydraulic-summary,
+body.v57-industrial .v57-right-stage .result-panel{
+ display:block!important;position:static!important;inset:auto!important;
+ width:100%!important;min-width:0;min-height:0;height:auto!important;
+ margin:0 0 10px!important;padding:9px!important;
+ border:1px solid #315165;border-radius:8px;box-shadow:none;overflow:visible;
+ background:#102637;color:#e1f1f8}
+body.v57-industrial .v57-right-stage .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+body.v57-industrial .v57-right-stage .kpi-grid article{min-width:0;padding:9px 5px}
+body.v57-industrial .v57-right-stage .result-metrics{grid-template-columns:1fr 1fr;gap:7px}
+body.v57-industrial .v57-right-stage .chart-grid{display:block}
+body.v57-industrial .v57-right-stage .result-chart{max-width:100%;overflow:hidden}
+body.v57-industrial .v57-right-stage .technical-section-head h3,
+body.v57-industrial .v57-right-stage .result-panel h3{font-size:13px}
+body.v57-industrial .v57-reopen-right{top:60px;right:10px}
+/* Full-sized inspector is a nonoverlapping center column, not a floating window. */
+body.v57-industrial .v57-pipe-inspector{
+ position:absolute;left:var(--euler-rail);right:calc(var(--euler-right) + 12px);
+ top:45px;bottom:var(--euler-bottom);width:auto;height:auto;
+ min-width:0;min-height:0;border-radius:9px;
+ box-shadow:0 9px 26px #0008}
+body.v57-industrial .v57-pipe-bar{min-height:44px;padding:7px 9px;gap:6px}
+body.v57-industrial .v57-pipe-actions{gap:4px}
+body.v57-industrial .v57-pipe-actions button{padding:7px 6px;font-size:10px;white-space:nowrap}
+body.v57-industrial .v57-pipe-hero{min-height:120px}
+body.v57-industrial .v57-pipe-diagnostics{min-height:120px;height:24%;max-height:160px}
+body.v57-industrial .v57-pipe-metrics b{font-size:13px}
+body.v57-industrial.v57-pipe-expanded .v57-pipe-inspector{
+ position:absolute;left:var(--euler-rail);right:calc(var(--euler-right) + 12px);
+ top:12px;bottom:var(--euler-bottom);width:auto;height:auto;min-height:0;
+ z-index:17;box-shadow:0 14px 35px #0008}
+body.v57-industrial .v57-scenario-explanation{z-index:21;
+ top:48px;left:var(--euler-rail);transform:none;
+ width:min(370px,calc(100% - var(--euler-right) - var(--euler-rail) - 18px));
+ min-width:0;max-height:30vh;overflow:auto}
+body.v57-industrial .v57-p3p4-audit{top:48px;left:var(--euler-rail);right:calc(var(--euler-right) + 12px);
+ min-width:0;width:auto;max-height:32vh;overflow:auto}
+/* A compact control row. Extra scientific parameters remain accessible, not removed. */
+body.v57-industrial .v57-dock{bottom:7px;left:var(--euler-rail);right:calc(var(--euler-right) + 12px);
+ border-radius:10px;max-height:114px}
+body.v57-industrial .v57-dock.v57-more-expanded{max-height:190px}
+body.v57-industrial .v57-dock-header{padding:5px 9px;gap:6px}
+body.v57-industrial .v57-dock-header strong{font-size:11px}
+body.v57-industrial .v57-dock-header select{padding:5px;max-width:122px;font-size:10px}
+body.v57-industrial .v57-dock-header label{font-size:10px}
+body.v57-industrial .v57-dock-header button{padding:6px 7px;font-size:10px}
+body.v57-industrial .v57-control-body{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+ gap:7px 10px;padding:9px 10px 7px;max-height:130px;overflow:auto}
+body.v57-industrial .v57-control-body label{font-size:10px;gap:4px}
+body.v57-industrial .v57-control-body input{margin:2px 0 0;min-height:14px}
+body.v57-industrial .v57-control-body [data-euler-extra="true"]{display:none}
+body.v57-industrial .v57-more-expanded .v57-control-body [data-euler-extra="true"]{display:flex}
+body.v57-industrial .v57-control-body .v57-dock-help{display:none}
+body.v57-industrial .v57-dock.minimized{max-height:0!important;overflow:hidden}
+body.v57-industrial .v57-reopen-dock{bottom:12px;left:calc(var(--euler-rail) + 8px);transform:none}
+body.v57-industrial.v57-exposition .v57-right-workspace,
+body.v57-industrial.v57-exposition .v57-dock,
+body.v57-industrial.v57-exposition .v57-process-ribbon{display:none!important}
+body.v57-industrial.v57-exposition .v57-pipe-inspector{top:9px;bottom:9px}
+body.v57-industrial.v57-exposition .v57-reopen-dock{display:none}
+@media(max-width:1400px){
+ body.v57-industrial{--euler-right:312px}
+ body.v57-industrial .v57-right-workspace{width:292px}
+ body.v57-industrial .topbar h1{font-size:16px}
+ body.v57-industrial .v57-top-actions{gap:4px}
+ body.v57-industrial .v57-top-actions button{font-size:10px;padding:6px}
+ body.v57-industrial .v57-pipe-bar{flex-wrap:wrap}
+ body.v57-industrial .v57-pipe-diagnostics{min-height:110px}
+}
+@media(max-width:1050px){
+ body.v57-industrial{--euler-right:280px}
+ body.v57-industrial .v57-right-workspace{width:260px}
+ body.v57-industrial .v57-top-actions label{display:none}
+ body.v57-industrial .v57-pipe-actions button{font-size:9px}
+ body.v57-industrial .v57-pipe-diagnostics{grid-template-columns:repeat(2,minmax(0,1fr));
+  height:30%;min-height:140px;max-height:180px}
+ body.v57-industrial .v57-control-body{grid-template-columns:repeat(2,minmax(0,1fr))}
+ body.v57-industrial .v57-dock{max-height:125px}
+}
+@media(max-width:800px){
+ body.v57-industrial{--euler-rail:8px;--euler-right:8px;--euler-bottom:132px}
+ body.v57-industrial .workspace{height:calc(100dvh - 58px);min-height:0}
+ body.v57-industrial .scene-card{
+  position:fixed!important;top:58px;bottom:0;
+  height:calc(100dvh - 58px)!important;max-height:calc(100dvh - 58px);
+  min-height:0!important}
+ body.v57-industrial .scene-viewport{height:100%!important;min-height:0!important}
+ body.v57-industrial.v57-left-open{--euler-rail:8px}
+ body.v57-industrial.v57-right-open{--euler-right:8px}
+ body.v57-industrial .v57-toolrail{top:8px;left:6px;width:auto;flex-direction:row;padding:3px;gap:3px}
+ body.v57-industrial .v57-toolrail button{min-height:33px;width:44px;padding:2px;font-size:16px}
+ body.v57-industrial .v57-toolrail button small{font-size:7px}
+ body.v57-industrial .v57-side-left{left:6px;top:57px;width:min(270px,calc(100vw - 12px));
+  bottom:130px;z-index:23}
+ body.v57-industrial .v57-right-workspace{left:6px;right:6px;top:57px;bottom:130px;
+  width:auto;z-index:22}
+ body.v57-industrial.v57-right-open .v57-pipe-inspector{display:none!important}
+ body.v57-industrial .v57-pipe-inspector{top:58px;bottom:132px;left:6px;right:6px}
+ body.v57-industrial.v57-pipe-expanded .v57-pipe-inspector{top:57px;bottom:132px;left:6px;right:6px}
+ body.v57-industrial .v57-pipe-bar{display:flex;flex-direction:column;align-items:stretch;
+  gap:4px;min-height:0;padding:6px 7px}
+ body.v57-industrial .v57-pipe-bar strong{font-size:11px}
+ body.v57-industrial .v57-pipe-actions{width:100%;min-width:0;max-width:100%;
+  justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;
+  overscroll-behavior-inline:contain;padding-bottom:3px}
+ body.v57-industrial .v57-pipe-actions button{flex:0 0 auto;white-space:nowrap}
+ body.v57-industrial .v57-pipe-hero{min-height:120px}
+ body.v57-industrial .v57-dock{left:6px;right:6px;bottom:6px;max-height:122px}
+ body.v57-industrial .v57-reopen-right{top:10px}
+ body.v57-industrial .v57-pipe-diagnostics{height:auto;min-height:190px;max-height:240px}
+ body.v57-industrial .v57-p3p4-audit{top:58px;left:6px;right:6px;z-index:20}
+ body.v57-industrial .v57-process-ribbon{display:none}
+ body.v57-industrial .v57-top-actions #v57InspectP3P4{display:none}
+ body.v57-industrial .v57-top-actions #v57OpenPipeInspector{display:none}
+}

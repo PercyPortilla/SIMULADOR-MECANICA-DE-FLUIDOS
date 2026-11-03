@@ -118,7 +118,8 @@ export function mountSlurryPipeInspector({document: doc, viewport, getState, get
   }
   function rounded(ctx, x, y, w, h, r) {
     ctx.beginPath();
-    ctx.roundRect(x, y, w, h, Math.min(r, w / 2, h / 2));
+    ctx.roundRect(x,y,Math.max(1,w),Math.max(1,h),
+      Math.max(0,Math.min(r,w/2,h/2)));
   }
   function drawHero(time, m) {
     const {ctx:c, w, h} = fit(canvases[0]);
@@ -276,6 +277,7 @@ export function mountSlurryPipeInspector({document: doc, viewport, getState, get
   }
   function drawWear(m) {
     const {ctx:c,w,h}=fit(canvases[3]);if(!c)return;c.clearRect(0,0,w,h);
+    if(w<50||h<60)return;
     const x=13,y=24,ww=w-26,hh=h-46;
     const metal=c.createLinearGradient(0,y,0,y+hh);
     metal.addColorStop(0,'#7f969f');metal.addColorStop(.6,'#263f4d');metal.addColorStop(1,'#18232c');
