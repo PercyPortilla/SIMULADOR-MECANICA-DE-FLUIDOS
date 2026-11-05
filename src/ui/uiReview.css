@@ -1,0 +1,150 @@
+/* UX-REVIEW 2026-11-04 | Kowalski × Taste × Impeccable
+ * Scoped to the standard application workspace. The protected Euler lab
+ * activates body.v57-industrial, so this sheet does not style that view or
+ * any .scene-* / Babylon canvas controls, cameras, assets or 3D surfaces.
+ */
+body:not(.v57-industrial) .workspace { grid-template-columns: 348px minmax(0, 1fr); }
+body:not(.v57-industrial) .sidebar { padding: 24px 20px; }
+body:not(.v57-industrial) .content { max-width: 1370px; padding: 34px clamp(22px, 3.5vw, 58px); }
+body:not(.v57-industrial) .sidebar-heading { font-size: 12px; letter-spacing: .07em; margin-bottom: 16px; }
+body:not(.v57-industrial) .sidebar-heading small { color: var(--ui-muted); font-size: 11px; }
+body:not(.v57-industrial) .parameter-section > summary { font-size: 14px; padding: 17px 1px; }
+body:not(.v57-industrial) .parameter-advanced > summary { font-size: 12px; }
+body:not(.v57-industrial) .parameter-field > span { font-size: 13px; }
+body:not(.v57-industrial) .parameter-field-unit { font-size: 11px; }
+body:not(.v57-industrial) .field-help { font-size: 12px; line-height: 1.5; }
+body:not(.v57-industrial) .empty-section { color: var(--ui-muted); font-size: 12px; }
+body:not(.v57-industrial) .parameter-field input,
+body:not(.v57-industrial) .parameter-field select { min-height: 40px; font-size: 14px; }
+body:not(.v57-industrial) .parameter-field input[type='checkbox'] { width: 18px; height: 18px; min-height: 18px; }
+body:not(.v57-industrial) .segment-grid label { font-size: 12px; }
+body:not(.v57-industrial) .segment-grid input,
+body:not(.v57-industrial) .pump-row input { min-height: 36px; font-size: 12px; }
+body:not(.v57-industrial) .pump-head,
+body:not(.v57-industrial) .segment-accessories summary { font-size: 11px; }
+body:not(.v57-industrial) .segment-action,
+body:not(.v57-industrial) .segment-remove { min-height: 37px; padding: 8px 10px; font-size: 12px; }
+body:not(.v57-industrial) .pump-curve-table { overflow-x: auto; padding-bottom: 6px; }
+body:not(.v57-industrial) .pump-row { min-width: 285px; grid-template-columns: repeat(4, minmax(0,1fr)) 28px; gap: 5px; }
+
+/* One clear scenario selector, one principal save action, secondary actions. */
+body:not(.v57-industrial) .scenario-panel { margin-bottom: 12px; }
+body:not(.v57-industrial) .scenario-panel > input { height: 42px; margin-bottom: 10px; font-size: 13px; }
+body:not(.v57-industrial) .scenario-primary-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+body:not(.v57-industrial) .scenario-select-label { display: grid; grid-column: 1 / -1; gap: 5px; font-size: 12px; color: var(--ui-muted); }
+body:not(.v57-industrial) .scenario-select-label select { width: 100%; height: 40px; padding: 7px 10px; border: 1px solid var(--ui-border); border-radius: 6px; background: var(--ui-input); color: var(--ui-text); font-size: 13px; }
+body:not(.v57-industrial) .scenario-primary-row > button,
+body:not(.v57-industrial) .scenario-more summary { min-width: 0; min-height: 44px; padding: 7px 5px; font-size: 11px; line-height: 1.3; border-radius: 6px; text-align: center; }
+body:not(.v57-industrial) #scenario-save { background: var(--ui-accent); border-color: var(--ui-accent); color: #172027; font-weight: 700; }
+body:not(.v57-industrial) #scenario-save:hover { filter: brightness(1.08); color: #111a20; }
+body:not(.v57-industrial) .scenario-more summary { display: flex; justify-content: center; padding-inline: 5px; white-space: normal; }
+body:not(.v57-industrial) .scenario-more-actions { width: 196px; padding: 8px; gap: 5px; }
+body:not(.v57-industrial) .scenario-more-actions button { width: 100%; min-height: 38px; padding: 7px 10px; font-size: 12px; text-align: left; }
+body:not(.v57-industrial) .scenario-status { font-size: 12px; color: var(--ui-muted); line-height: 1.5; min-height: 0; }
+body:not(.v57-industrial) .scenario-comparison { overflow-x: auto; }
+
+/* Navigation belongs to a scientific workbench, not a marketing hero. */
+body:not(.v57-industrial) .workspace-tabs { margin-top: 0; margin-bottom: 24px; gap: 10px; padding-bottom: 2px; }
+body:not(.v57-industrial) .workspace-tabs button { margin-right: 4px; padding: 13px 10px 15px; min-height: 46px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+body:not(.v57-industrial) .workspace-tabs button span { font-size: 11px; }
+body:not(.v57-industrial) .tab-placeholder-card { padding: clamp(18px, 2.3vw, 30px); }
+body:not(.v57-industrial) .tab-placeholder-card h2 { font-size: clamp(22px, 2.4vw, 29px); }
+body:not(.v57-industrial) .tab-placeholder-card > p:last-of-type { font-size: 14px; line-height: 1.55; }
+body:not(.v57-industrial) .science-card-head strong { font-size: 15px; }
+body:not(.v57-industrial) .science-card-head small { font-size: 11px; }
+body:not(.v57-industrial) .science-legend,
+body:not(.v57-industrial) .science-hover-note { font-size: 12px; }
+body:not(.v57-industrial) .science-empty { font-size: 13px; }
+body:not(.v57-industrial) .science-point-detail { margin: 0; padding: 7px 14px 12px; font-size: 12px; color: var(--ui-text); }
+body:not(.v57-industrial) .science-hit-point:focus-visible { stroke: var(--ui-accent); stroke-width: 3; fill: var(--ui-bg); outline: none; }
+body:not(.v57-industrial) .probe-head button { min-height: 38px; font-size: 12px; }
+body:not(.v57-industrial) .probe-slider { font-size: 13px; }
+body:not(.v57-industrial) .probe-metrics span,
+body:not(.v57-industrial) .balance-row span { font-size: 12px; }
+body:not(.v57-industrial) .probe-metrics strong,
+body:not(.v57-industrial) .balance-row strong { font-size: 14px; }
+body:not(.v57-industrial) .balance-note { font-size: 12px; }
+body:not(.v57-industrial) .science-table-wrap table,
+body:not(.v57-industrial) .probe-table-wrap table { font-size: 12px; }
+body:not(.v57-industrial) .science-table-wrap th,
+body:not(.v57-industrial) .science-table-wrap td,
+body:not(.v57-industrial) .probe-table-wrap th,
+body:not(.v57-industrial) .probe-table-wrap td { padding: 9px 10px; }
+body:not(.v57-industrial) .sensitivity-controls { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+body:not(.v57-industrial) .sensitivity-controls label,
+body:not(.v57-industrial) .sensitivity-index { font-size: 12px; }
+body:not(.v57-industrial) .sensitivity-controls select,
+body:not(.v57-industrial) .sensitivity-controls input[type='number'],
+body:not(.v57-industrial) .sensitivity-controls button { height: 40px; font-size: 13px; }
+body:not(.v57-industrial) .sensitivity-stale { margin: 12px; padding: 12px; border-left: 3px solid var(--ui-accent); font-size: 13px; color: var(--ui-text); background: var(--ui-panel-soft); }
+body:not(.v57-industrial) .memo-document { overflow-x: auto; }
+body:not(.v57-industrial) .memo-actions { flex-wrap: wrap; }
+body:not(.v57-industrial) .memo-actions button { min-height: 40px; font-size: 13px; }
+body:not(.v57-industrial) .memo-export-status { font-size: 13px; color: var(--ui-muted); }
+body:not(.v57-industrial) .calculation-memo table { font-size: 12px; }
+body:not(.v57-industrial) .calculation-memo th,
+body:not(.v57-industrial) .calculation-memo td { padding: 10px; }
+
+/* Academic cases are deliberately wider than the former sidebar. */
+body:not(.v57-industrial) #academy-tab-root .academic-case-panel { margin: 16px 0 0; padding: 22px; background: var(--ui-panel); border-color: var(--ui-border); }
+body:not(.v57-industrial) #academy-tab-root .academic-case-heading strong { font-size: 18px; }
+body:not(.v57-industrial) #academy-tab-root .academic-case-heading span,
+body:not(.v57-industrial) #academy-tab-root .academic-case-heading small { font-size: 12px; }
+body:not(.v57-industrial) #academy-tab-root .academic-case-panel > select { min-height: 44px; font-size: 14px; }
+body:not(.v57-industrial) #academy-tab-root .academic-case-actions { grid-template-columns: repeat(2,minmax(0,210px)); gap: 10px; }
+body:not(.v57-industrial) #academy-tab-root .academic-case-actions button,
+body:not(.v57-industrial) #academy-tab-root #academic-compare-run,
+body:not(.v57-industrial) #academy-tab-root .academic-lab-actions button { min-height: 42px; padding: 8px 12px; font-size: 13px; }
+body:not(.v57-industrial) #academy-tab-root .academic-case-guide header strong,
+body:not(.v57-industrial) #academy-tab-root .academic-case-status,
+body:not(.v57-industrial) #academy-tab-root .academic-global-scope,
+body:not(.v57-industrial) #academy-tab-root .academic-question,
+body:not(.v57-industrial) #academy-tab-root .academic-caution,
+body:not(.v57-industrial) #academy-tab-root .academic-lab-conclusion p,
+body:not(.v57-industrial) #academy-tab-root .academic-lab-scope { font-size: 13px; line-height: 1.55; }
+body:not(.v57-industrial) #academy-tab-root .academic-comparator > summary,
+body:not(.v57-industrial) #academy-tab-root .academic-lab > summary { font-size: 15px; padding-block: 14px; }
+body:not(.v57-industrial) #academy-tab-root .academic-comparator-selects { max-width: 660px; gap: 14px; }
+body:not(.v57-industrial) #academy-tab-root .academic-comparator-selects label { font-size: 13px; }
+body:not(.v57-industrial) #academy-tab-root .academic-comparator-selects select,
+body:not(.v57-industrial) #academy-tab-root .academic-lab select { min-height: 42px; font-size: 13px; }
+body:not(.v57-industrial) #academy-tab-root .academic-comparison-table-wrap table,
+body:not(.v57-industrial) #academy-tab-root .academic-lab-table-wrap table { font-size: 12px; }
+body:not(.v57-industrial) #academy-tab-root .academic-comparison-table-wrap th,
+body:not(.v57-industrial) #academy-tab-root .academic-comparison-table-wrap td,
+body:not(.v57-industrial) #academy-tab-root .academic-lab-table-wrap th,
+body:not(.v57-industrial) #academy-tab-root .academic-lab-table-wrap td { padding: 11px 12px; }
+
+body:not(.v57-industrial) .sidebar :is(button, input, select, summary):focus-visible,
+body:not(.v57-industrial) .workspace-tabs button:focus-visible,
+body:not(.v57-industrial) .memo-actions button:focus-visible,
+body:not(.v57-industrial) #academy-tab-root :is(button, select, summary):focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 3px; }
+body:not(.v57-industrial) .field-error { display: block; margin-top: 5px; color: var(--ui-danger); font-size: 12px; }
+
+@media (max-width: 1050px) {
+  body:not(.v57-industrial) .workspace { grid-template-columns: 302px minmax(0,1fr); }
+  body:not(.v57-industrial) .sensitivity-controls { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 700px) {
+  body:not(.v57-industrial) .workspace { display: flex; flex-direction: column; }
+  body:not(.v57-industrial) .mobile-workspace-jump { order: 0; }
+  body:not(.v57-industrial) .sidebar { order: 1; display: none; border-right: 0; border-bottom: 1px solid var(--ui-border); padding: 18px; }
+  body:not(.v57-industrial) .sidebar.is-mobile-open { display: block; }
+  body:not(.v57-industrial) .content { order: 2; padding: 20px 14px 34px; }
+  body:not(.v57-industrial) .mobile-workspace-jump button { min-height: 44px; font-size: 13px; }
+  body:not(.v57-industrial) .workspace-tabs { scroll-margin-top: 58px; }
+  body:not(.v57-industrial) .workspace-tabs button { font-size: 13px; }
+  body:not(.v57-industrial) .memo-toolbar { align-items: stretch; flex-direction: column; }
+  body:not(.v57-industrial) .memo-actions { justify-content: flex-start; }
+  body:not(.v57-industrial) .sensitivity-controls { grid-template-columns: 1fr 1fr; }
+  body:not(.v57-industrial) #academy-tab-root .academic-case-panel { padding: 15px; }
+  body:not(.v57-industrial) #academy-tab-root .academic-case-actions { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 430px) {
+  body:not(.v57-industrial) .sensitivity-controls { grid-template-columns: 1fr; }
+  body:not(.v57-industrial) #academy-tab-root .academic-case-actions { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body:not(.v57-industrial) .workspace-tabs *,
+  body:not(.v57-industrial) .sidebar * { scroll-behavior: auto; transition-duration: 0ms; animation-duration: 0ms; }
+}

@@ -1,0 +1,66 @@
+{
+  "desktop": {
+    "title": "PULPA LAB V2",
+    "bodyClasses": "",
+    "tabs": 5,
+    "academyMounted": true,
+    "academyVisible": true,
+    "scenePanelHidden": true,
+    "activeTab": "true",
+    "scenarioButtonPx": "11px",
+    "academicButtonPx": "13px",
+    "desktopWidth": 1424
+  },
+  "mobile": {
+    "width": 409,
+    "tabCount": 5,
+    "before": "none",
+    "after": "block",
+    "ariaExpanded": "true",
+    "academyMounted": true,
+    "overflowPx": 19,
+    "overflowCandidates": [
+      {
+        "selector": "button#v57EnterEulerLab.v57-lab-entry",
+        "right": 409,
+        "width": 118,
+        "top": -5
+      },
+      {
+        "selector": "button#workspace-tab-balance",
+        "right": 498,
+        "width": 149,
+        "top": 2246
+      },
+      {
+        "selector": "button#workspace-tab-memory",
+        "right": 681,
+        "width": 168,
+        "top": 2246
+      },
+      {
+        "selector": "span",
+        "right": 536,
+        "width": 14,
+        "top": 2261
+      },
+      {
+        "selector": "button#workspace-tab-academy.active",
+        "right": 860,
+        "width": 165,
+        "top": 2246
+      },
+      {
+        "selector": "span",
+        "right": 719,
+        "width": 14,
+        "top": 2261
+      }
+    ]
+  },
+  "security": {
+    "nameAsText": "<img src=x onerror=alert(1)> vs escenario actual",
+    "injectedImageCount": 0,
+    "saveNotification": "Sin diferencias vs. estado actual."
+  }
+}

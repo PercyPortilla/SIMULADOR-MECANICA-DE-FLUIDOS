@@ -84,14 +84,14 @@ function chartSvg({ title, subtitle, xLabel, yLabel, series, focusPoint = null }
   ].join('');
   const lines = validSeries.map((item, index) => {
     const geometry = seriesToSvgPolyline(createNumericSeries(item.x, item.y), { width, height, padding, xDomain, yDomain });
-    const hitPoints = item.x.map((x, pointIndex) => `<circle class="science-hit-point" cx="${sx(x)}" cy="${sy(item.y[pointIndex])}" r="5"><title>${item.label}: ${xLabel} = ${Number(x.toPrecision(5))}; ${yLabel} = ${Number(item.y[pointIndex].toPrecision(5))}</title></circle>`).join('');
+    const hitPoints = item.x.map((x, pointIndex) => `<circle class="science-hit-point" cx="${sx(x)}" cy="${sy(item.y[pointIndex])}" r="7" tabindex="0" role="button" aria-label="${item.label}: ${xLabel} ${Number(x.toPrecision(5))}, ${yLabel} ${Number(item.y[pointIndex].toPrecision(5))}" data-chart-point="${item.label}: ${xLabel} = ${Number(x.toPrecision(5))}; ${yLabel} = ${Number(item.y[pointIndex].toPrecision(5))}"><title>${item.label}: ${xLabel} = ${Number(x.toPrecision(5))}; ${yLabel} = ${Number(item.y[pointIndex].toPrecision(5))}</title></circle>`).join('');
     return `<polyline class="science-line science-line-${index + 1}" points="${geometry.points}" />${hitPoints}`;
   }).join('');
   const legend = validSeries.map((item, index) => `<span><i class="science-key science-key-${index + 1}"></i>${item.label}</span>`).join('');
   const focus = focusPoint && finite(focusPoint.x) && finite(focusPoint.y)
     ? `<g class="science-focus-point"><circle cx="${sx(focusPoint.x)}" cy="${sy(focusPoint.y)}" r="5"/><text x="${sx(focusPoint.x) + 8}" y="${sy(focusPoint.y) - 8}">${focusPoint.label ?? 'Punto de operación'}</text><title>${focusPoint.label ?? 'Punto de operación'}: ${xLabel} = ${Number(focusPoint.x.toPrecision(5))}; ${yLabel} = ${Number(focusPoint.y.toPrecision(5))}</title></g>`
     : '';
-  return `<article class="science-chart"><div class="science-card-head"><strong>${title}</strong><small>${subtitle}</small></div><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${title}">${grid}<line class="chart-axis" x1="${padding.left}" y1="${padding.top}" x2="${padding.left}" y2="${height - padding.bottom}"/><line class="chart-axis" x1="${padding.left}" y1="${height - padding.bottom}" x2="${width - padding.right}" y2="${height - padding.bottom}"/>${lines}${focus}<text class="chart-label chart-axis-title" x="${width / 2}" y="${height - 7}" text-anchor="middle">${xLabel}</text><text class="chart-label chart-axis-title" x="12" y="${height / 2}" transform="rotate(-90 12 ${height / 2})" text-anchor="middle">${yLabel}</text></svg><div class="science-legend">${legend}<span class="science-hover-note">Pase el cursor por los puntos para ver valores.</span></div></article>`;
+  return `<article class="science-chart"><div class="science-card-head"><strong>${title}</strong><small>${subtitle}</small></div><svg viewBox="0 0 ${width} ${height}" role="group" aria-label="${title}; selecciona un punto con clic, toque o teclado">${grid}<line class="chart-axis" x1="${padding.left}" y1="${padding.top}" x2="${padding.left}" y2="${height - padding.bottom}"/><line class="chart-axis" x1="${padding.left}" y1="${height - padding.bottom}" x2="${width - padding.right}" y2="${height - padding.bottom}"/>${lines}${focus}<text class="chart-label chart-axis-title" x="${width / 2}" y="${height - 7}" text-anchor="middle">${xLabel}</text><text class="chart-label chart-axis-title" x="12" y="${height / 2}" transform="rotate(-90 12 ${height / 2})" text-anchor="middle">${yLabel}</text></svg><div class="science-legend">${legend}<span class="science-hover-note">Selecciona un punto para consultar valores.</span></div><p class="science-point-detail" role="status" aria-live="polite">Selecciona un punto del gráfico.</p></article>`;
 }
 
 function downloadText(filename, content, mime = 'text/csv;charset=utf-8') {
@@ -122,14 +122,27 @@ export function renderCurvesAndProbes(root, { state, results, calculate }) {
     ${chartSvg({ title: 'Viscosidad aparente', subtitle: 'μa = τ/γ̇ · no definida en plug', xLabel: 'γ̇ · s⁻¹', yLabel: 'μa · Pa·s', series: [{ label: 'μ aparente', x: muX, y: muY }] })}
     ${pumpCurves?.flowRateM3s?.length ? chartSvg({ title: 'Bomba y sistema', subtitle: results.pump?.status ?? '', xLabel: 'Q · m³/h', yLabel: 'H · m', series: [{ label: 'Sistema', x: pumpCurves.flowRateM3s.map((q) => q * 3600), y: pumpCurves.systemHeadM }, { label: 'Bomba', x: pumpCurves.flowRateM3s.map((q) => q * 3600), y: pumpCurves.pumpHeadM }], focusPoint: results.pump?.operatingPoint ? { x: results.pump.operatingPoint.flowRateM3s * 3600, y: results.pump.operatingPoint.pumpHeadM, label: 'Punto de operación' } : null }) : chartSvg({ title: 'Curva del sistema', subtitle: 'recalculada con el motor activo', xLabel: 'Q · m³/h', yLabel: 'ΔP · kPa', series: system ? [{ label: 'Sistema', x: system.flowRateM3h, y: system.pressureDropKpa }] : [] })}
     ${chartSvg({ title: 'Perfil de velocidad', subtitle: results.transport?.flowRegime ? `régimen: ${results.transport.flowRegime}` : '', xLabel: 'u · m/s', yLabel: 'r/R', series: profileRows.length ? [{ label: 'Perfil radial', x: radialVelocity, y: radialRatio }] : [] })}
-  </div><section class="probe-panel"><div class="probe-head"><div><p class="eyebrow">SONDA RADIAL</p><h3>Perfil laminar equivalente</h3></div><button id="probe-export-csv" type="button" ${profileRows.length ? '' : 'disabled'}>Exportar perfiles CSV</button></div><label class="probe-slider">r/R <input id="probe-ratio" type="range" min="0" max="1000" value="${Math.round(selectedProbeRatio * 1000)}"><output id="probe-ratio-value">${selectedProbeRatio.toFixed(2)}</output></label><div id="probe-metrics" class="probe-metrics"></div><div class="probe-table-wrap">${profileRows.length ? radialProbeToHtmlTable(profile, { decimals: 4, caption: 'Sondas virtuales · perfil radial' }) : '<p class="science-empty">Selecciona un modelo reológico no newtoniano válido para generar sondas.</p>'}</div></section>`;
+  </div><section class="probe-panel"><div class="probe-head"><div><p class="eyebrow">SONDA RADIAL</p><h3>Perfil laminar equivalente</h3></div><button id="probe-export-csv" type="button" ${profileRows.length ? '' : 'disabled'}>Exportar perfiles CSV</button></div><label class="probe-slider">r/R <input id="probe-ratio" type="range" min="0" max="1" step="0.001" value="${selectedProbeRatio.toFixed(3)}"><output id="probe-ratio-value" for="probe-ratio">${selectedProbeRatio.toFixed(2)}</output></label><div id="probe-metrics" class="probe-metrics"></div><div class="probe-table-wrap">${profileRows.length ? radialProbeToHtmlTable(profile, { decimals: 4, caption: 'Sondas virtuales · perfil radial' }) : '<p class="science-empty">Selecciona un modelo reológico no newtoniano válido para generar sondas.</p>'}</div></section>`;
+
+  root.querySelectorAll('.science-hit-point').forEach((point) => {
+    const showDetails = () => {
+      const detail = point.closest('.science-chart')?.querySelector('.science-point-detail');
+      if (detail) detail.textContent = point.dataset.chartPoint;
+    };
+    point.addEventListener('focus', showDetails);
+    point.addEventListener('mouseenter', showDetails);
+    point.addEventListener('click', showDetails);
+    point.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); showDetails(); }
+    });
+  });
 
   const slider = root.querySelector('#probe-ratio');
   const metrics = root.querySelector('#probe-metrics');
   const output = root.querySelector('#probe-ratio-value');
   const updateProbe = () => {
     if (!profileRows.length) { if (metrics) metrics.innerHTML = '<span>Sin perfil disponible.</span>'; return; }
-    selectedProbeRatio = Number(slider.value) / 1000;
+    selectedProbeRatio = Number(slider.value);
     const row = nearestProbe(profileRows, selectedProbeRatio);
     output.textContent = selectedProbeRatio.toFixed(2);
     metrics.innerHTML = `<div><span>r</span><strong>${(row.radiusM * 1000).toFixed(2)} mm</strong></div><div><span>u</span><strong>${row.velocityMps.toFixed(4)} m/s</strong></div><div><span>τ</span><strong>${row.shearStressPa === null ? '—' : `${row.shearStressPa.toFixed(3)} Pa`}</strong></div><div><span>γ̇</span><strong>${row.shearRateS_1 === null ? '—' : `${row.shearRateS_1.toFixed(3)} s⁻¹`}</strong></div><div><span>μa</span><strong>${row.apparentViscosityPaS === null ? 'No definida' : `${row.apparentViscosityPaS.toFixed(4)} Pa·s`}</strong></div>`;
