@@ -107,7 +107,7 @@ function chartSvg({ title, subtitle, xLabel, yLabel, series, exportId, focusPoin
     const geometry = seriesToSvgPolyline(createNumericSeries(item.x, item.y), { width, height, padding, xDomain, yDomain });
     const hitPoints = item.x.map((x, pointIndex) => {
       const description = `${item.label}: ${xLabel} = ${Number(x.toPrecision(5))}; ${yLabel} = ${Number(item.y[pointIndex].toPrecision(5))}`;
-      return `<circle class="science-hit-point" cx="${sx(x)}" cy="${sy(item.y[pointIndex])}" r="7" tabindex="0" role="button" aria-label="${escapeMarkup(description)}" data-chart-point="${escapeMarkup(description)}"><title>${escapeMarkup(description)}</title></circle>`;
+      return `<circle class="science-hit-point" cx="${sx(x)}" cy="${sy(item.y[pointIndex])}" r="7" tabindex="${pointIndex === 0 && index === 0 ? 0 : -1}" role="button" aria-label="${escapeMarkup(description)}" data-chart-point="${escapeMarkup(description)}"><title>${escapeMarkup(description)}</title></circle>`;
     }).join('');
     return `<polyline class="science-line science-line-${index + 1}" points="${geometry.points}" aria-label="${escapeMarkup(item.label)}"><title>${escapeMarkup(item.label)}</title></polyline>${hitPoints}`;
   }).join('');
@@ -237,6 +237,17 @@ export function renderCurvesAndProbes(root, { state, results, calculate }) {
     point.addEventListener('click', showDetails);
     point.addEventListener('keydown', (event) => {
       if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); showDetails(); }
+      if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) {
+        event.preventDefault();
+        const points = [...(point.closest('.science-chart')?.querySelectorAll('.science-hit-point') ?? [])];
+        const index = points.indexOf(point);
+        if (index === -1 || !points.length) return;
+        const targetIndex = event.key === 'Home' ? 0 : event.key === 'End' ? points.length - 1
+          : (index + (['ArrowRight', 'ArrowDown'].includes(event.key) ? 1 : -1) + points.length) % points.length;
+        point.setAttribute('tabindex', '-1');
+        points[targetIndex].setAttribute('tabindex', '0');
+        points[targetIndex].focus();
+      }
     });
   });
 

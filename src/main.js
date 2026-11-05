@@ -5,6 +5,7 @@ import './ui/eulerLayoutCompact.css';
 import './ui/uiReview.css';
 import './ui/workbenchTransform.css';
 import { resolveMemoryScenarioProvenance } from './ui/scenarioProvenance.js';
+import { prepareScenarioState } from './ui/scenarioLoad.js';
 import { mountIndustrialV57Presentation } from './ui/industrialV57Presentation.js';
 import { attachNativeClassFeedL349 } from './babylon/assets/nativeClassFeedL349.js';
 import { attachNativeClassHeaderL352 } from './babylon/assets/nativeClassHeaderL352.js';
@@ -237,6 +238,33 @@ function renderError(message) {
   if (node) node.textContent = message;
 }
 
+let nextEditorErrorId = 0;
+function guardedEditorUpdate(input, apply) {
+  const previousError = input.nextElementSibling?.classList.contains('field-error')
+    ? input.nextElementSibling : null;
+  try {
+    apply();
+    input.removeAttribute('aria-invalid');
+    input.removeAttribute('aria-describedby');
+    previousError?.remove();
+    renderError('');
+    return true;
+  } catch (error) {
+    let note = previousError;
+    if (!note) {
+      note = document.createElement('small');
+      note.className = 'field-error';
+      note.id = `editor-validation-${++nextEditorErrorId}`;
+      input.after(note);
+    }
+    input.setAttribute('aria-invalid', 'true');
+    input.setAttribute('aria-describedby', note.id);
+    note.textContent = error.message;
+    renderError(error.message);
+    return false;
+  }
+}
+
 function renderParameterSections() {
   const sectionHost = document.querySelector('#sections');
   if (!sectionHost) return;
@@ -290,11 +318,11 @@ function createSegmentEditor(state) {
         input.type = type;
         if (type === 'number') input.step = String(step);
         input.value = segment[key] ?? '';
-        input.addEventListener('change', () => {
+        input.addEventListener('change', () => guardedEditorUpdate(input, () => {
           const next = structuredClone(getState().transport.segments);
           next[index][key] = type === 'number' ? Number(input.value) : input.value;
           updateState({ transport: { segments: next } });
-        });
+        }));
         label.append(input);
         grid.append(label);
       });
@@ -307,7 +335,7 @@ function createSegmentEditor(state) {
       [['valvesCount','Válvulas'],['elbowsCount','Codos 90°'],['teesCount','Tes'],['reducersCount','Reducciones']].forEach(([key,labelText]) => {
         const label = document.createElement('label'); label.textContent = labelText;
         const input = document.createElement('input'); input.type='number'; input.min='0'; input.step='1'; input.value=segment.accessories?.[key] ?? 0;
-        input.addEventListener('change',()=>{ const next=structuredClone(getState().transport.segments); next[index].accessories={...next[index].accessories,[key]:Number(input.value)}; updateState({transport:{segments:next}}); });
+        input.addEventListener('change', () => guardedEditorUpdate(input, () => { const next=structuredClone(getState().transport.segments); next[index].accessories={...next[index].accessories,[key]:Number(input.value)}; updateState({transport:{segments:next}}); }));
         label.append(input); accessoryGrid.append(label);
       });
       accessoryDetails.append(accessoryGrid); card.append(accessoryDetails);
@@ -384,7 +412,7 @@ function createPumpCurveEditor(state) {
         input.setAttribute('aria-label', `${['Caudal Q (m³/h)', 'Altura H (m)', 'Eficiencia η (%)', 'NPSH requerido (m)'][column]}, punto ${index + 1}`);
         input.step = column === 0 ? '0.1' : column === 2 ? '0.1' : '0.01';
         input.value = value;
-        input.addEventListener('change', () => {
+        input.addEventListener('change', () => guardedEditorUpdate(input, () => {
           const pumpCurve = structuredClone(getState().energy.pumpCurve);
           const efficiencyCurve = structuredClone(getState().energy.efficiencyCurve);
           const npshrCurve = structuredClone(getState().energy.npshrCurve);
@@ -402,7 +430,7 @@ function createPumpCurveEditor(state) {
             npshrCurve[index].npshM = Number(input.value);
           }
           updateState({ energy: { pumpCurve, efficiencyCurve, npshrCurve } });
-        });
+        }));
         row.append(input);
       });
       const remove = document.createElement('button');
@@ -516,19 +544,30 @@ function formatScenarioDelta(left, right) {
   return [formatScenarioValue(delta), relative === null ? '—' : `${relative >= 0 ? '+' : ''}${relative.toFixed(2)} %`];
 }
 
+function hideActiveScenarioComparison() {
+  activeComparisonScenarioId = null;
+  ['scenario-comparison', 'engineering-comparison', 'workbench-scenario-comparison'].forEach((id) => {
+    const node = document.getElementById(id);
+    if (node) node.hidden = true;
+  });
+}
+
 function renderScenarioComparison(scenario) {
   const host = document.querySelector('#scenario-comparison');
   const engineeringHost = document.querySelector('#engineering-comparison');
-  if (!host && !engineeringHost) return;
+  const academyRoot = document.querySelector('#academy-tab-root');
+  let workbenchHost = academyRoot?.querySelector('#workbench-scenario-comparison');
+  if (activeWorkspaceTab !== 'circuit' && academyRoot && !workbenchHost) {
+    workbenchHost = document.createElement('section');
+    workbenchHost.id = 'workbench-scenario-comparison';
+    workbenchHost.className = 'wb-scenario-comparison';
+    workbenchHost.setAttribute('aria-label', 'Comparación técnica de escenarios');
+    academyRoot.prepend(workbenchHost);
+  }
+  if (!host && !engineeringHost && !workbenchHost) return;
   activeComparisonScenarioId = scenario?.id ?? null;
   const diffs = compareScenarios(scenario, getState());
-  const defaultState = getInitialState();
-  const savedState = structuredClone(defaultState);
-  Object.entries(scenario.inputs ?? {}).forEach(([section, value]) => {
-    if (value && typeof value === 'object' && !Array.isArray(value)) savedState[section] = { ...savedState[section], ...value };
-    else savedState[section] = value;
-  });
-  if (scenario.inputs?.transport?.pipe1) savedState.transport.pipe1 = { ...defaultState.transport.pipe1, ...scenario.inputs.transport.pipe1 };
+  const savedState = prepareScenarioState(getInitialState(), scenario.inputs ?? {});
   const savedResults = calculateSimulationResults(savedState);
   const currentResults = getResults();
   const currentState = getState();
@@ -544,7 +583,8 @@ function renderScenarioComparison(scenario) {
     ['Densidad pulpa', savedResults.slurry?.densityKgM3, currentResults.slurry?.densityKgM3, 'kg/m³'],
     ['Recuperación', savedResults.recovery?.overallRecovery === undefined ? undefined : savedResults.recovery.overallRecovery * 100, currentResults.recovery?.overallRecovery === undefined ? undefined : currentResults.recovery.overallRecovery * 100, '%'],
   ].filter(([, left, right]) => left !== undefined || right !== undefined);
-  const inputHtml = diffs.length ? diffs.slice(0, 20).map(({ key, left, right }) => {
+  // Show every changed input; the table itself is scrollable when needed.
+  const inputHtml = diffs.length ? diffs.map(({ key, left, right }) => {
     const [delta, relative] = formatScenarioDelta(left, right);
     return `<tr><td>${escapeHtml(key)}</td><td>${escapeHtml(formatScenarioValue(left))}</td><td>${escapeHtml(formatScenarioValue(right))}</td><td>${delta}</td><td>${relative}</td></tr>`;
   }).join('') : '<tr><td colspan="5">Sin diferencias de entrada.</td></tr>';
@@ -553,9 +593,7 @@ function renderScenarioComparison(scenario) {
     return `<tr><td>${name}</td><td>${formatScenarioValue(left)}${unit ? ` ${unit}` : ''}</td><td>${formatScenarioValue(right)}${unit ? ` ${unit}` : ''}</td><td>${delta}${unit ? ` ${unit}` : ''}</td><td>${relative}</td></tr>`;
   }).join('');
   const closeComparison = () => {
-    activeComparisonScenarioId = null;
-    if (host) host.hidden = true;
-    if (engineeringHost) engineeringHost.hidden = true;
+    hideActiveScenarioComparison();
   };
   if (host) {
     host.innerHTML = `<div class="scenario-comparison-head"><strong>Comparación A/B</strong><button type="button" aria-label="Cerrar comparación">×</button></div><table><thead><tr><th>Entrada</th><th>A</th><th>B</th><th>Δ</th><th>Δ %</th></tr></thead><tbody>${inputHtml}</tbody></table>`;
@@ -566,6 +604,14 @@ function renderScenarioComparison(scenario) {
     engineeringHost.innerHTML = `<div class="engineering-comparison-head"><div><span>COMPARACIÓN DE ESCENARIOS</span><strong>${escapeHtml(scenario.name)} vs escenario actual</strong></div><button type="button" aria-label="Cerrar comparación técnica">×</button></div><table><thead><tr><th>Variable</th><th>Escenario A</th><th>Escenario B</th><th>Δ</th><th>Δ %</th></tr></thead><tbody>${resultHtml}</tbody></table>`;
     engineeringHost.hidden = false;
     engineeringHost.querySelector('button')?.addEventListener('click', closeComparison);
+  }
+  if (workbenchHost) {
+    workbenchHost.innerHTML = `<header class="wb-scenario-compare-head"><div><span>ESTUDIO COMPARATIVO · A/B</span><h3>${escapeHtml(scenario.name)} <em>vs.</em> estado actual</h3><p>Ambas columnas se calculan con el mismo solver y sus respectivos parámetros.</p></div><button type="button" aria-label="Cerrar comparación técnica">✕ Cerrar</button></header>
+      <div class="wb-scenario-compare-label"><strong>Resultados de ingeniería</strong><small>Las variaciones indican B − A</small></div>
+      <div class="wb-scenario-compare-table"><table><thead><tr><th scope="col">Variable</th><th scope="col">A · guardado</th><th scope="col">B · actual</th><th scope="col">Δ</th><th scope="col">Δ %</th></tr></thead><tbody>${resultHtml}</tbody></table></div>
+      <details class="wb-scenario-compare-inputs"><summary>Ver diferencias de entradas (${diffs.length})</summary><div class="wb-scenario-compare-table"><table><thead><tr><th scope="col">Entrada</th><th scope="col">A</th><th scope="col">B</th><th scope="col">Δ</th><th scope="col">Δ %</th></tr></thead><tbody>${inputHtml}</tbody></table></div></details>`;
+    workbenchHost.hidden = false;
+    workbenchHost.querySelector('header button')?.addEventListener('click', closeComparison);
   }
 }
 
@@ -591,7 +637,7 @@ function downloadText(filename, content, type) {
   link.href = URL.createObjectURL(blob);
   link.download = filename;
   link.click();
-  URL.revokeObjectURL(link.href);
+  setTimeout(() => URL.revokeObjectURL(link.href), 0);
 }
 
 function wireScenarioControls() {
@@ -618,8 +664,10 @@ function wireScenarioControls() {
       return;
     }
     try {
-      resetState();
-      updateState(scenario.inputs);
+      // Validate/commit in one update: an incompatible imported record must
+      // not wipe out the previous simulation state or current calculations.
+      const candidate = prepareScenarioState(getInitialState(), scenario.inputs);
+      updateState(candidate);
       renderParameterSections();
       if (nameInput) nameInput.value = scenario.name;
       setScenarioStatus(`Cargado: ${scenario.name}.`, 'success');
@@ -639,6 +687,7 @@ function wireScenarioControls() {
     if (!select?.value) return setScenarioStatus('Selecciona un escenario para borrar.', 'warning');
     const scenario = loadNamedScenario(select.value);
     if (!scenario || !window.confirm(`¿Eliminar el escenario «${scenario.name}»? Esta acción no se puede deshacer.`)) return;
+    if (activeComparisonScenarioId === scenario.id) hideActiveScenarioComparison();
     deleteNamedScenario(select.value);
     refreshScenarioSelect();
     setScenarioStatus('Escenario eliminado.', 'muted');
@@ -649,7 +698,24 @@ function wireScenarioControls() {
     if (!scenario) return setScenarioStatus('Selecciona un escenario para comparar.', 'warning');
     const diffs = compareScenarios(scenario, getState());
     setScenarioStatus(diffs.length ? `${diffs.length} diferencias vs. estado actual.` : 'Sin diferencias vs. estado actual.', diffs.length ? 'warning' : 'success');
-    renderScenarioComparison(scenario);
+    if (activeWorkspaceTab !== 'circuit') {
+      // The legacy engineering result belongs to the protected circuit tab;
+      // show its scientific equivalent in the wide Academy workspace instead.
+      document.querySelector('.wb-parameters-close')?.click();
+      document.querySelector('#workspace-tab-academy')?.click();
+    }
+    try {
+      renderScenarioComparison(scenario);
+    } catch (error) {
+      hideActiveScenarioComparison();
+      setScenarioStatus(`Escenario incompatible para comparar: ${error.message}`, 'warning');
+      return;
+    }
+    if (activeWorkspaceTab === 'academy') {
+      const output = document.querySelector('#workbench-scenario-comparison');
+      output?.scrollIntoView({ behavior: 'auto', block: 'start' });
+      output?.querySelector('header button')?.focus({ preventScroll: true });
+    }
   });
   document.querySelector('#scenario-export-json')?.addEventListener('click', () => {
     downloadText('pulpa-lab-scenario.json', exportScenarioJson(nameInput?.value, getState()), 'application/json');
@@ -1390,8 +1456,14 @@ const unsubscribeResultsRender = subscribeResults((results) => {
   refreshInspectionGuide?.();
   if (activeComparisonScenarioId) {
     const scenario = loadNamedScenario(activeComparisonScenarioId);
-    if (scenario) renderScenarioComparison(scenario);
-    else activeComparisonScenarioId = null;
+    if (scenario) {
+      try {
+        renderScenarioComparison(scenario);
+      } catch (error) {
+        hideActiveScenarioComparison();
+        setScenarioStatus(`Comparación suspendida: ${error.message}`, 'warning');
+      }
+    } else hideActiveScenarioComparison();
   }
   if (activeWorkspaceTab !== 'circuit') renderScientificWorkspace(activeWorkspaceTab);
 });

@@ -1,4 +1,5 @@
 import { renderPressureBreakdown } from './pressureBreakdown.js';
+import { renderNpshDiagnostic } from './npshDiagnostic.js';
 import { escapeHtml } from './safeHtml.js';
 
 function fmt(value, digits = 2) {
@@ -85,6 +86,7 @@ export function renderBalanceAndEnergy(root, { state, results }) {
           </article>
         </div>
         ${renderPressureBreakdown(transport)}
+        ${renderNpshDiagnostic(pump)}
       </section>
 
       <section class="wb-section wb-section-energy" aria-labelledby="wb-energy-section-title">
