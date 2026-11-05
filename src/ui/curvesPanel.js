@@ -65,7 +65,7 @@ export function buildSystemCurve(state, calculate, pointCount = 13) {
 
 function chartSvg({ title, subtitle, xLabel, yLabel, series, focusPoint = null }) {
   const validSeries = series.filter((item) => item?.x?.length && item.x.length === item.y.length);
-  if (!validSeries.length) return `<article class="science-chart"><div class="science-card-head"><strong>${title}</strong><small>${subtitle}</small></div><p class="science-empty">Datos insuficientes.</p></article>`;
+  if (!validSeries.length) return `<article class="science-chart wb-chart-card"><div class="science-card-head"><strong>${title}</strong><small>${subtitle}</small></div><p class="science-empty">Datos insuficientes.</p></article>`;
   const width = 520; const height = 230; const padding = { left: 48, right: 16, top: 18, bottom: 38 };
   const allX = validSeries.flatMap((item) => item.x);
   const allY = validSeries.flatMap((item) => item.y);
@@ -91,7 +91,7 @@ function chartSvg({ title, subtitle, xLabel, yLabel, series, focusPoint = null }
   const focus = focusPoint && finite(focusPoint.x) && finite(focusPoint.y)
     ? `<g class="science-focus-point"><circle cx="${sx(focusPoint.x)}" cy="${sy(focusPoint.y)}" r="5"/><text x="${sx(focusPoint.x) + 8}" y="${sy(focusPoint.y) - 8}">${focusPoint.label ?? 'Punto de operación'}</text><title>${focusPoint.label ?? 'Punto de operación'}: ${xLabel} = ${Number(focusPoint.x.toPrecision(5))}; ${yLabel} = ${Number(focusPoint.y.toPrecision(5))}</title></g>`
     : '';
-  return `<article class="science-chart"><div class="science-card-head"><strong>${title}</strong><small>${subtitle}</small></div><svg viewBox="0 0 ${width} ${height}" role="group" aria-label="${title}; selecciona un punto con clic, toque o teclado">${grid}<line class="chart-axis" x1="${padding.left}" y1="${padding.top}" x2="${padding.left}" y2="${height - padding.bottom}"/><line class="chart-axis" x1="${padding.left}" y1="${height - padding.bottom}" x2="${width - padding.right}" y2="${height - padding.bottom}"/>${lines}${focus}<text class="chart-label chart-axis-title" x="${width / 2}" y="${height - 7}" text-anchor="middle">${xLabel}</text><text class="chart-label chart-axis-title" x="12" y="${height / 2}" transform="rotate(-90 12 ${height / 2})" text-anchor="middle">${yLabel}</text></svg><div class="science-legend">${legend}<span class="science-hover-note">Selecciona un punto para consultar valores.</span></div><p class="science-point-detail" role="status" aria-live="polite">Selecciona un punto del gráfico.</p></article>`;
+  return `<article class="science-chart wb-chart-card"><div class="science-card-head"><strong>${title}</strong><small>${subtitle}</small></div><svg viewBox="0 0 ${width} ${height}" role="group" aria-label="${title}; selecciona un punto con clic, toque o teclado">${grid}<line class="chart-axis" x1="${padding.left}" y1="${padding.top}" x2="${padding.left}" y2="${height - padding.bottom}"/><line class="chart-axis" x1="${padding.left}" y1="${height - padding.bottom}" x2="${width - padding.right}" y2="${height - padding.bottom}"/>${lines}${focus}<text class="chart-label chart-axis-title" x="${width / 2}" y="${height - 7}" text-anchor="middle">${xLabel}</text><text class="chart-label chart-axis-title" x="12" y="${height / 2}" transform="rotate(-90 12 ${height / 2})" text-anchor="middle">${yLabel}</text></svg><div class="science-legend">${legend}<span class="science-hover-note">Selecciona un punto para consultar valores.</span></div><p class="science-point-detail" role="status" aria-live="polite">Selecciona un punto del gráfico.</p></article>`;
 }
 
 function downloadText(filename, content, mime = 'text/csv;charset=utf-8') {
@@ -117,12 +117,63 @@ export function renderCurvesAndProbes(root, { state, results, calculate }) {
   const radialRatio = profileRows.map((row) => row.radiusRatio);
   const radialVelocity = profileRows.map((row) => row.velocityMps);
   const pumpCurves = results.pump?.curves;
-  root.innerHTML = `<div class="science-grid">
-    ${chartSvg({ title: 'Ley constitutiva', subtitle: state.rheology.model || 'sin modelo', xLabel: 'γ̇ · s⁻¹', yLabel: 'τ · Pa', series: [{ label: 'Modelo activo', x: constitutive.shearRateS_1, y: constitutive.shearStressPa }] })}
-    ${chartSvg({ title: 'Viscosidad aparente', subtitle: 'μa = τ/γ̇ · no definida en plug', xLabel: 'γ̇ · s⁻¹', yLabel: 'μa · Pa·s', series: [{ label: 'μ aparente', x: muX, y: muY }] })}
-    ${pumpCurves?.flowRateM3s?.length ? chartSvg({ title: 'Bomba y sistema', subtitle: results.pump?.status ?? '', xLabel: 'Q · m³/h', yLabel: 'H · m', series: [{ label: 'Sistema', x: pumpCurves.flowRateM3s.map((q) => q * 3600), y: pumpCurves.systemHeadM }, { label: 'Bomba', x: pumpCurves.flowRateM3s.map((q) => q * 3600), y: pumpCurves.pumpHeadM }], focusPoint: results.pump?.operatingPoint ? { x: results.pump.operatingPoint.flowRateM3s * 3600, y: results.pump.operatingPoint.pumpHeadM, label: 'Punto de operación' } : null }) : chartSvg({ title: 'Curva del sistema', subtitle: 'recalculada con el motor activo', xLabel: 'Q · m³/h', yLabel: 'ΔP · kPa', series: system ? [{ label: 'Sistema', x: system.flowRateM3h, y: system.pressureDropKpa }] : [] })}
-    ${chartSvg({ title: 'Perfil de velocidad', subtitle: results.transport?.flowRegime ? `régimen: ${results.transport.flowRegime}` : '', xLabel: 'u · m/s', yLabel: 'r/R', series: profileRows.length ? [{ label: 'Perfil radial', x: radialVelocity, y: radialRatio }] : [] })}
-  </div><section class="probe-panel"><div class="probe-head"><div><p class="eyebrow">SONDA RADIAL</p><h3>Perfil laminar equivalente</h3></div><button id="probe-export-csv" type="button" ${profileRows.length ? '' : 'disabled'}>Exportar perfiles CSV</button></div><label class="probe-slider">r/R <input id="probe-ratio" type="range" min="0" max="1" step="0.001" value="${selectedProbeRatio.toFixed(3)}"><output id="probe-ratio-value" for="probe-ratio">${selectedProbeRatio.toFixed(2)}</output></label><div id="probe-metrics" class="probe-metrics"></div><div class="probe-table-wrap">${profileRows.length ? radialProbeToHtmlTable(profile, { decimals: 4, caption: 'Sondas virtuales · perfil radial' }) : '<p class="science-empty">Selecciona un modelo reológico no newtoniano válido para generar sondas.</p>'}</div></section>`;
+  root.innerHTML = `
+    <div class="wb-curves-workspace">
+      <section class="wb-section wb-section-rheology" aria-labelledby="wb-rheology-title">
+        <header class="wb-section-head">
+          <span class="wb-section-index" aria-hidden="true">01</span>
+          <div>
+            <p class="wb-section-kicker">COMPORTAMIENTO REOLÓGICO</p>
+            <h3 id="wb-rheology-title" class="wb-section-title">Respuesta de la pulpa al esfuerzo</h3>
+            <p class="wb-section-description">Relación entre tasa de corte, esfuerzo cortante y viscosidad aparente del modelo activo.</p>
+          </div>
+        </header>
+        <div class="science-grid wb-chart-grid wb-chart-grid-rheology">
+          ${chartSvg({ title: 'Ley constitutiva', subtitle: state.rheology.model || 'sin modelo', xLabel: 'γ̇ · s⁻¹', yLabel: 'τ · Pa', series: [{ label: 'Modelo activo', x: constitutive.shearRateS_1, y: constitutive.shearStressPa }] })}
+          ${chartSvg({ title: 'Viscosidad aparente', subtitle: 'μa = τ/γ̇ · no definida en plug', xLabel: 'γ̇ · s⁻¹', yLabel: 'μa · Pa·s', series: [{ label: 'μ aparente', x: muX, y: muY }] })}
+        </div>
+      </section>
+      <section class="wb-section wb-section-hydraulic" aria-labelledby="wb-curves-hydraulic-title">
+        <header class="wb-section-head">
+          <span class="wb-section-index" aria-hidden="true">02</span>
+          <div>
+            <p class="wb-section-kicker">TRANSPORTE Y BOMBEO</p>
+            <h3 id="wb-curves-hydraulic-title" class="wb-section-title">Curvas del circuito y perfil radial</h3>
+            <p class="wb-section-description">Demanda hidráulica frente al caudal y distribución de velocidad a lo largo del radio.</p>
+          </div>
+        </header>
+        <div class="science-grid wb-chart-grid wb-chart-grid-hydraulic">
+          ${pumpCurves?.flowRateM3s?.length ? chartSvg({ title: 'Bomba y sistema', subtitle: results.pump?.status ?? '', xLabel: 'Q · m³/h', yLabel: 'H · m', series: [{ label: 'Sistema', x: pumpCurves.flowRateM3s.map((q) => q * 3600), y: pumpCurves.systemHeadM }, { label: 'Bomba', x: pumpCurves.flowRateM3s.map((q) => q * 3600), y: pumpCurves.pumpHeadM }], focusPoint: results.pump?.operatingPoint ? { x: results.pump.operatingPoint.flowRateM3s * 3600, y: results.pump.operatingPoint.pumpHeadM, label: 'Punto de operación' } : null }) : chartSvg({ title: 'Curva del sistema', subtitle: 'recalculada con el motor activo', xLabel: 'Q · m³/h', yLabel: 'ΔP · kPa', series: system ? [{ label: 'Sistema', x: system.flowRateM3h, y: system.pressureDropKpa }] : [] })}
+          ${chartSvg({ title: 'Perfil de velocidad', subtitle: results.transport?.flowRegime ? `régimen: ${results.transport.flowRegime}` : '', xLabel: 'u · m/s', yLabel: 'r/R', series: profileRows.length ? [{ label: 'Perfil radial', x: radialVelocity, y: radialRatio }] : [] })}
+        </div>
+      </section>
+      <section class="wb-section wb-section-probes" aria-labelledby="wb-curves-probes-title">
+        <header class="wb-section-head">
+          <span class="wb-section-index" aria-hidden="true">03</span>
+          <div>
+            <p class="wb-section-kicker">INSPECCIÓN DEL PERFIL</p>
+            <h3 id="wb-curves-probes-title" class="wb-section-title">Sonda radial interactiva</h3>
+            <p class="wb-section-description">Mueve el cursor de r/R desde el eje hasta la pared; inspecciona las magnitudes locales y exporta la tabla completa.</p>
+          </div>
+        </header>
+        <div class="probe-panel wb-probe-workspace">
+          <div class="probe-head wb-probe-head">
+            <div><p class="eyebrow">PERFIL EQUIVALENTE</p><h3>Perfil laminar equivalente</h3></div>
+            <button id="probe-export-csv" type="button" ${profileRows.length ? '' : 'disabled'}>Exportar perfiles CSV</button>
+          </div>
+          <div class="wb-probe-controls">
+            <label class="probe-slider">Posición radial · r/R
+              <input id="probe-ratio" type="range" min="0" max="1" step="0.001" value="${selectedProbeRatio.toFixed(3)}">
+              <output id="probe-ratio-value" for="probe-ratio">${selectedProbeRatio.toFixed(2)}</output>
+            </label>
+            <div id="probe-metrics" class="probe-metrics wb-probe-metrics"></div>
+          </div>
+          <div class="probe-table-wrap wb-probe-table">
+            ${profileRows.length ? radialProbeToHtmlTable(profile, { decimals: 4, caption: 'Sondas virtuales · perfil radial' }) : '<p class="science-empty">Selecciona un modelo reológico no newtoniano válido para generar sondas.</p>'}
+          </div>
+        </div>
+      </section>
+    </div>`;
 
   root.querySelectorAll('.science-hit-point').forEach((point) => {
     const showDetails = () => {

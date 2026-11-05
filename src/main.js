@@ -3,6 +3,7 @@ import './ui/industrialV57Presentation.css';
 import './ui/slurryPipeInspector.css';
 import './ui/eulerLayoutCompact.css';
 import './ui/uiReview.css';
+import './ui/workbenchTransform.css';
 import { mountIndustrialV57Presentation } from './ui/industrialV57Presentation.js';
 import { attachNativeClassFeedL349 } from './babylon/assets/nativeClassFeedL349.js';
 import { attachNativeClassHeaderL352 } from './babylon/assets/nativeClassHeaderL352.js';
@@ -67,7 +68,11 @@ let eulerPresentationUi = null;
 let eulerNativeFeed = null;
 let eulerNativeHeader = null;
 let unsubscribeProcessMetrics = null;
-let activeWorkspaceTab = 'circuit';
+// Deep-link only to the redesigned science workspace. The default circuit
+// remains unchanged for Planta General / Bernoulli–Euler entry points.
+const initialWorkspaceTab = new URLSearchParams(window.location.search).get('tab');
+let activeWorkspaceTab = ['curves', 'balance', 'memory', 'academy'].includes(initialWorkspaceTab)
+  ? initialWorkspaceTab : 'circuit';
 let startPresentationTour = null;
 let lastAcademicLabEvaluation = null;
 let activeComparisonScenarioId = null;
@@ -955,6 +960,97 @@ const WORKSPACE_TABS = Object.freeze([
   ['academy', '05', 'Prácticas académicas'],
 ]);
 
+const WORKBENCH_NAMES = Object.freeze({
+  curves: 'Exploración de resultados',
+  balance: 'Diagnóstico hidráulico',
+  memory: 'Memoria científica',
+  academy: 'Laboratorio académico',
+});
+
+function engineeringValue(value, digits = 2) {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? value.toLocaleString('es-PE', { minimumFractionDigits: digits, maximumFractionDigits: digits })
+    : 'N/D';
+}
+
+function refreshWorkbenchMetrics(tabId = activeWorkspaceTab) {
+  if (tabId === 'circuit') return;
+  const results = getResults();
+  const state = getState();
+  const flow = results.transport?.flowRateM3s;
+  const pressure = results.transport?.pressureDropPa;
+  const power = results.energy?.electricalPowerW;
+  const metric = (label, value, unit, detail) => ({ label, value, unit, detail });
+  const model = state.rheology?.model || 'Sin seleccionar';
+  const metrics = {
+    curves: [
+      metric('Caudal del circuito', engineeringValue(flow === undefined ? null : flow * 3600), 'm³/h', 'Caudal calculado'),
+      metric('Reynolds', engineeringValue(results.transport?.reynoldsNumber, 0), '', 'Régimen de transporte'),
+      metric('Pérdida de presión', engineeringValue(pressure === undefined ? null : pressure / 1000), 'kPa', 'ΔP total de la línea'),
+      metric('Factor de fricción', engineeringValue(results.transport?.frictionFactor, 4), '', 'Modelo hidráulico activo'),
+    ],
+    balance: [
+      metric('Presión requerida', engineeringValue(pressure === undefined ? null : pressure / 1000), 'kPa', 'Distribuida + locales + estática'),
+      metric('Altura manométrica', engineeringValue(results.transport?.totalHeadM), 'm', 'Carga del sistema'),
+      metric('Potencia eléctrica', engineeringValue(power === undefined ? null : power / 1000), 'kW', 'Según caudal de cálculo'),
+      metric('NPSH disponible', engineeringValue(results.pump?.npshAvailableM), 'm', 'Comprobar frente a NPSHr'),
+    ],
+    memory: [
+      metric('Densidad de pulpa', engineeringValue(results.slurry?.densityKgM3, 1), 'kg/m³', 'Entrada y balance'),
+      metric('Caudal calculado', engineeringValue(flow === undefined ? null : flow * 3600), 'm³/h', 'Estado de simulación actual'),
+      metric('Presión total', engineeringValue(pressure === undefined ? null : pressure / 1000), 'kPa', 'Trazable a ecuaciones'),
+      metric('Potencia eléctrica', engineeringValue(power === undefined ? null : power / 1000), 'kW', 'Con supuestos declarados'),
+    ],
+    academy: [
+      metric('Casos de estudio', String(ACADEMIC_CASES.length), '', 'Biblioteca de referencia'),
+      metric('Modelo activo', model.toUpperCase(), '', 'Parámetros del circuito'),
+      metric('Caudal de referencia', engineeringValue(flow === undefined ? null : flow * 3600), 'm³/h', 'Escenario actual'),
+      metric('Resultado ΔP', engineeringValue(pressure === undefined ? null : pressure / 1000), 'kPa', 'Para comparar hipótesis'),
+    ],
+  };
+  const root = document.querySelector('#' + tabId + '-summary');
+  if (root) {
+    root.replaceChildren();
+    for (const [index, item] of (metrics[tabId] ?? []).entries()) {
+      const article = document.createElement('article');
+      article.className = 'wb-metric' + (index === 0 ? ' wb-metric-featured' : '');
+      article.innerHTML = '<div class="wb-metric-top"><span class="wb-metric-label"></span><span class="wb-metric-index"></span></div>'
+        + '<div class="wb-metric-reading"><strong></strong><em></em></div><p class="wb-metric-detail"></p>';
+      article.querySelector('.wb-metric-label').textContent = item.label;
+      article.querySelector('.wb-metric-index').textContent = '0' + (index + 1);
+      article.querySelector('strong').textContent = item.value;
+      article.querySelector('em').textContent = item.unit;
+      article.querySelector('.wb-metric-detail').textContent = item.detail;
+      root.append(article);
+    }
+  }
+  document.querySelectorAll('[data-wb-model]').forEach((node) => { node.textContent = model; });
+  document.querySelectorAll('[data-wb-current-tab]').forEach((node) => {
+    node.textContent = WORKBENCH_NAMES[tabId] ?? 'Área científica';
+  });
+}
+
+function structureAcademicWorkbench() {
+  const panel = document.querySelector('#academy-tab-root .academic-case-panel');
+  if (!panel || panel.querySelector('.wb-academic-select')) return;
+  const select = document.createElement('div');
+  select.className = 'wb-academic-select';
+  const lab = document.createElement('div');
+  lab.className = 'wb-academic-experiments';
+  [...panel.children].forEach((child) => {
+    (child.id === 'academic-comparator' || child.id === 'academic-lab' ? lab : select).append(child);
+  });
+  const kicker = document.createElement('div');
+  kicker.className = 'wb-academic-step';
+  kicker.textContent = '01 / PREPARAR Y CARGAR';
+  select.prepend(kicker);
+  const next = document.createElement('div');
+  next.className = 'wb-academic-step';
+  next.textContent = '02 / COMPARAR Y EXPERIMENTAR';
+  lab.prepend(next);
+  panel.replaceChildren(select, lab);
+}
+
 function installWorkspaceTabs(shell) {
   const content = shell.querySelector('.content');
   if (!content) return;
@@ -976,7 +1072,27 @@ function installWorkspaceTabs(shell) {
     button.innerHTML = `<span>${number}</span>${label}`;
     nav.append(button);
   });
-  content.replaceChildren(nav);
+  const rail = document.createElement('div');
+  rail.className = 'wb-rail';
+  const railBrand = document.createElement('div');
+  railBrand.className = 'wb-rail-brand';
+  railBrand.innerHTML = '<span class="wb-brand-mark">PL<span>.</span></span><span class="wb-brand-copy"><strong>PULPA LAB</strong><small>ENGINEERING WORKSPACE</small></span>';
+  const railLabel = document.createElement('p');
+  railLabel.className = 'wb-rail-section-label';
+  railLabel.textContent = 'MÓDULOS DEL SIMULADOR';
+  const railFooter = document.createElement('div');
+  railFooter.className = 'wb-rail-footer';
+  railFooter.innerHTML = '<span class="wb-rail-footer-kicker">HERRAMIENTAS</span>'
+    + '<button type="button" class="wb-rail-action" id="wb-rail-parameters">⚙ &nbsp; Editar parámetros</button>'
+    + '<button type="button" class="wb-rail-action" id="wb-rail-report">↗ &nbsp; Memoria técnica</button>'
+    + '<small>SIMULACIÓN ACADÉMICA · SISTEMA SI</small>';
+  rail.append(railBrand, railLabel, nav, railFooter);
+
+  const toolbar = document.createElement('div');
+  toolbar.className = 'wb-commandbar';
+  toolbar.innerHTML = '<div class="wb-command-location"><span class="wb-status-indicator"></span><span>INSTRUMENTACIÓN / PULPA LAB</span><span class="wb-command-divider">/</span><strong data-wb-current-tab>ÁREA CIENTÍFICA</strong></div>'
+    + '<div class="wb-command-actions"><span class="wb-verified"><i></i> Motor físico conectado</span><button type="button" id="wb-command-parameters" class="wb-btn-parameter">Ajustar parámetros <span>↗</span></button></div>';
+  content.replaceChildren(rail, toolbar);
 
   const circuit = document.createElement('section');
   circuit.className = 'workspace-tab-panel';
@@ -989,10 +1105,10 @@ function installWorkspaceTabs(shell) {
   content.append(circuit);
 
   const placeholders = [
-    ['curves', 'RESULTADOS', 'Curvas y respuesta del sistema', 'Reología, perfil radial, curva del sistema, bomba y sondas calculadas por el mismo motor numérico.'],
-    ['balance', 'ANÁLISIS', 'Hidráulica, energía y sensibilidad', 'Desglose de presión, continuidad, punto de operación, energía y sensibilidad del circuito activo.'],
-    ['memory', 'TRAZABILIDAD', 'Memoria, ecuaciones y supuestos', 'Ecuaciones, sustitución numérica, supuestos, resultados y referencias del escenario activo.'],
-    ['academy', 'APRENDIZAJE', 'Casos, comparaciones y experimentos', 'Explora escenarios de referencia, contrasta hipótesis y documenta tus resultados con sus límites de aplicabilidad.'],
+    ['curves', '01 / INTERPRETACIÓN DEL MODELO', 'Respuesta del sistema', 'Visualiza cómo la reología, la bomba y la geometría modifican el comportamiento de la pulpa. Todos los valores proceden del motor numérico.'],
+    ['balance', '02 / DIAGNÓSTICO DEL CIRCUITO', 'Ingeniería hidráulica', 'Relaciona pérdidas de presión, energía, bombeo y seguridad operativa, con desglose por tramo y análisis de sensibilidad.'],
+    ['memory', '03 / EVIDENCIA REPRODUCIBLE', 'Memoria de cálculo', 'Una lectura técnica de los datos, ecuaciones, hipótesis y resultados que respaldan cada simulación.'],
+    ['academy', '04 / APRENDIZAJE APLICADO', 'Laboratorio de casos', 'Formula hipótesis, confronta escenarios del modelo y documenta conclusiones con sus límites de aplicabilidad.'],
   ];
   placeholders.forEach(([id, eyebrow, title, description]) => {
     const panel = document.createElement('section');
@@ -1002,7 +1118,7 @@ function installWorkspaceTabs(shell) {
     panel.setAttribute('role', 'tabpanel');
     panel.setAttribute('aria-labelledby', `workspace-tab-${id}`);
     panel.tabIndex = 0;
-    panel.innerHTML = `<div class="tab-placeholder-card"><p class="eyebrow">${eyebrow}</p><h2>${title}</h2><p>${description}</p><div id="${id}-tab-root"></div></div>`;
+    panel.innerHTML = `<div class="tab-placeholder-card"><header class="wb-page-intro"><div class="wb-page-main"><p class="eyebrow">${eyebrow}</p><h2>${title}</h2><p>${description}</p></div><aside class="wb-model-card"><span>ESTADO DEL MODELO</span><strong data-wb-model>—</strong><small>Resultados derivados del escenario activo · Sistema internacional</small></aside></header><div class="wb-metrics-head"><div><span>LECTURAS OPERATIVAS</span><h3>Indicadores del escenario</h3></div><small>Actualizados con cada cálculo</small></div><div class="wb-summary-grid" id="${id}-summary"></div><div id="${id}-tab-root" class="wb-content-root"></div></div>`;
     content.append(panel);
   });
 
@@ -1012,20 +1128,72 @@ function installWorkspaceTabs(shell) {
   const academyRoot = content.querySelector('#academy-tab-root');
   if (academicPanel && academyRoot) academyRoot.append(academicPanel);
 
+  const closeParameters = () => {
+    document.body.classList.remove('wb-parameters-open');
+    shell.querySelectorAll('[data-wb-parameters-trigger]').forEach((button) => button.setAttribute('aria-expanded', 'false'));
+  };
+  const toggleParameters = () => {
+    const open = document.body.classList.toggle('wb-parameters-open');
+    shell.querySelectorAll('[data-wb-parameters-trigger]').forEach((button) => button.setAttribute('aria-expanded', String(open)));
+    if (open) document.querySelector('#scenario-name')?.focus({ preventScroll: true });
+  };
+  const sidebar = shell.querySelector('.sidebar');
+  const sidebarClose = document.createElement('button');
+  sidebarClose.className = 'wb-parameters-close';
+  sidebarClose.type = 'button';
+  sidebarClose.textContent = '✕  Cerrar parámetros';
+  sidebarClose.addEventListener('click', closeParameters);
+  sidebar?.prepend(sidebarClose);
+  const backdrop = document.createElement('button');
+  backdrop.className = 'wb-parameters-backdrop';
+  backdrop.type = 'button';
+  backdrop.setAttribute('aria-label', 'Cerrar el panel de parámetros');
+  backdrop.addEventListener('click', closeParameters);
+  shell.append(backdrop);
+  for (const id of ['wb-rail-parameters', 'wb-command-parameters']) {
+    const button = shell.querySelector('#' + id);
+    button?.setAttribute('aria-expanded', 'false');
+    button?.setAttribute('aria-controls', 'parameters-sidebar');
+    button?.setAttribute('data-wb-parameters-trigger', '');
+    button?.addEventListener('click', toggleParameters);
+  }
+  shell.querySelector('#wb-rail-report')?.addEventListener('click', () => {
+    content.querySelector('#workspace-tab-memory')?.click();
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeParameters();
+  });
+
+  const centerSelectedTab = () => {
+    if (nav.scrollWidth <= nav.clientWidth) return;
+    const selected = nav.querySelector('[aria-selected="true"]');
+    if (!selected) return;
+    const railRect = nav.getBoundingClientRect();
+    const buttonRect = selected.getBoundingClientRect();
+    nav.scrollLeft += (buttonRect.left - railRect.left)
+      - (railRect.width - buttonRect.width) / 2;
+  };
+  window.addEventListener('resize', () => requestAnimationFrame(centerSelectedTab));
+
   const activate = (id) => {
     if (!WORKSPACE_TABS.some(([tabId]) => tabId === id)) return;
     activeWorkspaceTab = id;
+    document.body.classList.toggle('ui-workbench', id !== 'circuit');
+    document.body.dataset.workbenchTab = id;
+    if (id === 'circuit') closeParameters();
     content.querySelectorAll('[data-workspace-tab]').forEach((button) => {
       const active = button.dataset.workspaceTab === id;
       button.classList.toggle('active', active);
       button.setAttribute('aria-selected', String(active));
       button.tabIndex = active ? 0 : -1;
     });
+    // Keep the selected scientific module visible in the mobile horizontal rail.
+    requestAnimationFrame(centerSelectedTab);
     content.querySelectorAll('[data-tab-panel]').forEach((panel) => {
       panel.hidden = panel.dataset.tabPanel !== id;
     });
     if (id === 'circuit') queueMicrotask(() => environmentHandle?.resize?.());
-    else queueMicrotask(() => renderScientificWorkspace(id));
+    else queueMicrotask(() => { refreshWorkbenchMetrics(id); renderScientificWorkspace(id); });
   };
   nav.addEventListener('click', (event) => {
     const button = event.target.closest('[data-workspace-tab]');
@@ -1048,6 +1216,7 @@ function installWorkspaceTabs(shell) {
 function renderScientificWorkspace(tabId = activeWorkspaceTab) {
   const state = getState();
   const results = getResults();
+  refreshWorkbenchMetrics(tabId);
   if (tabId === 'curves') renderCurvesAndProbes(document.querySelector('#curves-tab-root'), { state, results, calculate: calculateSimulationResults });
   if (tabId === 'balance') {
     const root = document.querySelector('#balance-tab-root');
@@ -1154,6 +1323,7 @@ function render() {
   wireScenarioControls();
   wireAcademicCaseControls();
   wireAcademicLabControls();
+  structureAcademicWorkbench();
   wireSceneFullscreen();
   wireMobileWorkspaceJump();
   setScenarioStatus('Caso de ejemplo precargado. Modifica los valores o guarda tu propio escenario.', 'success');

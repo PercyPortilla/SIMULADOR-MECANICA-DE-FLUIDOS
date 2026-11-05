@@ -1,0 +1,69 @@
+{
+  "state": {
+    "start": {
+      "title": "PULPA LAB V2",
+      "tab": "balance",
+      "workbench": true,
+      "activeSections": 5,
+      "metrics": 4,
+      "railDisplay": "flex",
+      "topbarDisplay": "none",
+      "modelText": "86.91kPa",
+      "contentBackground": "rgb(243, 242, 238)",
+      "viewportWidth": 1505,
+      "pageOverflow": 0
+    },
+    "curves": {
+      "selected": "true",
+      "title": "Respuesta del sistema",
+      "metrics": 4,
+      "curves": 4,
+      "memoSections": 0,
+      "academicColumns": 2,
+      "pageOverflow": 0
+    },
+    "memory": {
+      "selected": "true",
+      "title": "Memoria de cálculo",
+      "metrics": 4,
+      "curves": 4,
+      "memoSections": 7,
+      "academicColumns": 2,
+      "pageOverflow": 0
+    },
+    "academy": {
+      "selected": "true",
+      "title": "Laboratorio de casos",
+      "metrics": 4,
+      "curves": 4,
+      "memoSections": 7,
+      "academicColumns": 2,
+      "pageOverflow": 0
+    },
+    "drawer": {
+      "open": "block",
+      "close": "none",
+      "remainingClass": false
+    },
+    "mobile": {
+      "selected": "academy",
+      "viewportWidth": 390,
+      "pageOverflow": 0,
+      "railPosition": "relative",
+      "gridColumns": "390px",
+      "academicColumns": "362px",
+      "activeNavigationVisible": true
+    },
+    "mobileCurves": {
+      "selected": "curves",
+      "charts": 4
+    },
+    "circuitPreservation": {
+      "active": "circuit",
+      "redesignClass": false,
+      "railDisplay": "contents",
+      "sceneCanvasPresent": true
+    }
+  },
+  "runtimeExceptions": []
+}
