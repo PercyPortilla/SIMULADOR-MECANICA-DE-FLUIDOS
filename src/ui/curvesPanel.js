@@ -11,16 +11,16 @@ let selectedProbeRatio = 0.5;
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const EXPORT_SVG_CSS = `
   text { font-family: Arial, Helvetica, sans-serif; }
-  .science-grid-line { stroke: #e3e9e4; stroke-width: .8; }
-  .chart-axis { stroke: #9caeab; stroke-width: 1; }
-  .chart-label { fill: #71847e; font-size: 10px; }
+  .science-grid-line { stroke: #e0e7f1; stroke-width: .8; }
+  .chart-axis { stroke: #93a8c1; stroke-width: 1; }
+  .chart-label { fill: #526f8e; font-size: 10px; }
   .chart-axis-title { font-weight: 650; }
   .science-line { fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-  .science-line-1 { stroke: #2d766f; }
-  .science-line-2 { stroke: #c17c53; }
-  .science-line-3 { stroke: #7d9c9a; }
-  .science-focus-point circle { fill: #c17c53; stroke: #244042; stroke-width: 1.5; }
-  .science-focus-point text { fill: #244042; font-size: 9.5px; font-weight: 650; }
+  .science-line-1 { stroke: #1879d2; }
+  .science-line-2 { stroke: #7965d6; }
+  .science-line-3 { stroke: #42badb; }
+  .science-focus-point circle { fill: #7965d6; stroke: #183955; stroke-width: 1.5; }
+  .science-focus-point text { fill: #183955; font-size: 9.5px; font-weight: 650; }
 `;
 
 function finite(value) { return typeof value === 'number' && Number.isFinite(value); }

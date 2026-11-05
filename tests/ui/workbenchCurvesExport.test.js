@@ -165,7 +165,7 @@ describe('Curvas científicas · exportación SVG real', () => {
     expect(xml).toContain('<title>Curva &lt;ensayo&gt; &amp; medición</title>');
     expect(xml).toContain('class="chart-axis"');
     expect(xml).toContain('points="48.00,172.00 276.00,90.00 504.00,18.00"');
-    expect(xml).toContain('.science-line-1 { stroke: #2d766f; }');
+    expect(xml).toContain('.science-line-1 { stroke: #1879d2; }');
     expect(xml).toContain('<rect x="0" y="0" width="520" height="230" fill="#ffffff">');
     expect(xml).not.toContain('science-hit-point');
     expect(xml).not.toContain('<ensayo>');

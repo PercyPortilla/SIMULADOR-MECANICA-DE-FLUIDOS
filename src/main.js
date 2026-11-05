@@ -5,6 +5,8 @@ import './ui/eulerLayoutCompact.css';
 import './ui/uiReview.css';
 import './ui/workbenchTransform.css';
 import './ui/threeDWorkbench.css';
+import './ui/premiumWorkbench.css';
+import { installPremiumWorkbench, renderPremiumInsight } from './ui/premiumWorkbench.js';
 import { resolveMemoryScenarioProvenance } from './ui/scenarioProvenance.js';
 import { prepareScenarioState } from './ui/scenarioLoad.js';
 import { mountIndustrialV57Presentation } from './ui/industrialV57Presentation.js';
@@ -1185,7 +1187,7 @@ function installWorkspaceTabs(shell) {
   rail.className = 'wb-rail';
   const railBrand = document.createElement('div');
   railBrand.className = 'wb-rail-brand';
-  railBrand.innerHTML = '<span class="wb-brand-mark">PL<span>.</span></span><span class="wb-brand-copy"><strong>PULPA LAB</strong><small>ENGINEERING WORKSPACE</small></span>';
+  railBrand.innerHTML = '<span class="wb-brand-mark"><img src="/brand/pulpa-lab-mark.svg" alt="" width="52" height="52"></span><span class="wb-brand-copy"><strong>PULPA <em>LAB</em></strong><small>SIMULADOR DE MECÁNICA<br>DE FLUIDOS</small></span>';
   const railLabel = document.createElement('p');
   railLabel.className = 'wb-rail-section-label';
   railLabel.textContent = 'MÓDULOS DEL SIMULADOR';
@@ -1229,6 +1231,15 @@ function installWorkspaceTabs(shell) {
     <button type="button" data-wb-3d-mode="euler" aria-pressed="false" disabled><span>02</span> Laboratorio Bernoulli–Euler</button>
   </div>`;
   circuit.prepend(sceneIntro);
+  const sceneGuide = document.createElement('details');
+  sceneGuide.className = 'wb-3d-tour-guide';
+  sceneGuide.innerHTML = '<summary>Guía del recorrido 3D <span>Explorar las etapas de la planta</span></summary>'
+    + '<ol><li><strong>Mina y recepción</strong><small>Origen del mineral y alimentación ROM.</small></li>'
+    + '<li><strong>Chancado y molienda</strong><small>Reducción del tamaño y preparación de pulpa.</small></li>'
+    + '<li><strong>SUMP, bombeo y ciclones</strong><small>Tramo estudiado en el laboratorio hidráulico.</small></li>'
+    + '<li><strong>Lixiviación y recuperación</strong><small>Etapas metalúrgicas representadas en la planta.</small></li></ol>'
+    + '<p>Usa las cámaras existentes para visitar las áreas. Para inspeccionar el interior de tubería, selecciona Laboratorio Bernoulli–Euler.</p>';
+  sceneIntro.after(sceneGuide);
   content.append(circuit);
 
   const placeholders = [
@@ -1263,6 +1274,7 @@ function installWorkspaceTabs(shell) {
       <div id="wb-inputs-model-controls"></div>
     </section>
   </div>`;
+  const premiumInputs = installPremiumWorkbench({ content, inputsRoot });
   const sidebar = shell.querySelector('.sidebar');
   const heading = sidebar.querySelector('.sidebar-heading');
   const scenarios = sidebar.querySelector('.scenario-panel');
@@ -1356,7 +1368,10 @@ function installWorkspaceTabs(shell) {
     if (id !== 'circuit' && document.body.classList.contains('v57-industrial')) {
       document.querySelector('#v57ExitEulerLab')?.click();
     }
-    if (activeWorkspaceTab === 'inputs' && id !== 'inputs') restoreInputsToSidebar();
+    if (activeWorkspaceTab === 'inputs' && id !== 'inputs') {
+      premiumInputs.restore();
+      restoreInputsToSidebar();
+    }
     activeWorkspaceTab = id;
     document.body.classList.add('ui-workbench');
     document.body.classList.toggle('wb-3d-workspace', id === 'circuit');
@@ -1365,6 +1380,7 @@ function installWorkspaceTabs(shell) {
     if (id === 'academy') structureAcademicWorkbench();
     if (id === 'circuit') restoreAcademicSidebar();
     if (id === 'inputs') { closeParameters(); moveInputsToWorkbench(); }
+    if (id === 'inputs') premiumInputs.apply();
     content.querySelectorAll('[data-workspace-tab]').forEach((button) => {
       const active = button.dataset.workspaceTab === id;
       button.classList.toggle('active', active);
@@ -1381,7 +1397,12 @@ function installWorkspaceTabs(shell) {
   };
   nav.addEventListener('click', (event) => {
     const button = event.target.closest('[data-workspace-tab]');
-    if (button) activate(button.dataset.workspaceTab);
+    if (button) {
+      activate(button.dataset.workspaceTab);
+      // Mobile navigation starts each module at its heading rather than
+      // retaining the scroll offset of the previously open scientific page.
+      if (window.matchMedia('(max-width: 940px)').matches) window.scrollTo({ top: 0, behavior: 'instant' });
+    }
   });
   nav.addEventListener('keydown', (event) => {
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
@@ -1448,6 +1469,7 @@ function renderScientificWorkspace(tabId = activeWorkspaceTab) {
     const root = document.querySelector('#balance-tab-root');
     renderBalanceAndEnergy(root, { state, results });
     renderSensitivityPanel(root?.querySelector('#sensitivity-root'), { state, calculate: calculateSimulationResults });
+    renderPremiumInsight({ state, results });
   }
   if (tabId === 'memory') {
     const selectedScenario = loadNamedScenario(document.querySelector('#scenario-select')?.value);
