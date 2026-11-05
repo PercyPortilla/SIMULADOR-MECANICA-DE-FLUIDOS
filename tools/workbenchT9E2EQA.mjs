@@ -43,7 +43,7 @@ async function evaluate(expression) {
 }
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const qaRoot = resolve(process.env.PULPA_QA_REPORT_DIR ?? 'qa-artifacts/ui-transform');
-const downloadRoot = join(qaRoot, 't9-temporary-downloads');
+const downloadRoot = join(qaRoot, `t9-temporary-downloads-${process.pid}`);
 mkdirSync(qaRoot, { recursive: true });
 mkdirSync(downloadRoot, { recursive: true });
 await call('Page.enable');
@@ -75,6 +75,47 @@ verify('npsh', await evaluate(`(() => ({
   disclaimer: document.querySelector('#balance-tab-root .wb-npsh-caveat')?.textContent,
   pageOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
 }))()`), (v) => v.visible && v.disclaimer?.includes('no lecturas de sensores') && v.pageOverflow === 0);
+
+verify('inputsPageAndProtectedCircuit', await evaluate(`(async () => {
+  document.querySelector('#workspace-tab-inputs').click();
+  const root = document.querySelector('#inputs-tab-root');
+  const editable = root.querySelector('#field-transport-pipe1-velocityMps');
+  const initial = editable?.value;
+  const baseline = Number(initial);
+  editable.value = String(baseline + 0.05);
+  editable.dispatchEvent(new Event('change', { bubbles: true }));
+  await new Promise((resolve) => setTimeout(resolve, 220));
+  const changedMetric = document.querySelector('#inputs-summary .wb-metric:nth-child(3) strong')?.textContent;
+  editable.value = initial;
+  editable.dispatchEvent(new Event('change', { bubbles: true }));
+  await new Promise((resolve) => setTimeout(resolve, 220));
+  const inputs = {
+    tab: document.body.dataset.workbenchTab,
+    workbench: document.body.classList.contains('ui-workbench'),
+    visible: !document.querySelector('#workspace-panel-inputs').hidden,
+    fields: root.querySelectorAll('#sections [data-path]').length,
+    scenarios: Boolean(root.querySelector('#scenario-save-new')),
+    editable: Boolean(editable && !editable.disabled),
+    recalculated: changedMetric !== document.querySelector('#inputs-summary .wb-metric:nth-child(3) strong')?.textContent,
+  };
+  document.querySelector('#workspace-tab-circuit').click();
+  const circuit = {
+    tab: document.body.dataset.workbenchTab,
+    originalLayout: !document.body.classList.contains('ui-workbench'),
+    fieldsRestored: Boolean(document.querySelector('#parameters-sidebar #sections [data-path]')),
+    scenariosRestored: Boolean(document.querySelector('#parameters-sidebar .scenario-panel')),
+    academicControlsRestored: Boolean(document.querySelector('#parameters-sidebar .academic-case-panel')),
+    canvasPresent: Boolean(document.querySelector('#environment-canvas')),
+  };
+  document.querySelector('#workspace-tab-inputs').click();
+  const preserved = document.querySelector('#inputs-tab-root #field-transport-pipe1-velocityMps')?.value === initial;
+  document.querySelector('#workspace-tab-balance').click();
+  return { inputs, circuit, preserved, finalTab: document.body.dataset.workbenchTab };
+})()`), (v) => v.inputs.tab === 'inputs' && v.inputs.workbench && v.inputs.visible
+  && v.inputs.fields >= 15 && v.inputs.scenarios && v.inputs.editable && v.inputs.recalculated
+  && v.circuit.tab === 'circuit' && v.circuit.originalLayout && v.circuit.fieldsRestored
+  && v.circuit.scenariosRestored && v.circuit.academicControlsRestored
+  && v.circuit.canvasPresent && v.preserved && v.finalTab === 'balance');
 
 verify('saveAndCompare', await evaluate(`(() => {
   document.querySelector('#wb-command-parameters').click();
@@ -204,9 +245,28 @@ verify('mobile', await evaluate(`(() => ({
   tab:document.body.dataset.workbenchTab,
   buttons:document.querySelectorAll('#curves-tab-root .wb-chart-export').length,
 }))()`), (v) => v.viewport === 390 && v.overflow === 0 && v.buttons === 4);
+verify('mobileInputs', await evaluate(`(() => {
+  document.querySelector('#workspace-tab-inputs').click();
+  const root = document.querySelector('#inputs-tab-root');
+  const result = {
+    activeTab: document.body.dataset.workbenchTab,
+    fields: root.querySelectorAll('#sections [data-path]').length,
+    overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    scenarioVisible: Boolean(root.querySelector('#scenario-save')),
+  };
+  document.querySelector('#workspace-tab-curves').click();
+  return result;
+})()`), (v) => v.activeTab === 'inputs' && v.fields >= 15 && v.overflow === 0 && v.scenarioVisible);
 await call('Emulation.clearDeviceMetricsOverride');
 
-await sleep(1700);
+// Headless Chrome may finish SVG downloads after the CDP clicks resolve.
+// Inspect bytes only once every expected export has finished writing.
+for (let attempt = 0; attempt < 60; attempt += 1) {
+  const names = readdirSync(downloadRoot);
+  if (names.filter((name) => /\.(svg|csv|html|json)$/.test(name)).length >= 9
+    && !names.some((name) => name.endsWith('.crdownload'))) break;
+  await sleep(250);
+}
 for (const file of readdirSync(downloadRoot)) {
   const path = join(downloadRoot, file);
   if (!statSync(path).isFile()) continue;
@@ -226,6 +286,40 @@ verify('downloadFiles', {
   html: outcome.downloads.filter((item) => item.name.endsWith('.html')).length,
   scenarioJson: outcome.downloads.some((item) => item.name === 'pulpa-lab-scenario.json' && item.validScenarioJson),
 }, (v) => v.svg >= 3 && v.csv >= 2 && v.html >= 2 && v.scenarioJson);
+
+// Explicit deep-link regression: a fresh /?tab=inputs session must never
+// return the user to the legacy circuit when opening "Entradas y modelo".
+await call('Emulation.setDeviceMetricsOverride', {
+  width: 1440, height: 900, deviceScaleFactor: 1, mobile: false,
+});
+await call('Page.navigate', { url: `http://127.0.0.1:${previewPort}/?tab=inputs` });
+for (let i = 0; i < 80; i += 1) {
+  if (await evaluate(`Boolean(document.body.dataset.workbenchTab === 'inputs' && document.querySelector('#inputs-tab-root #scenario-save-new'))`).catch(() => false)) break;
+  if (i === 79) throw new Error('Inputs deep link did not load.');
+  await sleep(200);
+}
+verify('inputsDeepLink', await evaluate(`(() => ({
+  tab: document.body.dataset.workbenchTab,
+  scientific: document.body.classList.contains('ui-workbench'),
+  oldCircuitHidden: document.querySelector('#workspace-panel-circuit').hidden,
+  fields: document.querySelectorAll('#inputs-tab-root #sections [data-path]').length,
+  overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+}))()`), (v) => v.tab === 'inputs' && v.scientific && v.oldCircuitHidden && v.fields >= 15 && v.overflow === 0);
+const desktopShot = await call('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
+writeFileSync(join(qaRoot, 't16-inputs-desktop.png'), Buffer.from(desktopShot.data, 'base64'));
+await call('Emulation.setDeviceMetricsOverride', {
+  width: 390, height: 844, deviceScaleFactor: 1, mobile: true,
+  screenWidth: 390, screenHeight: 844,
+});
+await sleep(250);
+verify('inputsDeepLinkMobile', await evaluate(`(() => ({
+  tab: document.body.dataset.workbenchTab,
+  viewport: document.documentElement.clientWidth,
+  overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+}))()`), (v) => v.tab === 'inputs' && v.viewport === 390 && v.overflow === 0);
+const mobileShot = await call('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
+writeFileSync(join(qaRoot, 't16-inputs-mobile.png'), Buffer.from(mobileShot.data, 'base64'));
+await call('Emulation.clearDeviceMetricsOverride');
 
 writeFileSync(join(qaRoot, 't9-e2e-qa.json'), JSON.stringify(outcome, null, 2));
 rmSync(downloadRoot, { recursive: true, force: true });

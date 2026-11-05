@@ -1706,3 +1706,100 @@ body.ui-workbench:not(.v57-industrial) .wb-npsh-caveat {
 @media (prefers-reduced-motion: reduce) {
   body.ui-workbench:not(.v57-industrial) * { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
 }
+
+/* T16: A real scientific input page, separate from the protected Planta General. */
+body.ui-workbench:not(.v57-industrial) .wb-inputs-layout {
+  display: grid;
+  gap: 25px;
+  min-width: 0;
+}
+body.ui-workbench:not(.v57-industrial) .wb-inputs-card {
+  min-width: 0;
+  padding: clamp(21px, 2.5vw, 35px);
+  background: #fff;
+  border: 1px solid #dce4df;
+  border-radius: 12px;
+  box-shadow: 0 13px 38px rgba(25, 54, 46, .035);
+}
+body.ui-workbench:not(.v57-industrial) .wb-inputs-card > header {
+  margin-bottom: 22px;
+  padding-bottom: 19px;
+  border-bottom: 1px solid #e6ebe6;
+}
+body.ui-workbench:not(.v57-industrial) .wb-inputs-card > header h3 {
+  margin: 8px 0;
+  font-size: clamp(22px, 2vw, 27px);
+  font-weight: 750;
+  letter-spacing: -.035em;
+  color: #1b3937;
+}
+body.ui-workbench:not(.v57-industrial) .wb-inputs-card > header p {
+  max-width: 720px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.65;
+  color: #62776e;
+}
+body.ui-workbench:not(.v57-industrial) .wb-inputs-scenarios #scenario-name { max-width: 480px; }
+body.ui-workbench:not(.v57-industrial) .wb-inputs-scenarios .scenario-primary-row {
+  grid-template-columns: minmax(170px, 1.35fr) repeat(3, minmax(108px, 1fr));
+  gap: 10px;
+  align-items: end;
+}
+body.ui-workbench:not(.v57-industrial) .wb-inputs-scenarios .scenario-select-label { grid-column: auto; }
+body.ui-workbench:not(.v57-industrial) .wb-inputs-scenarios .scenario-primary-row > button,
+body.ui-workbench:not(.v57-industrial) .wb-inputs-scenarios .scenario-more summary { min-height: 42px; }
+body.ui-workbench:not(.v57-industrial) .wb-inputs-model .sidebar-heading { display: none; }
+body.ui-workbench:not(.v57-industrial) #wb-inputs-model-controls #sections {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 14px;
+}
+body.ui-workbench:not(.v57-industrial) #wb-inputs-model-controls .parameter-section {
+  min-width: 0;
+  margin: 0;
+  padding: 12px 18px;
+  background: #f8faf7;
+  border: 1px solid #dbe6df;
+  border-radius: 9px;
+}
+body.ui-workbench:not(.v57-industrial) #wb-inputs-model-controls .parameter-section[open] {
+  background: #fff;
+  border-color: #adcbc0;
+}
+body.ui-workbench:not(.v57-industrial) #wb-inputs-model-controls .parameter-section > summary {
+  color: #254a43;
+  font-weight: 720;
+  cursor: pointer;
+}
+body.ui-workbench:not(.v57-industrial) #wb-inputs-model-controls :is(.circuit-segments,.pump-curve-editor) {
+  grid-column: 1 / -1;
+}
+body.ui-workbench:not(.v57-industrial) #wb-inputs-model-controls .parameter-field {
+  min-width: 0;
+}
+body.ui-workbench:not(.v57-industrial) #wb-inputs-model-controls .parameter-field :is(input,select) {
+  max-width: 100%;
+}
+body.ui-workbench:not(.v57-industrial) #wb-inputs-model-controls #validation-message:not(:empty) {
+  display: block;
+  margin-top: 15px;
+  padding: 12px 15px;
+  border-radius: 8px;
+  background: #fff2ee;
+  color: #8e4233;
+}
+@media (max-width: 1100px) {
+  body.ui-workbench:not(.v57-industrial) .wb-inputs-scenarios .scenario-primary-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  body.ui-workbench:not(.v57-industrial) .wb-inputs-scenarios .scenario-select-label { grid-column: 1 / -1; }
+}
+@media (max-width: 740px) {
+  body.ui-workbench:not(.v57-industrial) .wb-inputs-card { padding: 18px 14px; }
+  body.ui-workbench:not(.v57-industrial) #wb-inputs-model-controls #sections { grid-template-columns: minmax(0,1fr); }
+  body.ui-workbench:not(.v57-industrial) .wb-inputs-scenarios .scenario-primary-row { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  body.ui-workbench:not(.v57-industrial) .wb-inputs-scenarios .scenario-primary-row > button,
+  body.ui-workbench:not(.v57-industrial) .wb-inputs-scenarios .scenario-more { min-width: 0; }
+}

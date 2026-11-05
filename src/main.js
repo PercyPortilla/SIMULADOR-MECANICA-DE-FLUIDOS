@@ -73,7 +73,7 @@ let unsubscribeProcessMetrics = null;
 // Deep-link only to the redesigned science workspace. The default circuit
 // remains unchanged for Planta General / Bernoulli–Euler entry points.
 const initialWorkspaceTab = new URLSearchParams(window.location.search).get('tab');
-let activeWorkspaceTab = ['curves', 'balance', 'memory', 'academy'].includes(initialWorkspaceTab)
+let activeWorkspaceTab = ['inputs', 'curves', 'balance', 'memory', 'academy'].includes(initialWorkspaceTab)
   ? initialWorkspaceTab : 'circuit';
 let startPresentationTour = null;
 let lastAcademicLabEvaluation = null;
@@ -1026,14 +1026,16 @@ function wireAcademicLabControls() {
 }
 
 const WORKSPACE_TABS = Object.freeze([
-  ['circuit', '01', 'Entradas y modelo'],
+  ['inputs', '01', 'Entradas y modelo'],
   ['curves', '02', 'Resultados y curvas'],
   ['balance', '03', 'Análisis hidráulico'],
   ['memory', '04', 'Memoria y supuestos'],
   ['academy', '05', 'Prácticas académicas'],
+  ['circuit', '06', 'Planta general · 3D'],
 ]);
 
 const WORKBENCH_NAMES = Object.freeze({
+  inputs: 'Entradas y modelo',
   curves: 'Exploración de resultados',
   balance: 'Diagnóstico hidráulico',
   memory: 'Memoria científica',
@@ -1056,6 +1058,12 @@ function refreshWorkbenchMetrics(tabId = activeWorkspaceTab) {
   const metric = (label, value, unit, detail) => ({ label, value, unit, detail });
   const model = state.rheology?.model || 'Sin seleccionar';
   const metrics = {
+    inputs: [
+      metric('Sólidos en masa', engineeringValue(state.slurry?.solidsMassFraction * 100, 1), '%', 'Fracción ingresada, no lectura de sensor'),
+      metric('Diámetro interno', engineeringValue(state.transport?.pipe1?.innerDiameterM, 3), 'm', 'Geometría hidráulica del escenario'),
+      metric('Velocidad de entrada', engineeringValue(state.transport?.pipe1?.velocityMps), 'm/s', 'Velocidad objetivo del modelo'),
+      metric('Modelo reológico', model.toUpperCase(), '', 'Ley constitutiva seleccionada'),
+    ],
     curves: [
       metric('Caudal del circuito', engineeringValue(flow === undefined ? null : flow * 3600), 'm³/h', 'Caudal calculado'),
       metric('Reynolds', engineeringValue(results.transport?.reynoldsNumber, 0), '', 'Régimen de transporte'),
@@ -1204,6 +1212,7 @@ function installWorkspaceTabs(shell) {
   content.append(circuit);
 
   const placeholders = [
+    ['inputs', '01 / CONFIGURACIÓN DEL ESTUDIO', 'Entradas y modelo', 'Prepara el escenario con valores físicos editables. Cada campo usa el mismo motor y las mismas validaciones de la simulación; no son lecturas de sensores.'],
     ['curves', '01 / INTERPRETACIÓN DEL MODELO', 'Respuesta del sistema', 'Visualiza cómo la reología, la bomba y la geometría modifican el comportamiento de la pulpa. Todos los valores proceden del motor numérico.'],
     ['balance', '02 / DIAGNÓSTICO DEL CIRCUITO', 'Ingeniería hidráulica', 'Relaciona pérdidas de presión, energía, bombeo y seguridad operativa, con desglose por tramo y análisis de sensibilidad.'],
     ['memory', '03 / EVIDENCIA REPRODUCIBLE', 'Memoria de cálculo', 'Una lectura técnica de los datos, ecuaciones, hipótesis y resultados que respaldan cada simulación.'],
@@ -1221,6 +1230,37 @@ function installWorkspaceTabs(shell) {
     content.append(panel);
   });
 
+  // The original 3D circuit remains untouched. Inputs get their own scientific
+  // page, reusing the real, wired controls rather than duplicating model state.
+  const inputsRoot = content.querySelector('#inputs-tab-root');
+  inputsRoot.innerHTML = `<div class="wb-inputs-layout">
+    <section class="wb-inputs-card wb-inputs-scenarios" aria-labelledby="wb-inputs-scenarios-title">
+      <header><span class="wb-section-index">01 / VERSIONES DE ESTUDIO</span><h3 id="wb-inputs-scenarios-title">Escenarios y trazabilidad</h3><p>Guarda, carga o compara condiciones. Una entrada inválida no reemplaza el estado activo.</p></header>
+      <div id="wb-inputs-scenario-controls"></div>
+    </section>
+    <section class="wb-inputs-card wb-inputs-model" aria-labelledby="wb-inputs-model-title">
+      <header><span class="wb-section-index">02 / VARIABLES DEL MODELO</span><h3 id="wb-inputs-model-title">Parámetros físicos</h3><p>Pulpa, reología, tubería, pérdidas, bomba y proceso. Los campos modifican el escenario activo del solver; no alteran las dimensiones de los modelos 3D.</p></header>
+      <div id="wb-inputs-model-controls"></div>
+    </section>
+  </div>`;
+  const sidebar = shell.querySelector('.sidebar');
+  const heading = sidebar.querySelector('.sidebar-heading');
+  const scenarios = sidebar.querySelector('.scenario-panel');
+  const scenarioStatus = sidebar.querySelector('#scenario-status');
+  const sections = sidebar.querySelector('#sections');
+  const validation = sidebar.querySelector('#validation-message');
+  const moveInputsToWorkbench = () => {
+    inputsRoot.querySelector('#wb-inputs-scenario-controls').append(scenarios, scenarioStatus);
+    inputsRoot.querySelector('#wb-inputs-model-controls').append(heading, sections, validation);
+  };
+  const restoreInputsToSidebar = () => {
+    const academic = sidebar.querySelector('.academic-case-panel');
+    sidebar.insertBefore(heading, academic);
+    sidebar.insertBefore(scenarios, academic);
+    sidebar.insertBefore(scenarioStatus, academic);
+    sidebar.append(sections, validation);
+  };
+
   // The academic controls stay in their ORIGINAL sidebar for the protected
   // circuit/3D view. Only reparent them when the scientific Academy tab opens.
 
@@ -1234,6 +1274,11 @@ function installWorkspaceTabs(shell) {
     }
   };
   const toggleParameters = (event) => {
+    if (activeWorkspaceTab === 'inputs') {
+      inputsRoot.querySelector('#wb-inputs-model-title')?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+      inputsRoot.querySelector('#sections summary')?.focus?.({ preventScroll: true });
+      return;
+    }
     if (document.body.classList.contains('wb-parameters-open')) {
       closeParameters();
       return;
@@ -1243,7 +1288,6 @@ function installWorkspaceTabs(shell) {
     shell.querySelectorAll('[data-wb-parameters-trigger]').forEach((button) => button.setAttribute('aria-expanded', String(open)));
     if (open) document.querySelector('#scenario-name')?.focus({ preventScroll: true });
   };
-  const sidebar = shell.querySelector('.sidebar');
   const sidebarClose = document.createElement('button');
   sidebarClose.className = 'wb-parameters-close';
   sidebarClose.type = 'button';
@@ -1283,12 +1327,14 @@ function installWorkspaceTabs(shell) {
 
   const activate = (id) => {
     if (!WORKSPACE_TABS.some(([tabId]) => tabId === id)) return;
+    if (activeWorkspaceTab === 'inputs' && id !== 'inputs') restoreInputsToSidebar();
     activeWorkspaceTab = id;
     document.body.classList.toggle('ui-workbench', id !== 'circuit');
     document.body.dataset.workbenchTab = id;
     if (id === 'circuit') closeParameters();
     if (id === 'academy') structureAcademicWorkbench();
     if (id === 'circuit') restoreAcademicSidebar();
+    if (id === 'inputs') { closeParameters(); moveInputsToWorkbench(); }
     content.querySelectorAll('[data-workspace-tab]').forEach((button) => {
       const active = button.dataset.workspaceTab === id;
       button.classList.toggle('active', active);
