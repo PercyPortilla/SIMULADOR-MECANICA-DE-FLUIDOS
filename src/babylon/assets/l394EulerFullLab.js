@@ -8,6 +8,7 @@
  */
 import {TransformNode} from '@babylonjs/core/Meshes/transformNode.js';
 import {loadBabylonAssetContainer} from './gltfLoader.js';
+import {applyE11EulerD5Lookdev} from './e11EulerD5Lookdev.js';
 
 export const L394_EULER_GLB_URL='models/euler/L394_L384_EULER_34_ANIM_FULL_LAB.glb';
 export const L394_EULER_GLB_SHA256='3ea34050240b310a6fe8663d6b66c8f1f07b69b23c4e2473f93819ead33fcf3e';
@@ -94,6 +95,7 @@ export function createEulerFullLabL394({
  const clipState=new Map();
  let transparencyRequested=false;
  const transparentMaterials=new Map();
+ let e11Lookdev=null;
  const v57Groups=()=>v57SiteVisual?.animationGroups??[];
  const reRender=()=>invalidate(240);
 
@@ -157,6 +159,7 @@ export function createEulerFullLabL394({
 
  function remove(){
   restoreCadMaterial();
+  e11Lookdev?.restore();e11Lookdev=null;
   if(inScene){
    for(const group of container?.animationGroups??[])group.stop?.();
    eulerHost?.setEnabled(false);
@@ -230,11 +233,15 @@ export function createEulerFullLabL394({
    eulerHost.setEnabled(true);
    scene.activeCamera=originalCamera;
    inScene=true;
+   // E11: adjust only clone materials of the loaded Euler GLB and the existing
+   // scene light/exposure settings. All values restore on any exit or failure.
+   e11Lookdev=applyE11EulerD5Lookdev({scene,container});
    syncClips();
    applyCadTransparency();
    loadError=null;loadState='ready';reRender();
    return true;
   }catch(error){
+   e11Lookdev?.restore();e11Lookdev=null;
    if(added){
     restoreCadMaterial();
     for(const root of container?.rootNodes??[])if(root?.parent===eulerHost)root.parent=null;
@@ -292,6 +299,7 @@ export function createEulerFullLabL394({
    animationGroupsPlaying:inScene?[...clipState.values()].filter(Boolean).length:0,
    nativeCadTransparencyRequested:transparencyRequested,
    transparentNativeCadMeshes:transparentMaterials.size,
+   e11D5Lookdev:e11Lookdev?.status??{active:false,uiModified:false,solverModified:false},
    scope:'Euler only; entire V57 restored on exit',
    visualOnly:true,sourceV57Edited:false,solverModified:false,
    manufacturerWetMatesCertified:false,originalB64CapsOpened:false,
