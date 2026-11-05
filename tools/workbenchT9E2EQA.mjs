@@ -1,13 +1,16 @@
 // Reproducible end-to-end QA of scientific workbench only.
-// Run against local Vite preview at http://127.0.0.1:8845/?tab=balance
-// with a separate Chrome QA profile on CDP port 9337.
+// Run against a local Vite preview with a separate Chrome QA profile.
+// Override PULPA_QA_PORT, PULPA_QA_CDP_PORT and PULPA_QA_REPORT_DIR when
+// validating an isolated integration worktree.
 // Does not render, screenshot or modify protected Planta/Euler 3D views.
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
-const pages = await (await fetch('http://127.0.0.1:9337/json')).json();
-const page = pages.find((candidate) => candidate.type === 'page' && candidate.url.startsWith('http://127.0.0.1:8845/'));
+const previewPort = process.env.PULPA_QA_PORT ?? '8845';
+const cdpPort = process.env.PULPA_QA_CDP_PORT ?? '9337';
+const pages = await (await fetch(`http://127.0.0.1:${cdpPort}/json`)).json();
+const page = pages.find((candidate) => candidate.type === 'page' && candidate.url.startsWith(`http://127.0.0.1:${previewPort}/`));
 if (!page) throw new Error('Local Chrome QA page missing.');
 const socket = new WebSocket(page.webSocketDebuggerUrl);
 await new Promise((done, fail) => {
@@ -39,8 +42,9 @@ async function evaluate(expression) {
   return response.result.value;
 }
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const qaRoot = resolve('qa-artifacts/ui-transform');
-const downloadRoot = resolve('qa-artifacts/ui-transform/t9-temporary-downloads');
+const qaRoot = resolve(process.env.PULPA_QA_REPORT_DIR ?? 'qa-artifacts/ui-transform');
+const downloadRoot = join(qaRoot, 't9-temporary-downloads');
+mkdirSync(qaRoot, { recursive: true });
 mkdirSync(downloadRoot, { recursive: true });
 await call('Page.enable');
 await call('Runtime.enable');

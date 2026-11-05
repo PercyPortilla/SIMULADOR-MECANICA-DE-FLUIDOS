@@ -1,0 +1,147 @@
+{
+  "tests": {
+    "npsh": {
+      "visible": true,
+      "state": "unavailable",
+      "disclaimer": "Los valores mostrados son cálculos del modelo, no lecturas de sensores ni predicción de cavitación.",
+      "pageOverflow": 0
+    },
+    "saveAndCompare": {
+      "selected": "scenario-1793869279208-1",
+      "baseline": 1.2,
+      "modified": 1.52,
+      "activeTab": "academy",
+      "visible": true,
+      "technicalRows": 9,
+      "changedRows": 1,
+      "header": "QA T9 Escenario base vs. estado actual"
+    },
+    "loadRestoresAndInvalidPreserves": {
+      "restored": 1.2,
+      "previous": 1.2,
+      "afterInvalid": 1.2,
+      "warning": "Escenario incompatible: slurry.solidsMassFraction debe estar entre 0 y 1.",
+      "selected": "scenario-1793869279208-1"
+    },
+    "scenarioExports": {
+      "status": "Escenario incompatible: slurry.solidsMassFraction debe estar entre 0 y 1.",
+      "selected": "scenario-1793869279208-1"
+    },
+    "deleteClosesComparison": {
+      "deleted": "scenario-1793869279208-1",
+      "selectedAfter": "",
+      "comparisonHidden": true,
+      "status": "Escenario eliminado."
+    },
+    "academicCompareAndLab": {
+      "mounted": true,
+      "comparisonVisible": true,
+      "compareRows": 9,
+      "incomplete": "Completa todas las predicciones antes de evaluar. “No sé” también es una hipótesis válida.",
+      "labResultVisible": true,
+      "labRows": 5,
+      "reportEnabled": true
+    },
+    "memoryExportButtons": {
+      "csv": true,
+      "html": true,
+      "sections": 7
+    },
+    "chartsKeyboardAndExport": {
+      "charts": 4,
+      "exports": 4,
+      "enabled": 4,
+      "activeMoved": true,
+      "before": "Modelo activo: γ̇ · s⁻¹ = 0; τ · Pa = 4",
+      "focusCount": 1,
+      "points": 61
+    },
+    "mobile": {
+      "viewport": 390,
+      "overflow": 0,
+      "tab": "curves",
+      "buttons": 4
+    },
+    "downloadFiles": {
+      "svg": 4,
+      "csv": 2,
+      "html": 2,
+      "scenarioJson": true
+    }
+  },
+  "downloads": [
+    {
+      "name": "pulpa-lab-curva-del-sistema.svg",
+      "bytes": 3008,
+      "sha256": "f5351fdb41acaca0d716691b12f97569bb19fdeffa44b6f339dcb563b3b6e173",
+      "containsActualSvg": true,
+      "containsReportSections": null,
+      "validScenarioJson": null
+    },
+    {
+      "name": "pulpa-lab-ley-constitutiva.svg",
+      "bytes": 3655,
+      "sha256": "2891ec8df34c17f7c0c96ba30c0aadd0224a6b813f556ec75d352d2507eadb2b",
+      "containsActualSvg": true,
+      "containsReportSections": null,
+      "validScenarioJson": null
+    },
+    {
+      "name": "pulpa-lab-memoria-imprimible.html",
+      "bytes": 10689,
+      "sha256": "b67cf2938810d6fae3adda968404c046727e934e74035b563f6c27130bbbb385",
+      "containsActualSvg": null,
+      "containsReportSections": true,
+      "validScenarioJson": null
+    },
+    {
+      "name": "pulpa-lab-memoria.csv",
+      "bytes": 4342,
+      "sha256": "e319f10231b098613ec487adc034c5a11134fd3a2b724a3301434e34f1d6af24",
+      "containsActualSvg": null,
+      "containsReportSections": null,
+      "validScenarioJson": null
+    },
+    {
+      "name": "pulpa-lab-perfil-de-velocidad.svg",
+      "bytes": 3447,
+      "sha256": "12f30d9d034a448768c0287a5b3d54e46007645887ab6e49cbf0070551ae5282",
+      "containsActualSvg": true,
+      "containsReportSections": null,
+      "validScenarioJson": null
+    },
+    {
+      "name": "pulpa-lab-scenario.csv",
+      "bytes": 2799,
+      "sha256": "d74e21a32699dd6f25e5f528967da40bf0ab7436ed48b36b47bff526b7ae99a9",
+      "containsActualSvg": null,
+      "containsReportSections": null,
+      "validScenarioJson": null
+    },
+    {
+      "name": "pulpa-lab-scenario.json",
+      "bytes": 2686,
+      "sha256": "efd128c58dd50b355e1ece7d95d7c6fe4d5eb9412c0c764b0276a62c0e23198e",
+      "containsActualSvg": null,
+      "containsReportSections": null,
+      "validScenarioJson": true
+    },
+    {
+      "name": "pulpa-lab-v20-static-head-energy.html",
+      "bytes": 4974,
+      "sha256": "9d92c306fd4ad5b2a8bee4d578a884cc73cab1c0478a24607a4a042e2f0ba749",
+      "containsActualSvg": null,
+      "containsReportSections": true,
+      "validScenarioJson": null
+    },
+    {
+      "name": "pulpa-lab-viscosidad-aparente.svg",
+      "bytes": 3696,
+      "sha256": "1a80a711ae404e20cedc7f3c4a12d4df22963b6a1f7d43253b8b8970c28057ac",
+      "containsActualSvg": true,
+      "containsReportSections": null,
+      "validScenarioJson": null
+    }
+  ],
+  "runtimeExceptions": []
+}
