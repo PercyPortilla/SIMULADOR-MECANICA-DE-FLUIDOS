@@ -8,8 +8,27 @@ import { createNumericSeries, seriesToSvgPolyline } from './chartSeries.js';
 import { buildRadialProbeRows, radialProbeToCsv, radialProbeToHtmlTable } from './radialProbe.js';
 
 let selectedProbeRatio = 0.5;
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const EXPORT_SVG_CSS = `
+  text { font-family: Arial, Helvetica, sans-serif; }
+  .science-grid-line { stroke: #e0e7f1; stroke-width: .8; }
+  .chart-axis { stroke: #93a8c1; stroke-width: 1; }
+  .chart-label { fill: #526f8e; font-size: 10px; }
+  .chart-axis-title { font-weight: 650; }
+  .science-line { fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  .science-line-1 { stroke: #1879d2; }
+  .science-line-2 { stroke: #7965d6; }
+  .science-line-3 { stroke: #42badb; }
+  .science-focus-point circle { fill: #7965d6; stroke: #183955; stroke-width: 1.5; }
+  .science-focus-point text { fill: #183955; font-size: 9.5px; font-weight: 650; }
+`;
 
 function finite(value) { return typeof value === 'number' && Number.isFinite(value); }
+function escapeMarkup(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[character]);
+}
 
 function constitutiveStress(state, shearRateS_1) {
   const r = state.rheology;
@@ -63,9 +82,11 @@ export function buildSystemCurve(state, calculate, pointCount = 13) {
   return flowRateM3h.length >= 2 ? { velocityMps, flowRateM3h, pressureDropKpa } : null;
 }
 
-function chartSvg({ title, subtitle, xLabel, yLabel, series, focusPoint = null }) {
+function chartSvg({ title, subtitle, xLabel, yLabel, series, exportId, focusPoint = null }) {
   const validSeries = series.filter((item) => item?.x?.length && item.x.length === item.y.length);
-  if (!validSeries.length) return `<article class="science-chart"><div class="science-card-head"><strong>${title}</strong><small>${subtitle}</small></div><p class="science-empty">Datos insuficientes.</p></article>`;
+  const heading = `<div class="wb-chart-heading"><strong>${escapeMarkup(title)}</strong><small>${escapeMarkup(subtitle)}</small></div>`;
+  const exportButton = `<button type="button" class="wb-chart-export" data-chart-export="${escapeMarkup(exportId)}" aria-label="Descargar gráfico ${escapeMarkup(title)} como SVG" ${validSeries.length ? '' : 'disabled'}>Descargar SVG</button>`;
+  if (!validSeries.length) return `<article class="science-chart wb-chart-card"><div class="science-card-head">${heading}${exportButton}</div><p class="science-empty">Datos insuficientes.</p></article>`;
   const width = 520; const height = 230; const padding = { left: 48, right: 16, top: 18, bottom: 38 };
   const allX = validSeries.flatMap((item) => item.x);
   const allY = validSeries.flatMap((item) => item.y);
@@ -84,14 +105,45 @@ function chartSvg({ title, subtitle, xLabel, yLabel, series, focusPoint = null }
   ].join('');
   const lines = validSeries.map((item, index) => {
     const geometry = seriesToSvgPolyline(createNumericSeries(item.x, item.y), { width, height, padding, xDomain, yDomain });
-    const hitPoints = item.x.map((x, pointIndex) => `<circle class="science-hit-point" cx="${sx(x)}" cy="${sy(item.y[pointIndex])}" r="7" tabindex="0" role="button" aria-label="${item.label}: ${xLabel} ${Number(x.toPrecision(5))}, ${yLabel} ${Number(item.y[pointIndex].toPrecision(5))}" data-chart-point="${item.label}: ${xLabel} = ${Number(x.toPrecision(5))}; ${yLabel} = ${Number(item.y[pointIndex].toPrecision(5))}"><title>${item.label}: ${xLabel} = ${Number(x.toPrecision(5))}; ${yLabel} = ${Number(item.y[pointIndex].toPrecision(5))}</title></circle>`).join('');
-    return `<polyline class="science-line science-line-${index + 1}" points="${geometry.points}" />${hitPoints}`;
+    const hitPoints = item.x.map((x, pointIndex) => {
+      const description = `${item.label}: ${xLabel} = ${Number(x.toPrecision(5))}; ${yLabel} = ${Number(item.y[pointIndex].toPrecision(5))}`;
+      return `<circle class="science-hit-point" cx="${sx(x)}" cy="${sy(item.y[pointIndex])}" r="7" tabindex="${pointIndex === 0 && index === 0 ? 0 : -1}" role="button" aria-label="${escapeMarkup(description)}" data-chart-point="${escapeMarkup(description)}"><title>${escapeMarkup(description)}</title></circle>`;
+    }).join('');
+    return `<polyline class="science-line science-line-${index + 1}" points="${geometry.points}" aria-label="${escapeMarkup(item.label)}"><title>${escapeMarkup(item.label)}</title></polyline>${hitPoints}`;
   }).join('');
-  const legend = validSeries.map((item, index) => `<span><i class="science-key science-key-${index + 1}"></i>${item.label}</span>`).join('');
+  const legend = validSeries.map((item, index) => `<span><i class="science-key science-key-${index + 1}"></i>${escapeMarkup(item.label)}</span>`).join('');
   const focus = focusPoint && finite(focusPoint.x) && finite(focusPoint.y)
-    ? `<g class="science-focus-point"><circle cx="${sx(focusPoint.x)}" cy="${sy(focusPoint.y)}" r="5"/><text x="${sx(focusPoint.x) + 8}" y="${sy(focusPoint.y) - 8}">${focusPoint.label ?? 'Punto de operación'}</text><title>${focusPoint.label ?? 'Punto de operación'}: ${xLabel} = ${Number(focusPoint.x.toPrecision(5))}; ${yLabel} = ${Number(focusPoint.y.toPrecision(5))}</title></g>`
+    ? `<g class="science-focus-point"><circle cx="${sx(focusPoint.x)}" cy="${sy(focusPoint.y)}" r="5"/><text x="${sx(focusPoint.x) + 8}" y="${sy(focusPoint.y) - 8}">${escapeMarkup(focusPoint.label ?? 'Punto de operación')}</text><title>${escapeMarkup(`${focusPoint.label ?? 'Punto de operación'}: ${xLabel} = ${Number(focusPoint.x.toPrecision(5))}; ${yLabel} = ${Number(focusPoint.y.toPrecision(5))}`)}</title></g>`
     : '';
-  return `<article class="science-chart"><div class="science-card-head"><strong>${title}</strong><small>${subtitle}</small></div><svg viewBox="0 0 ${width} ${height}" role="group" aria-label="${title}; selecciona un punto con clic, toque o teclado">${grid}<line class="chart-axis" x1="${padding.left}" y1="${padding.top}" x2="${padding.left}" y2="${height - padding.bottom}"/><line class="chart-axis" x1="${padding.left}" y1="${height - padding.bottom}" x2="${width - padding.right}" y2="${height - padding.bottom}"/>${lines}${focus}<text class="chart-label chart-axis-title" x="${width / 2}" y="${height - 7}" text-anchor="middle">${xLabel}</text><text class="chart-label chart-axis-title" x="12" y="${height / 2}" transform="rotate(-90 12 ${height / 2})" text-anchor="middle">${yLabel}</text></svg><div class="science-legend">${legend}<span class="science-hover-note">Selecciona un punto para consultar valores.</span></div><p class="science-point-detail" role="status" aria-live="polite">Selecciona un punto del gráfico.</p></article>`;
+  return `<article class="science-chart wb-chart-card"><div class="science-card-head">${heading}${exportButton}</div><svg viewBox="0 0 ${width} ${height}" role="group" aria-label="${escapeMarkup(title)}; selecciona un punto con clic, toque o teclado">${grid}<line class="chart-axis" x1="${padding.left}" y1="${padding.top}" x2="${padding.left}" y2="${height - padding.bottom}"/><line class="chart-axis" x1="${padding.left}" y1="${height - padding.bottom}" x2="${width - padding.right}" y2="${height - padding.bottom}"/>${lines}${focus}<text class="chart-label chart-axis-title" x="${width / 2}" y="${height - 7}" text-anchor="middle">${escapeMarkup(xLabel)}</text><text class="chart-label chart-axis-title" x="12" y="${height / 2}" transform="rotate(-90 12 ${height / 2})" text-anchor="middle">${escapeMarkup(yLabel)}</text></svg><div class="science-legend">${legend}<span class="science-hover-note">Selecciona un punto para consultar valores.</span></div><p class="science-point-detail" role="status" aria-live="polite">Selecciona un punto del gráfico.</p></article>`;
+}
+
+/** Clone the actual displayed series and axes, then embed the palette for offline SVG viewing. */
+export function serializeChartForExport(sourceSvg, title) {
+  if (sourceSvg?.namespaceURI !== SVG_NS) throw new TypeError('Se requiere un gráfico SVG real.');
+  const svg = sourceSvg.cloneNode(true);
+  svg.setAttribute('xmlns', SVG_NS);
+  svg.setAttribute('width', '1040');
+  svg.setAttribute('height', '460');
+  svg.setAttribute('role', 'img');
+  svg.setAttribute('aria-label', String(title));
+  svg.querySelectorAll('.science-hit-point').forEach((point) => point.remove());
+
+  const element = (tag) => sourceSvg.ownerDocument.createElementNS(SVG_NS, tag);
+  const name = element('title');
+  name.textContent = String(title);
+  const styles = element('style');
+  styles.textContent = EXPORT_SVG_CSS;
+  const background = element('rect');
+  background.setAttribute('x', '0');
+  background.setAttribute('y', '0');
+  background.setAttribute('width', '520');
+  background.setAttribute('height', '230');
+  background.setAttribute('fill', '#ffffff');
+  svg.insertBefore(background, svg.firstChild);
+  svg.insertBefore(styles, svg.firstChild);
+  svg.insertBefore(name, svg.firstChild);
+  return `<?xml version="1.0" encoding="UTF-8"?>\n${new XMLSerializer().serializeToString(svg)}`;
 }
 
 function downloadText(filename, content, mime = 'text/csv;charset=utf-8') {
@@ -117,12 +169,63 @@ export function renderCurvesAndProbes(root, { state, results, calculate }) {
   const radialRatio = profileRows.map((row) => row.radiusRatio);
   const radialVelocity = profileRows.map((row) => row.velocityMps);
   const pumpCurves = results.pump?.curves;
-  root.innerHTML = `<div class="science-grid">
-    ${chartSvg({ title: 'Ley constitutiva', subtitle: state.rheology.model || 'sin modelo', xLabel: 'γ̇ · s⁻¹', yLabel: 'τ · Pa', series: [{ label: 'Modelo activo', x: constitutive.shearRateS_1, y: constitutive.shearStressPa }] })}
-    ${chartSvg({ title: 'Viscosidad aparente', subtitle: 'μa = τ/γ̇ · no definida en plug', xLabel: 'γ̇ · s⁻¹', yLabel: 'μa · Pa·s', series: [{ label: 'μ aparente', x: muX, y: muY }] })}
-    ${pumpCurves?.flowRateM3s?.length ? chartSvg({ title: 'Bomba y sistema', subtitle: results.pump?.status ?? '', xLabel: 'Q · m³/h', yLabel: 'H · m', series: [{ label: 'Sistema', x: pumpCurves.flowRateM3s.map((q) => q * 3600), y: pumpCurves.systemHeadM }, { label: 'Bomba', x: pumpCurves.flowRateM3s.map((q) => q * 3600), y: pumpCurves.pumpHeadM }], focusPoint: results.pump?.operatingPoint ? { x: results.pump.operatingPoint.flowRateM3s * 3600, y: results.pump.operatingPoint.pumpHeadM, label: 'Punto de operación' } : null }) : chartSvg({ title: 'Curva del sistema', subtitle: 'recalculada con el motor activo', xLabel: 'Q · m³/h', yLabel: 'ΔP · kPa', series: system ? [{ label: 'Sistema', x: system.flowRateM3h, y: system.pressureDropKpa }] : [] })}
-    ${chartSvg({ title: 'Perfil de velocidad', subtitle: results.transport?.flowRegime ? `régimen: ${results.transport.flowRegime}` : '', xLabel: 'u · m/s', yLabel: 'r/R', series: profileRows.length ? [{ label: 'Perfil radial', x: radialVelocity, y: radialRatio }] : [] })}
-  </div><section class="probe-panel"><div class="probe-head"><div><p class="eyebrow">SONDA RADIAL</p><h3>Perfil laminar equivalente</h3></div><button id="probe-export-csv" type="button" ${profileRows.length ? '' : 'disabled'}>Exportar perfiles CSV</button></div><label class="probe-slider">r/R <input id="probe-ratio" type="range" min="0" max="1" step="0.001" value="${selectedProbeRatio.toFixed(3)}"><output id="probe-ratio-value" for="probe-ratio">${selectedProbeRatio.toFixed(2)}</output></label><div id="probe-metrics" class="probe-metrics"></div><div class="probe-table-wrap">${profileRows.length ? radialProbeToHtmlTable(profile, { decimals: 4, caption: 'Sondas virtuales · perfil radial' }) : '<p class="science-empty">Selecciona un modelo reológico no newtoniano válido para generar sondas.</p>'}</div></section>`;
+  root.innerHTML = `
+    <div class="wb-curves-workspace">
+      <section class="wb-section wb-section-rheology" aria-labelledby="wb-rheology-title">
+        <header class="wb-section-head">
+          <span class="wb-section-index" aria-hidden="true">01</span>
+          <div>
+            <p class="wb-section-kicker">COMPORTAMIENTO REOLÓGICO</p>
+            <h3 id="wb-rheology-title" class="wb-section-title">Respuesta de la pulpa al esfuerzo</h3>
+            <p class="wb-section-description">Relación entre tasa de corte, esfuerzo cortante y viscosidad aparente del modelo activo.</p>
+          </div>
+        </header>
+        <div class="science-grid wb-chart-grid wb-chart-grid-rheology">
+          ${chartSvg({ title: 'Ley constitutiva', subtitle: state.rheology.model || 'sin modelo', xLabel: 'γ̇ · s⁻¹', yLabel: 'τ · Pa', exportId: 'ley-constitutiva', series: [{ label: 'Modelo activo', x: constitutive.shearRateS_1, y: constitutive.shearStressPa }] })}
+          ${chartSvg({ title: 'Viscosidad aparente', subtitle: 'μa = τ/γ̇ · no definida en plug', xLabel: 'γ̇ · s⁻¹', yLabel: 'μa · Pa·s', exportId: 'viscosidad-aparente', series: [{ label: 'μ aparente', x: muX, y: muY }] })}
+        </div>
+      </section>
+      <section class="wb-section wb-section-hydraulic" aria-labelledby="wb-curves-hydraulic-title">
+        <header class="wb-section-head">
+          <span class="wb-section-index" aria-hidden="true">02</span>
+          <div>
+            <p class="wb-section-kicker">TRANSPORTE Y BOMBEO</p>
+            <h3 id="wb-curves-hydraulic-title" class="wb-section-title">Curvas del circuito y perfil radial</h3>
+            <p class="wb-section-description">Demanda hidráulica frente al caudal y distribución de velocidad a lo largo del radio.</p>
+          </div>
+        </header>
+        <div class="science-grid wb-chart-grid wb-chart-grid-hydraulic">
+          ${pumpCurves?.flowRateM3s?.length ? chartSvg({ title: 'Bomba y sistema', subtitle: results.pump?.status ?? '', xLabel: 'Q · m³/h', yLabel: 'H · m', exportId: 'bomba-y-sistema', series: [{ label: 'Sistema', x: pumpCurves.flowRateM3s.map((q) => q * 3600), y: pumpCurves.systemHeadM }, { label: 'Bomba', x: pumpCurves.flowRateM3s.map((q) => q * 3600), y: pumpCurves.pumpHeadM }], focusPoint: results.pump?.operatingPoint ? { x: results.pump.operatingPoint.flowRateM3s * 3600, y: results.pump.operatingPoint.pumpHeadM, label: 'Punto de operación' } : null }) : chartSvg({ title: 'Curva del sistema', subtitle: 'recalculada con el motor activo', xLabel: 'Q · m³/h', yLabel: 'ΔP · kPa', exportId: 'curva-del-sistema', series: system ? [{ label: 'Sistema', x: system.flowRateM3h, y: system.pressureDropKpa }] : [] })}
+          ${chartSvg({ title: 'Perfil de velocidad', subtitle: results.transport?.flowRegime ? `régimen: ${results.transport.flowRegime}` : '', xLabel: 'u · m/s', yLabel: 'r/R', exportId: 'perfil-de-velocidad', series: profileRows.length ? [{ label: 'Perfil radial', x: radialVelocity, y: radialRatio }] : [] })}
+        </div>
+      </section>
+      <section class="wb-section wb-section-probes" aria-labelledby="wb-curves-probes-title">
+        <header class="wb-section-head">
+          <span class="wb-section-index" aria-hidden="true">03</span>
+          <div>
+            <p class="wb-section-kicker">INSPECCIÓN DEL PERFIL</p>
+            <h3 id="wb-curves-probes-title" class="wb-section-title">Sonda radial interactiva</h3>
+            <p class="wb-section-description">Mueve el cursor de r/R desde el eje hasta la pared; inspecciona las magnitudes locales y exporta la tabla completa.</p>
+          </div>
+        </header>
+        <div class="probe-panel wb-probe-workspace">
+          <div class="probe-head wb-probe-head">
+            <div><p class="eyebrow">PERFIL EQUIVALENTE</p><h3>Perfil laminar equivalente</h3></div>
+            <button id="probe-export-csv" type="button" ${profileRows.length ? '' : 'disabled'}>Exportar perfiles CSV</button>
+          </div>
+          <div class="wb-probe-controls">
+            <label class="probe-slider">Posición radial · r/R
+              <input id="probe-ratio" type="range" min="0" max="1" step="0.001" value="${selectedProbeRatio.toFixed(3)}">
+              <output id="probe-ratio-value" for="probe-ratio">${selectedProbeRatio.toFixed(2)}</output>
+            </label>
+            <div id="probe-metrics" class="probe-metrics wb-probe-metrics"></div>
+          </div>
+          <div class="probe-table-wrap wb-probe-table">
+            ${profileRows.length ? radialProbeToHtmlTable(profile, { decimals: 4, caption: 'Sondas virtuales · perfil radial' }) : '<p class="science-empty">Selecciona un modelo reológico no newtoniano válido para generar sondas.</p>'}
+          </div>
+        </div>
+      </section>
+    </div>`;
 
   root.querySelectorAll('.science-hit-point').forEach((point) => {
     const showDetails = () => {
@@ -134,6 +237,28 @@ export function renderCurvesAndProbes(root, { state, results, calculate }) {
     point.addEventListener('click', showDetails);
     point.addEventListener('keydown', (event) => {
       if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); showDetails(); }
+      if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) {
+        event.preventDefault();
+        const points = [...(point.closest('.science-chart')?.querySelectorAll('.science-hit-point') ?? [])];
+        const index = points.indexOf(point);
+        if (index === -1 || !points.length) return;
+        const targetIndex = event.key === 'Home' ? 0 : event.key === 'End' ? points.length - 1
+          : (index + (['ArrowRight', 'ArrowDown'].includes(event.key) ? 1 : -1) + points.length) % points.length;
+        point.setAttribute('tabindex', '-1');
+        points[targetIndex].setAttribute('tabindex', '0');
+        points[targetIndex].focus();
+      }
+    });
+  });
+
+  root.querySelectorAll('.wb-chart-export').forEach((button) => {
+    button.addEventListener('click', () => {
+      const chart = button.closest('.science-chart');
+      const svg = chart?.querySelector('svg');
+      if (!svg || button.disabled) return;
+      const title = chart.querySelector('.wb-chart-heading strong')?.textContent ?? 'Gráfico científico';
+      const filename = `pulpa-lab-${button.dataset.chartExport}.svg`;
+      downloadText(filename, serializeChartForExport(svg, title), 'image/svg+xml;charset=utf-8');
     });
   });
 

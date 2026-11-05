@@ -3,6 +3,12 @@ import './ui/industrialV57Presentation.css';
 import './ui/slurryPipeInspector.css';
 import './ui/eulerLayoutCompact.css';
 import './ui/uiReview.css';
+import './ui/workbenchTransform.css';
+import './ui/threeDWorkbench.css';
+import './ui/premiumWorkbench.css';
+import { installPremiumWorkbench, renderPremiumInsight } from './ui/premiumWorkbench.js';
+import { resolveMemoryScenarioProvenance } from './ui/scenarioProvenance.js';
+import { prepareScenarioState } from './ui/scenarioLoad.js';
 import { mountIndustrialV57Presentation } from './ui/industrialV57Presentation.js';
 import { attachNativeClassFeedL349 } from './babylon/assets/nativeClassFeedL349.js';
 import { attachNativeClassHeaderL352 } from './babylon/assets/nativeClassHeaderL352.js';
@@ -67,7 +73,11 @@ let eulerPresentationUi = null;
 let eulerNativeFeed = null;
 let eulerNativeHeader = null;
 let unsubscribeProcessMetrics = null;
-let activeWorkspaceTab = 'circuit';
+// Deep-link only to the redesigned science workspace. The default circuit
+// remains unchanged for Planta General / Bernoulli–Euler entry points.
+const initialWorkspaceTab = new URLSearchParams(window.location.search).get('tab');
+let activeWorkspaceTab = ['inputs', 'curves', 'balance', 'memory', 'academy'].includes(initialWorkspaceTab)
+  ? initialWorkspaceTab : 'circuit';
 let startPresentationTour = null;
 let lastAcademicLabEvaluation = null;
 let activeComparisonScenarioId = null;
@@ -231,6 +241,33 @@ function renderError(message) {
   if (node) node.textContent = message;
 }
 
+let nextEditorErrorId = 0;
+function guardedEditorUpdate(input, apply) {
+  const previousError = input.nextElementSibling?.classList.contains('field-error')
+    ? input.nextElementSibling : null;
+  try {
+    apply();
+    input.removeAttribute('aria-invalid');
+    input.removeAttribute('aria-describedby');
+    previousError?.remove();
+    renderError('');
+    return true;
+  } catch (error) {
+    let note = previousError;
+    if (!note) {
+      note = document.createElement('small');
+      note.className = 'field-error';
+      note.id = `editor-validation-${++nextEditorErrorId}`;
+      input.after(note);
+    }
+    input.setAttribute('aria-invalid', 'true');
+    input.setAttribute('aria-describedby', note.id);
+    note.textContent = error.message;
+    renderError(error.message);
+    return false;
+  }
+}
+
 function renderParameterSections() {
   const sectionHost = document.querySelector('#sections');
   if (!sectionHost) return;
@@ -284,11 +321,11 @@ function createSegmentEditor(state) {
         input.type = type;
         if (type === 'number') input.step = String(step);
         input.value = segment[key] ?? '';
-        input.addEventListener('change', () => {
+        input.addEventListener('change', () => guardedEditorUpdate(input, () => {
           const next = structuredClone(getState().transport.segments);
           next[index][key] = type === 'number' ? Number(input.value) : input.value;
           updateState({ transport: { segments: next } });
-        });
+        }));
         label.append(input);
         grid.append(label);
       });
@@ -301,7 +338,7 @@ function createSegmentEditor(state) {
       [['valvesCount','Válvulas'],['elbowsCount','Codos 90°'],['teesCount','Tes'],['reducersCount','Reducciones']].forEach(([key,labelText]) => {
         const label = document.createElement('label'); label.textContent = labelText;
         const input = document.createElement('input'); input.type='number'; input.min='0'; input.step='1'; input.value=segment.accessories?.[key] ?? 0;
-        input.addEventListener('change',()=>{ const next=structuredClone(getState().transport.segments); next[index].accessories={...next[index].accessories,[key]:Number(input.value)}; updateState({transport:{segments:next}}); });
+        input.addEventListener('change', () => guardedEditorUpdate(input, () => { const next=structuredClone(getState().transport.segments); next[index].accessories={...next[index].accessories,[key]:Number(input.value)}; updateState({transport:{segments:next}}); }));
         label.append(input); accessoryGrid.append(label);
       });
       accessoryDetails.append(accessoryGrid); card.append(accessoryDetails);
@@ -378,7 +415,7 @@ function createPumpCurveEditor(state) {
         input.setAttribute('aria-label', `${['Caudal Q (m³/h)', 'Altura H (m)', 'Eficiencia η (%)', 'NPSH requerido (m)'][column]}, punto ${index + 1}`);
         input.step = column === 0 ? '0.1' : column === 2 ? '0.1' : '0.01';
         input.value = value;
-        input.addEventListener('change', () => {
+        input.addEventListener('change', () => guardedEditorUpdate(input, () => {
           const pumpCurve = structuredClone(getState().energy.pumpCurve);
           const efficiencyCurve = structuredClone(getState().energy.efficiencyCurve);
           const npshrCurve = structuredClone(getState().energy.npshrCurve);
@@ -396,7 +433,7 @@ function createPumpCurveEditor(state) {
             npshrCurve[index].npshM = Number(input.value);
           }
           updateState({ energy: { pumpCurve, efficiencyCurve, npshrCurve } });
-        });
+        }));
         row.append(input);
       });
       const remove = document.createElement('button');
@@ -510,19 +547,30 @@ function formatScenarioDelta(left, right) {
   return [formatScenarioValue(delta), relative === null ? '—' : `${relative >= 0 ? '+' : ''}${relative.toFixed(2)} %`];
 }
 
+function hideActiveScenarioComparison() {
+  activeComparisonScenarioId = null;
+  ['scenario-comparison', 'engineering-comparison', 'workbench-scenario-comparison'].forEach((id) => {
+    const node = document.getElementById(id);
+    if (node) node.hidden = true;
+  });
+}
+
 function renderScenarioComparison(scenario) {
   const host = document.querySelector('#scenario-comparison');
   const engineeringHost = document.querySelector('#engineering-comparison');
-  if (!host && !engineeringHost) return;
+  const academyRoot = document.querySelector('#academy-tab-root');
+  let workbenchHost = academyRoot?.querySelector('#workbench-scenario-comparison');
+  if (activeWorkspaceTab !== 'circuit' && academyRoot && !workbenchHost) {
+    workbenchHost = document.createElement('section');
+    workbenchHost.id = 'workbench-scenario-comparison';
+    workbenchHost.className = 'wb-scenario-comparison';
+    workbenchHost.setAttribute('aria-label', 'Comparación técnica de escenarios');
+    academyRoot.prepend(workbenchHost);
+  }
+  if (!host && !engineeringHost && !workbenchHost) return;
   activeComparisonScenarioId = scenario?.id ?? null;
   const diffs = compareScenarios(scenario, getState());
-  const defaultState = getInitialState();
-  const savedState = structuredClone(defaultState);
-  Object.entries(scenario.inputs ?? {}).forEach(([section, value]) => {
-    if (value && typeof value === 'object' && !Array.isArray(value)) savedState[section] = { ...savedState[section], ...value };
-    else savedState[section] = value;
-  });
-  if (scenario.inputs?.transport?.pipe1) savedState.transport.pipe1 = { ...defaultState.transport.pipe1, ...scenario.inputs.transport.pipe1 };
+  const savedState = prepareScenarioState(getInitialState(), scenario.inputs ?? {});
   const savedResults = calculateSimulationResults(savedState);
   const currentResults = getResults();
   const currentState = getState();
@@ -538,7 +586,8 @@ function renderScenarioComparison(scenario) {
     ['Densidad pulpa', savedResults.slurry?.densityKgM3, currentResults.slurry?.densityKgM3, 'kg/m³'],
     ['Recuperación', savedResults.recovery?.overallRecovery === undefined ? undefined : savedResults.recovery.overallRecovery * 100, currentResults.recovery?.overallRecovery === undefined ? undefined : currentResults.recovery.overallRecovery * 100, '%'],
   ].filter(([, left, right]) => left !== undefined || right !== undefined);
-  const inputHtml = diffs.length ? diffs.slice(0, 20).map(({ key, left, right }) => {
+  // Show every changed input; the table itself is scrollable when needed.
+  const inputHtml = diffs.length ? diffs.map(({ key, left, right }) => {
     const [delta, relative] = formatScenarioDelta(left, right);
     return `<tr><td>${escapeHtml(key)}</td><td>${escapeHtml(formatScenarioValue(left))}</td><td>${escapeHtml(formatScenarioValue(right))}</td><td>${delta}</td><td>${relative}</td></tr>`;
   }).join('') : '<tr><td colspan="5">Sin diferencias de entrada.</td></tr>';
@@ -547,9 +596,7 @@ function renderScenarioComparison(scenario) {
     return `<tr><td>${name}</td><td>${formatScenarioValue(left)}${unit ? ` ${unit}` : ''}</td><td>${formatScenarioValue(right)}${unit ? ` ${unit}` : ''}</td><td>${delta}${unit ? ` ${unit}` : ''}</td><td>${relative}</td></tr>`;
   }).join('');
   const closeComparison = () => {
-    activeComparisonScenarioId = null;
-    if (host) host.hidden = true;
-    if (engineeringHost) engineeringHost.hidden = true;
+    hideActiveScenarioComparison();
   };
   if (host) {
     host.innerHTML = `<div class="scenario-comparison-head"><strong>Comparación A/B</strong><button type="button" aria-label="Cerrar comparación">×</button></div><table><thead><tr><th>Entrada</th><th>A</th><th>B</th><th>Δ</th><th>Δ %</th></tr></thead><tbody>${inputHtml}</tbody></table>`;
@@ -560,6 +607,14 @@ function renderScenarioComparison(scenario) {
     engineeringHost.innerHTML = `<div class="engineering-comparison-head"><div><span>COMPARACIÓN DE ESCENARIOS</span><strong>${escapeHtml(scenario.name)} vs escenario actual</strong></div><button type="button" aria-label="Cerrar comparación técnica">×</button></div><table><thead><tr><th>Variable</th><th>Escenario A</th><th>Escenario B</th><th>Δ</th><th>Δ %</th></tr></thead><tbody>${resultHtml}</tbody></table>`;
     engineeringHost.hidden = false;
     engineeringHost.querySelector('button')?.addEventListener('click', closeComparison);
+  }
+  if (workbenchHost) {
+    workbenchHost.innerHTML = `<header class="wb-scenario-compare-head"><div><span>ESTUDIO COMPARATIVO · A/B</span><h3>${escapeHtml(scenario.name)} <em>vs.</em> estado actual</h3><p>Ambas columnas se calculan con el mismo solver y sus respectivos parámetros.</p></div><button type="button" aria-label="Cerrar comparación técnica">✕ Cerrar</button></header>
+      <div class="wb-scenario-compare-label"><strong>Resultados de ingeniería</strong><small>Las variaciones indican B − A</small></div>
+      <div class="wb-scenario-compare-table"><table><thead><tr><th scope="col">Variable</th><th scope="col">A · guardado</th><th scope="col">B · actual</th><th scope="col">Δ</th><th scope="col">Δ %</th></tr></thead><tbody>${resultHtml}</tbody></table></div>
+      <details class="wb-scenario-compare-inputs"><summary>Ver diferencias de entradas (${diffs.length})</summary><div class="wb-scenario-compare-table"><table><thead><tr><th scope="col">Entrada</th><th scope="col">A</th><th scope="col">B</th><th scope="col">Δ</th><th scope="col">Δ %</th></tr></thead><tbody>${inputHtml}</tbody></table></div></details>`;
+    workbenchHost.hidden = false;
+    workbenchHost.querySelector('header button')?.addEventListener('click', closeComparison);
   }
 }
 
@@ -585,7 +640,7 @@ function downloadText(filename, content, type) {
   link.href = URL.createObjectURL(blob);
   link.download = filename;
   link.click();
-  URL.revokeObjectURL(link.href);
+  setTimeout(() => URL.revokeObjectURL(link.href), 0);
 }
 
 function wireScenarioControls() {
@@ -598,6 +653,7 @@ function wireScenarioControls() {
       refreshScenarioSelect();
       if (select) select.value = saved.id;
       setScenarioStatus(`Guardado: ${saved.name}.`, 'success');
+      if (activeWorkspaceTab === 'memory') renderScientificWorkspace('memory');
     } catch (error) {
       setScenarioStatus(error.message, 'warning');
     }
@@ -611,11 +667,14 @@ function wireScenarioControls() {
       return;
     }
     try {
-      resetState();
-      updateState(scenario.inputs);
+      // Validate/commit in one update: an incompatible imported record must
+      // not wipe out the previous simulation state or current calculations.
+      const candidate = prepareScenarioState(getInitialState(), scenario.inputs);
+      updateState(candidate);
       renderParameterSections();
       if (nameInput) nameInput.value = scenario.name;
       setScenarioStatus(`Cargado: ${scenario.name}.`, 'success');
+      if (activeWorkspaceTab === 'memory') renderScientificWorkspace('memory');
     } catch (error) {
       setScenarioStatus(`Escenario incompatible: ${error.message}`, 'warning');
     }
@@ -631,22 +690,44 @@ function wireScenarioControls() {
     if (!select?.value) return setScenarioStatus('Selecciona un escenario para borrar.', 'warning');
     const scenario = loadNamedScenario(select.value);
     if (!scenario || !window.confirm(`¿Eliminar el escenario «${scenario.name}»? Esta acción no se puede deshacer.`)) return;
+    if (activeComparisonScenarioId === scenario.id) hideActiveScenarioComparison();
     deleteNamedScenario(select.value);
     refreshScenarioSelect();
     setScenarioStatus('Escenario eliminado.', 'muted');
+    if (activeWorkspaceTab === 'memory') renderScientificWorkspace('memory');
   });
   document.querySelector('#scenario-compare')?.addEventListener('click', () => {
     const scenario = loadNamedScenario(select?.value);
     if (!scenario) return setScenarioStatus('Selecciona un escenario para comparar.', 'warning');
     const diffs = compareScenarios(scenario, getState());
     setScenarioStatus(diffs.length ? `${diffs.length} diferencias vs. estado actual.` : 'Sin diferencias vs. estado actual.', diffs.length ? 'warning' : 'success');
-    renderScenarioComparison(scenario);
+    if (activeWorkspaceTab !== 'circuit') {
+      // The legacy engineering result belongs to the protected circuit tab;
+      // show its scientific equivalent in the wide Academy workspace instead.
+      document.querySelector('.wb-parameters-close')?.click();
+      document.querySelector('#workspace-tab-academy')?.click();
+    }
+    try {
+      renderScenarioComparison(scenario);
+    } catch (error) {
+      hideActiveScenarioComparison();
+      setScenarioStatus(`Escenario incompatible para comparar: ${error.message}`, 'warning');
+      return;
+    }
+    if (activeWorkspaceTab === 'academy') {
+      const output = document.querySelector('#workbench-scenario-comparison');
+      output?.scrollIntoView({ behavior: 'auto', block: 'start' });
+      output?.querySelector('header button')?.focus({ preventScroll: true });
+    }
   });
   document.querySelector('#scenario-export-json')?.addEventListener('click', () => {
     downloadText('pulpa-lab-scenario.json', exportScenarioJson(nameInput?.value, getState()), 'application/json');
   });
   document.querySelector('#scenario-export-csv')?.addEventListener('click', () => {
     downloadText('pulpa-lab-scenario.csv', exportScenarioCsv(nameInput?.value, getState()), 'text/csv');
+  });
+  select?.addEventListener('change', () => {
+    if (activeWorkspaceTab === 'memory') renderScientificWorkspace('memory');
   });
   refreshScenarioSelect();
 }
@@ -948,12 +1029,138 @@ function wireAcademicLabControls() {
 }
 
 const WORKSPACE_TABS = Object.freeze([
-  ['circuit', '01', 'Entradas y modelo'],
+  ['inputs', '01', 'Entradas y modelo'],
   ['curves', '02', 'Resultados y curvas'],
   ['balance', '03', 'Análisis hidráulico'],
   ['memory', '04', 'Memoria y supuestos'],
   ['academy', '05', 'Prácticas académicas'],
+  ['circuit', '06', 'Entornos 3D'],
 ]);
+
+const WORKBENCH_NAMES = Object.freeze({
+  circuit: 'Entornos 3D',
+  inputs: 'Entradas y modelo',
+  curves: 'Exploración de resultados',
+  balance: 'Diagnóstico hidráulico',
+  memory: 'Memoria científica',
+  academy: 'Laboratorio académico',
+});
+
+function engineeringValue(value, digits = 2) {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? value.toLocaleString('es-PE', { minimumFractionDigits: digits, maximumFractionDigits: digits })
+    : 'N/D';
+}
+
+function refreshWorkbenchMetrics(tabId = activeWorkspaceTab) {
+  if (tabId === 'circuit') return;
+  const results = getResults();
+  const state = getState();
+  const flow = results.transport?.flowRateM3s;
+  const pressure = results.transport?.pressureDropPa;
+  const power = results.energy?.electricalPowerW;
+  const metric = (label, value, unit, detail) => ({ label, value, unit, detail });
+  const model = state.rheology?.model || 'Sin seleccionar';
+  const metrics = {
+    inputs: [
+      metric('Sólidos en masa', engineeringValue(state.slurry?.solidsMassFraction * 100, 1), '%', 'Fracción ingresada, no lectura de sensor'),
+      metric('Diámetro interno', engineeringValue(state.transport?.pipe1?.innerDiameterM, 3), 'm', 'Geometría hidráulica del escenario'),
+      metric('Velocidad de entrada', engineeringValue(state.transport?.pipe1?.velocityMps), 'm/s', 'Velocidad objetivo del modelo'),
+      metric('Modelo reológico', model.toUpperCase(), '', 'Ley constitutiva seleccionada'),
+    ],
+    curves: [
+      metric('Caudal del circuito', engineeringValue(flow === undefined ? null : flow * 3600), 'm³/h', 'Caudal calculado'),
+      metric('Reynolds', engineeringValue(results.transport?.reynoldsNumber, 0), '', 'Régimen de transporte'),
+      metric('Pérdida de presión', engineeringValue(pressure === undefined ? null : pressure / 1000), 'kPa', 'ΔP total de la línea'),
+      metric('Factor de fricción', engineeringValue(results.transport?.frictionFactor, 4), '', 'Modelo hidráulico activo'),
+    ],
+    balance: [
+      metric('Presión requerida', engineeringValue(pressure === undefined ? null : pressure / 1000), 'kPa', 'Distribuida + locales + estática'),
+      metric('Altura manométrica', engineeringValue(results.transport?.totalHeadM), 'm', 'Carga del sistema'),
+      metric('Potencia eléctrica', engineeringValue(power === undefined ? null : power / 1000), 'kW', 'Según caudal de cálculo'),
+      metric('NPSH disponible', engineeringValue(results.pump?.npshAvailableM), 'm', 'Comprobar frente a NPSHr'),
+    ],
+    memory: [
+      metric('Densidad de pulpa', engineeringValue(results.slurry?.densityKgM3, 1), 'kg/m³', 'Entrada y balance'),
+      metric('Caudal calculado', engineeringValue(flow === undefined ? null : flow * 3600), 'm³/h', 'Estado de simulación actual'),
+      metric('Presión total', engineeringValue(pressure === undefined ? null : pressure / 1000), 'kPa', 'Trazable a ecuaciones'),
+      metric('Potencia eléctrica', engineeringValue(power === undefined ? null : power / 1000), 'kW', 'Con supuestos declarados'),
+    ],
+    academy: [
+      metric('Casos de estudio', String(ACADEMIC_CASES.length), '', 'Biblioteca de referencia'),
+      metric('Modelo activo', model.toUpperCase(), '', 'Parámetros del circuito'),
+      metric('Caudal de referencia', engineeringValue(flow === undefined ? null : flow * 3600), 'm³/h', 'Escenario actual'),
+      metric('Resultado ΔP', engineeringValue(pressure === undefined ? null : pressure / 1000), 'kPa', 'Para comparar hipótesis'),
+    ],
+  };
+  const root = document.querySelector('#' + tabId + '-summary');
+  if (root) {
+    root.replaceChildren();
+    for (const [index, item] of (metrics[tabId] ?? []).entries()) {
+      const article = document.createElement('article');
+      article.className = 'wb-metric' + (index === 0 ? ' wb-metric-featured' : '');
+      article.innerHTML = '<div class="wb-metric-top"><span class="wb-metric-label"></span><span class="wb-metric-index"></span></div>'
+        + '<div class="wb-metric-reading"><strong></strong><em></em></div><p class="wb-metric-detail"></p>';
+      article.querySelector('.wb-metric-label').textContent = item.label;
+      article.querySelector('.wb-metric-index').textContent = '0' + (index + 1);
+      article.querySelector('strong').textContent = item.value;
+      article.querySelector('em').textContent = item.unit;
+      article.querySelector('.wb-metric-detail').textContent = item.detail;
+      root.append(article);
+    }
+  }
+  document.querySelectorAll('[data-wb-model]').forEach((node) => { node.textContent = model; });
+  document.querySelectorAll('[data-wb-current-tab]').forEach((node) => {
+    node.textContent = WORKBENCH_NAMES[tabId] ?? 'Área científica';
+  });
+}
+
+function structureAcademicWorkbench() {
+  const panel = document.querySelector('.academic-case-panel');
+  const root = document.querySelector('#academy-tab-root');
+  if (!panel || !root) return;
+  if (!root.contains(panel)) root.append(panel);
+  let select = panel.querySelector(':scope > .wb-academic-select');
+  let lab = panel.querySelector(':scope > .wb-academic-experiments');
+  if (!select) {
+    select = document.createElement('div');
+    select.className = 'wb-academic-select';
+    select.innerHTML = '<div class="wb-academic-step">01 / PREPARAR Y CARGAR</div>';
+    panel.prepend(select);
+  }
+  if (!lab) {
+    lab = document.createElement('div');
+    lab.className = 'wb-academic-experiments';
+    lab.innerHTML = '<div class="wb-academic-step">02 / COMPARAR Y EXPERIMENTAR</div>';
+    panel.append(lab);
+  }
+  // Widgets are dynamically installed after the initial tab construction;
+  // move any late #academic-lab into its proper column too.
+  [...panel.children].forEach((child) => {
+    if (child === select || child === lab) return;
+    (child.id === 'academic-comparator' || child.id === 'academic-lab' ? lab : select).append(child);
+  });
+}
+
+function restoreAcademicSidebar() {
+  const panel = document.querySelector('.academic-case-panel');
+  const sidebar = document.querySelector('.sidebar');
+  const sections = document.querySelector('#sections');
+  if (!panel || !sidebar) return;
+  // Restore the original direct-child structure for the protected 3D entry
+  // workspace, including selector, cases and laboratory controls.
+  const select = panel.querySelector(':scope > .wb-academic-select');
+  const lab = panel.querySelector(':scope > .wb-academic-experiments');
+  for (const wrapper of [select, lab]) {
+    if (!wrapper) continue;
+    [...wrapper.children].forEach((child) => {
+      if (child.classList.contains('wb-academic-step')) child.remove();
+      else panel.append(child);
+    });
+    wrapper.remove();
+  }
+  sidebar.insertBefore(panel, sections ?? null);
+}
 
 function installWorkspaceTabs(shell) {
   const content = shell.querySelector('.content');
@@ -976,7 +1183,34 @@ function installWorkspaceTabs(shell) {
     button.innerHTML = `<span>${number}</span>${label}`;
     nav.append(button);
   });
-  content.replaceChildren(nav);
+  const rail = document.createElement('div');
+  rail.className = 'wb-rail';
+  const railBrand = document.createElement('div');
+  railBrand.className = 'wb-rail-brand';
+  railBrand.innerHTML = '<span class="wb-brand-mark"><img src="/brand/pulpa-lab-mark.svg" alt="" width="52" height="52"></span><span class="wb-brand-copy"><strong>PULPA <em>LAB</em></strong><small>SIMULADOR DE MECÁNICA<br>DE FLUIDOS</small></span>';
+  const railLabel = document.createElement('p');
+  railLabel.className = 'wb-rail-section-label';
+  railLabel.textContent = 'MÓDULOS DEL SIMULADOR';
+  const railFooter = document.createElement('div');
+  railFooter.className = 'wb-rail-footer';
+  railFooter.innerHTML = '<span class="wb-rail-footer-kicker">HERRAMIENTAS</span>'
+    + '<button type="button" class="wb-rail-action" id="wb-rail-parameters">⚙ &nbsp; Editar parámetros</button>'
+    + '<button type="button" class="wb-rail-action" id="wb-rail-report">↗ &nbsp; Memoria técnica</button>'
+    + '<small>SIMULACIÓN ACADÉMICA · SISTEMA SI</small>';
+  const sceneSelector = document.createElement('div');
+  sceneSelector.className = 'wb-3d-selector';
+  sceneSelector.setAttribute('role', 'group');
+  sceneSelector.setAttribute('aria-label', 'Entorno tridimensional');
+  sceneSelector.innerHTML = '<span class="wb-3d-selector-title">VISTAS DEL MÓDULO 06</span>'
+    + '<button type="button" data-wb-3d-mode="mine" aria-pressed="true">◉ Planta general</button>'
+    + '<button type="button" data-wb-3d-mode="euler" aria-pressed="false" disabled>◎ Laboratorio Euler</button>';
+  rail.append(railBrand, railLabel, nav, sceneSelector, railFooter);
+
+  const toolbar = document.createElement('div');
+  toolbar.className = 'wb-commandbar';
+  toolbar.innerHTML = '<div class="wb-command-location"><span class="wb-status-indicator"></span><span>INSTRUMENTACIÓN / PULPA LAB</span><span class="wb-command-divider">/</span><strong data-wb-current-tab>ÁREA CIENTÍFICA</strong></div>'
+    + '<div class="wb-command-actions"><span class="wb-verified"><i></i> Motor físico conectado</span><button type="button" id="wb-command-parameters" class="wb-btn-parameter">Ajustar parámetros <span>↗</span></button></div>';
+  content.replaceChildren(rail, toolbar);
 
   const circuit = document.createElement('section');
   circuit.className = 'workspace-tab-panel';
@@ -986,13 +1220,34 @@ function installWorkspaceTabs(shell) {
   circuit.setAttribute('aria-labelledby', 'workspace-tab-circuit');
   circuit.tabIndex = 0;
   existing.forEach((node) => circuit.append(node));
+  const sceneIntro = document.createElement('header');
+  sceneIntro.className = 'wb-3d-intro';
+  sceneIntro.innerHTML = `<div class="wb-3d-intro-copy">
+    <span class="wb-section-index">06 / ENTORNOS TRIDIMENSIONALES</span>
+    <h2>Exploración del circuito</h2>
+    <p>Recorre el modelo industrial y el tramo de hidráulica estudiado con sus cámaras, animaciones e inspecciones originales. Las magnitudes mostradas son resultados del modelo, no sensores.</p>
+  </div><div class="wb-3d-intro-actions" role="group" aria-label="Seleccionar entorno 3D">
+    <button type="button" data-wb-3d-mode="mine" aria-pressed="true"><span>01</span> Planta general</button>
+    <button type="button" data-wb-3d-mode="euler" aria-pressed="false" disabled><span>02</span> Laboratorio Bernoulli–Euler</button>
+  </div>`;
+  circuit.prepend(sceneIntro);
+  const sceneGuide = document.createElement('details');
+  sceneGuide.className = 'wb-3d-tour-guide';
+  sceneGuide.innerHTML = '<summary>Guía del recorrido 3D <span>Explorar las etapas de la planta</span></summary>'
+    + '<ol><li><strong>Mina y recepción</strong><small>Origen del mineral y alimentación ROM.</small></li>'
+    + '<li><strong>Chancado y molienda</strong><small>Reducción del tamaño y preparación de pulpa.</small></li>'
+    + '<li><strong>SUMP, bombeo y ciclones</strong><small>Tramo estudiado en el laboratorio hidráulico.</small></li>'
+    + '<li><strong>Lixiviación y recuperación</strong><small>Etapas metalúrgicas representadas en la planta.</small></li></ol>'
+    + '<p>Usa las cámaras existentes para visitar las áreas. Para inspeccionar el interior de tubería, selecciona Laboratorio Bernoulli–Euler.</p>';
+  sceneIntro.after(sceneGuide);
   content.append(circuit);
 
   const placeholders = [
-    ['curves', 'RESULTADOS', 'Curvas y respuesta del sistema', 'Reología, perfil radial, curva del sistema, bomba y sondas calculadas por el mismo motor numérico.'],
-    ['balance', 'ANÁLISIS', 'Hidráulica, energía y sensibilidad', 'Desglose de presión, continuidad, punto de operación, energía y sensibilidad del circuito activo.'],
-    ['memory', 'TRAZABILIDAD', 'Memoria, ecuaciones y supuestos', 'Ecuaciones, sustitución numérica, supuestos, resultados y referencias del escenario activo.'],
-    ['academy', 'APRENDIZAJE', 'Casos, comparaciones y experimentos', 'Explora escenarios de referencia, contrasta hipótesis y documenta tus resultados con sus límites de aplicabilidad.'],
+    ['inputs', '01 / CONFIGURACIÓN DEL ESTUDIO', 'Entradas y modelo', 'Prepara el escenario con valores físicos editables. Cada campo usa el mismo motor y las mismas validaciones de la simulación; no son lecturas de sensores.'],
+    ['curves', '01 / INTERPRETACIÓN DEL MODELO', 'Respuesta del sistema', 'Visualiza cómo la reología, la bomba y la geometría modifican el comportamiento de la pulpa. Todos los valores proceden del motor numérico.'],
+    ['balance', '02 / DIAGNÓSTICO DEL CIRCUITO', 'Ingeniería hidráulica', 'Relaciona pérdidas de presión, energía, bombeo y seguridad operativa, con desglose por tramo y análisis de sensibilidad.'],
+    ['memory', '03 / EVIDENCIA REPRODUCIBLE', 'Memoria de cálculo', 'Una lectura técnica de los datos, ecuaciones, hipótesis y resultados que respaldan cada simulación.'],
+    ['academy', '04 / APRENDIZAJE APLICADO', 'Laboratorio de casos', 'Formula hipótesis, confronta escenarios del modelo y documenta conclusiones con sus límites de aplicabilidad.'],
   ];
   placeholders.forEach(([id, eyebrow, title, description]) => {
     const panel = document.createElement('section');
@@ -1002,34 +1257,152 @@ function installWorkspaceTabs(shell) {
     panel.setAttribute('role', 'tabpanel');
     panel.setAttribute('aria-labelledby', `workspace-tab-${id}`);
     panel.tabIndex = 0;
-    panel.innerHTML = `<div class="tab-placeholder-card"><p class="eyebrow">${eyebrow}</p><h2>${title}</h2><p>${description}</p><div id="${id}-tab-root"></div></div>`;
+    panel.innerHTML = `<div class="tab-placeholder-card"><header class="wb-page-intro"><div class="wb-page-main"><p class="eyebrow">${eyebrow}</p><h2>${title}</h2><p>${description}</p></div><aside class="wb-model-card"><span>ESTADO DEL MODELO</span><strong data-wb-model>—</strong><small>Resultados derivados del escenario activo · Sistema internacional</small></aside></header><div class="wb-metrics-head"><div><span>LECTURAS OPERATIVAS</span><h3>Indicadores del escenario</h3></div><small>Actualizados con cada cálculo</small></div><div class="wb-summary-grid" id="${id}-summary"></div><div id="${id}-tab-root" class="wb-content-root"></div></div>`;
     content.append(panel);
   });
 
-  // The academic experience needs full width, not a 332 px sidebar.
-  // Moving the existing node preserves the controls and their established IDs.
-  const academicPanel = shell.querySelector('.academic-case-panel');
-  const academyRoot = content.querySelector('#academy-tab-root');
-  if (academicPanel && academyRoot) academyRoot.append(academicPanel);
+  // The original 3D circuit remains untouched. Inputs get their own scientific
+  // page, reusing the real, wired controls rather than duplicating model state.
+  const inputsRoot = content.querySelector('#inputs-tab-root');
+  inputsRoot.innerHTML = `<div class="wb-inputs-layout">
+    <section class="wb-inputs-card wb-inputs-scenarios" aria-labelledby="wb-inputs-scenarios-title">
+      <header><span class="wb-section-index">01 / VERSIONES DE ESTUDIO</span><h3 id="wb-inputs-scenarios-title">Escenarios y trazabilidad</h3><p>Guarda, carga o compara condiciones. Una entrada inválida no reemplaza el estado activo.</p></header>
+      <div id="wb-inputs-scenario-controls"></div>
+    </section>
+    <section class="wb-inputs-card wb-inputs-model" aria-labelledby="wb-inputs-model-title">
+      <header><span class="wb-section-index">02 / VARIABLES DEL MODELO</span><h3 id="wb-inputs-model-title">Parámetros físicos</h3><p>Pulpa, reología, tubería, pérdidas, bomba y proceso. Los campos modifican el escenario activo del solver; no alteran las dimensiones de los modelos 3D.</p></header>
+      <div id="wb-inputs-model-controls"></div>
+    </section>
+  </div>`;
+  const premiumInputs = installPremiumWorkbench({ content, inputsRoot });
+  const sidebar = shell.querySelector('.sidebar');
+  const heading = sidebar.querySelector('.sidebar-heading');
+  const scenarios = sidebar.querySelector('.scenario-panel');
+  const scenarioStatus = sidebar.querySelector('#scenario-status');
+  const sections = sidebar.querySelector('#sections');
+  const validation = sidebar.querySelector('#validation-message');
+  const moveInputsToWorkbench = () => {
+    inputsRoot.querySelector('#wb-inputs-scenario-controls').append(scenarios, scenarioStatus);
+    inputsRoot.querySelector('#wb-inputs-model-controls').append(heading, sections, validation);
+  };
+  const restoreInputsToSidebar = () => {
+    const academic = sidebar.querySelector('.academic-case-panel');
+    sidebar.insertBefore(heading, academic);
+    sidebar.insertBefore(scenarios, academic);
+    sidebar.insertBefore(scenarioStatus, academic);
+    sidebar.append(sections, validation);
+  };
+
+  // The academic controls stay in their ORIGINAL sidebar for the protected
+  // circuit/3D view. Only reparent them when the scientific Academy tab opens.
+
+  let lastParameterTrigger = null;
+  const closeParameters = () => {
+    const wasOpen = document.body.classList.contains('wb-parameters-open');
+    document.body.classList.remove('wb-parameters-open');
+    shell.querySelectorAll('[data-wb-parameters-trigger]').forEach((button) => button.setAttribute('aria-expanded', 'false'));
+    if (wasOpen && lastParameterTrigger?.isConnected) {
+      lastParameterTrigger.focus({ preventScroll: true });
+    }
+  };
+  const toggleParameters = (event) => {
+    if (activeWorkspaceTab === 'inputs') {
+      inputsRoot.querySelector('#wb-inputs-model-title')?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+      inputsRoot.querySelector('#sections summary')?.focus?.({ preventScroll: true });
+      return;
+    }
+    if (document.body.classList.contains('v57-industrial')) {
+      // Open the native Euler parameter stage. Its controls are not replaced.
+      shell.querySelector('[data-euler-panel="parameters"]')?.click();
+      return;
+    }
+    if (document.body.classList.contains('wb-parameters-open')) {
+      closeParameters();
+      return;
+    }
+    lastParameterTrigger = event?.currentTarget ?? null;
+    const open = document.body.classList.toggle('wb-parameters-open', true);
+    shell.querySelectorAll('[data-wb-parameters-trigger]').forEach((button) => button.setAttribute('aria-expanded', String(open)));
+    if (open) document.querySelector('#scenario-name')?.focus({ preventScroll: true });
+  };
+  const sidebarClose = document.createElement('button');
+  sidebarClose.className = 'wb-parameters-close';
+  sidebarClose.type = 'button';
+  sidebarClose.textContent = '✕  Cerrar parámetros';
+  sidebarClose.addEventListener('click', closeParameters);
+  sidebar?.prepend(sidebarClose);
+  const backdrop = document.createElement('button');
+  backdrop.className = 'wb-parameters-backdrop';
+  backdrop.type = 'button';
+  backdrop.setAttribute('aria-label', 'Cerrar el panel de parámetros');
+  backdrop.addEventListener('click', closeParameters);
+  shell.append(backdrop);
+  for (const id of ['wb-rail-parameters', 'wb-command-parameters']) {
+    const button = shell.querySelector('#' + id);
+    button?.setAttribute('aria-expanded', 'false');
+    button?.setAttribute('aria-controls', 'parameters-sidebar');
+    button?.setAttribute('data-wb-parameters-trigger', '');
+    button?.addEventListener('click', toggleParameters);
+  }
+  shell.querySelector('#wb-rail-report')?.addEventListener('click', () => {
+    content.querySelector('#workspace-tab-memory')?.click();
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeParameters();
+  });
+
+  const centerSelectedTab = () => {
+    if (nav.scrollWidth <= nav.clientWidth) return;
+    const selected = nav.querySelector('[aria-selected="true"]');
+    if (!selected) return;
+    const railRect = nav.getBoundingClientRect();
+    const buttonRect = selected.getBoundingClientRect();
+    nav.scrollLeft += (buttonRect.left - railRect.left)
+      - (railRect.width - buttonRect.width) / 2;
+  };
+  window.addEventListener('resize', () => requestAnimationFrame(centerSelectedTab));
 
   const activate = (id) => {
     if (!WORKSPACE_TABS.some(([tabId]) => tabId === id)) return;
+    // A science module must never leave an active, hidden Euler scene behind it.
+    if (id !== 'circuit' && document.body.classList.contains('v57-industrial')) {
+      document.querySelector('#v57ExitEulerLab')?.click();
+    }
+    if (activeWorkspaceTab === 'inputs' && id !== 'inputs') {
+      premiumInputs.restore();
+      restoreInputsToSidebar();
+    }
     activeWorkspaceTab = id;
+    document.body.classList.add('ui-workbench');
+    document.body.classList.toggle('wb-3d-workspace', id === 'circuit');
+    document.body.dataset.workbenchTab = id;
+    if (id === 'circuit') closeParameters();
+    if (id === 'academy') structureAcademicWorkbench();
+    if (id === 'circuit') restoreAcademicSidebar();
+    if (id === 'inputs') { closeParameters(); moveInputsToWorkbench(); }
+    if (id === 'inputs') premiumInputs.apply();
     content.querySelectorAll('[data-workspace-tab]').forEach((button) => {
       const active = button.dataset.workspaceTab === id;
       button.classList.toggle('active', active);
       button.setAttribute('aria-selected', String(active));
       button.tabIndex = active ? 0 : -1;
     });
+    // Keep the selected scientific module visible in the mobile horizontal rail.
+    requestAnimationFrame(centerSelectedTab);
     content.querySelectorAll('[data-tab-panel]').forEach((panel) => {
       panel.hidden = panel.dataset.tabPanel !== id;
     });
     if (id === 'circuit') queueMicrotask(() => environmentHandle?.resize?.());
-    else queueMicrotask(() => renderScientificWorkspace(id));
+    else queueMicrotask(() => { refreshWorkbenchMetrics(id); renderScientificWorkspace(id); });
   };
   nav.addEventListener('click', (event) => {
     const button = event.target.closest('[data-workspace-tab]');
-    if (button) activate(button.dataset.workspaceTab);
+    if (button) {
+      activate(button.dataset.workspaceTab);
+      // Mobile navigation starts each module at its heading rather than
+      // retaining the scroll offset of the previously open scientific page.
+      if (window.matchMedia('(max-width: 940px)').matches) window.scrollTo({ top: 0, behavior: 'instant' });
+    }
   });
   nav.addEventListener('keydown', (event) => {
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
@@ -1045,18 +1418,66 @@ function installWorkspaceTabs(shell) {
   activate(activeWorkspaceTab);
 }
 
+function wireUnified3DViews(shell) {
+  const nativeEntry = shell.querySelector('#v57EnterEulerLab');
+  const nativeExit = shell.querySelector('#v57ExitEulerLab');
+  const modeButtons = [...shell.querySelectorAll('[data-wb-3d-mode]')];
+  if (!nativeEntry || !nativeExit || !modeButtons.length) return;
+  const updateMode = () => {
+    const activeMode = document.body.classList.contains('v57-industrial') ? 'euler' : 'mine';
+    const ready = !nativeEntry.disabled;
+    modeButtons.forEach((button) => {
+      // A dash preceding a digit is retained in DOMStringMap keys;
+      // use the literal attribute to avoid a silent selector mismatch.
+      const mode = button.getAttribute('data-wb-3d-mode');
+      const selected = mode === activeMode;
+      button.classList.toggle('active', selected);
+      button.setAttribute('aria-pressed', String(selected));
+      button.disabled = mode === 'euler' && !ready;
+      if (mode === 'euler') {
+        button.title = ready ? 'Abrir el laboratorio existente con todas sus funciones' : 'Preparando modelo 3D del laboratorio';
+      }
+    });
+    shell.querySelectorAll('[data-wb-current-tab]').forEach((node) => {
+      if (activeWorkspaceTab === 'circuit') node.textContent = activeMode === 'euler' ? 'Laboratorio Bernoulli–Euler' : 'Planta general 3D';
+    });
+  };
+  shell.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-wb-3d-mode]');
+    if (!button || button.disabled) return;
+    if (button.getAttribute('data-wb-3d-mode') === 'euler') {
+      nativeEntry.click();
+      // On a narrow screen, let the 3D studied environment be visible first.
+      // The original right-side scientific stage remains one native tap away.
+      if (document.body.classList.contains('v57-industrial') && window.matchMedia('(max-width: 940px)').matches) {
+        shell.querySelector('#v57CloseRightWorkspace')?.click();
+      }
+    } else nativeExit.click();
+    updateMode();
+  });
+  new MutationObserver(updateMode).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  new MutationObserver(updateMode).observe(nativeEntry, { attributes: true, attributeFilter: ['disabled'] });
+  updateMode();
+}
+
 function renderScientificWorkspace(tabId = activeWorkspaceTab) {
   const state = getState();
   const results = getResults();
+  refreshWorkbenchMetrics(tabId);
   if (tabId === 'curves') renderCurvesAndProbes(document.querySelector('#curves-tab-root'), { state, results, calculate: calculateSimulationResults });
   if (tabId === 'balance') {
     const root = document.querySelector('#balance-tab-root');
     renderBalanceAndEnergy(root, { state, results });
     renderSensitivityPanel(root?.querySelector('#sensitivity-root'), { state, calculate: calculateSimulationResults });
+    renderPremiumInsight({ state, results });
   }
   if (tabId === 'memory') {
     const selectedScenario = loadNamedScenario(document.querySelector('#scenario-select')?.value);
-    renderMemoryPanel(document.querySelector('#memory-tab-root'), { state, results, scenarioName: selectedScenario?.name ?? 'Escenario actual' });
+    const provenance = resolveMemoryScenarioProvenance(selectedScenario, state);
+    renderMemoryPanel(document.querySelector('#memory-tab-root'), {
+      state, results, scenarioName: provenance.scenarioName,
+      scenarioNotice: provenance.notice, matchesSaved: provenance.matchesSaved,
+    });
   }
 }
 
@@ -1154,6 +1575,7 @@ function render() {
   wireScenarioControls();
   wireAcademicCaseControls();
   wireAcademicLabControls();
+  if (activeWorkspaceTab === 'academy') structureAcademicWorkbench();
   wireSceneFullscreen();
   wireMobileWorkspaceJump();
   setScenarioStatus('Caso de ejemplo precargado. Modifica los valores o guarda tu propio escenario.', 'success');
@@ -1168,14 +1590,21 @@ eulerPresentationUi = mountIndustrialV57Presentation({
   cameras:CAMERA_PRESET_ORDER,
   labels:CAMERA_PRESET_LABELS,
 });
+wireUnified3DViews(document.querySelector('.shell'));
 const unsubscribeResultsRender = subscribeResults((results) => {
   renderResultsPanel(results, getState());
   eulerPresentationUi?.refresh();
   refreshInspectionGuide?.();
   if (activeComparisonScenarioId) {
     const scenario = loadNamedScenario(activeComparisonScenarioId);
-    if (scenario) renderScenarioComparison(scenario);
-    else activeComparisonScenarioId = null;
+    if (scenario) {
+      try {
+        renderScenarioComparison(scenario);
+      } catch (error) {
+        hideActiveScenarioComparison();
+        setScenarioStatus(`Comparación suspendida: ${error.message}`, 'warning');
+      }
+    } else hideActiveScenarioComparison();
   }
   if (activeWorkspaceTab !== 'circuit') renderScientificWorkspace(activeWorkspaceTab);
 });

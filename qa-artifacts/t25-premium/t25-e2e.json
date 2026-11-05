@@ -1,0 +1,84 @@
+{
+  "checks": {
+    "premiumBrand": {
+      "tab": "inputs",
+      "logoSrc": "/brand/pulpa-lab-mark.svg",
+      "logoLoaded": true,
+      "markW": 53,
+      "markH": 53,
+      "wordmark": "PULPA LAB",
+      "tagline": "SIMULADOR DE MECÁNICA\nDE FLUIDOS",
+      "oldPlMark": "",
+      "favicon": "/brand/pulpa-lab-mark.svg",
+      "overflow": 0
+    },
+    "parameterSearchAndLevels": {
+      "total": 10,
+      "basicVisible": [
+        "slurry",
+        "rheology",
+        "transport",
+        "energy"
+      ],
+      "searched": [
+        "transport"
+      ],
+      "matchCount": 1,
+      "empty": "No se encontraron variables. Prueba otro término o restablece el filtro.",
+      "restored": 10,
+      "processVisible": [
+        "leaching",
+        "recovery",
+        "process"
+      ],
+      "levelReset": "all"
+    },
+    "inputsRestoredTo3D": {
+      "tab": "circuit",
+      "originalSections": 10,
+      "hiddenSections": 0,
+      "sceneGuide": true,
+      "cameraCount": 9
+    },
+    "threeDGuide": {
+      "open": true,
+      "steps": 4
+    },
+    "engineeringInsight": {
+      "tab": "balance",
+      "flow": "Para las entradas actuales, el modelo calcula Q = 76.34 m³/h y ΔP = 86.91 kPa.",
+      "npsh": "NPSH: No existe un NPSH disponible calculado para este escenario.",
+      "npshState": "unavailable",
+      "disclaimer": "Resultados derivados del modelo académico; no lecturas de sensores ni certificación de operación.",
+      "guide": "Orden recomendado de lectura",
+      "actions": 2
+    },
+    "scientificJumpAndGuides": {
+      "curves": true,
+      "charts": 4,
+      "curveGuide": true,
+      "memoryGuide": true,
+      "academyGuide": true,
+      "finalTab": "academy"
+    },
+    "mobilePremiumInputs": {
+      "tab": "inputs",
+      "logoLoaded": true,
+      "overflow": 0,
+      "searchWidth": 290,
+      "filtersVisible": true,
+      "sections": 10
+    }
+  },
+  "screenshots": [
+    "01-premium-brand-inputs-desktop.png",
+    "01b-premium-parameter-filters.png",
+    "02-premium-general-desktop.png",
+    "03-premium-analysis-desktop.png",
+    "04-premium-inputs-mobile.png"
+  ],
+  "exceptions": [],
+  "date": "2026-11-05T18:43:02.272Z",
+  "result": "PASS",
+  "finished": "2026-11-05T18:43:14.344Z"
+}
