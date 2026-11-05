@@ -1,0 +1,98 @@
+{
+  "state": {
+    "start": {
+      "title": "PULPA LAB V2",
+      "tab": "balance",
+      "workbench": true,
+      "activeSections": 5,
+      "calculatedPressureMap": true,
+      "pressureLegendItems": 3,
+      "metrics": 4,
+      "railDisplay": "flex",
+      "topbarDisplay": "none",
+      "modelText": "86.91kPa",
+      "contentBackground": "rgb(238, 243, 250)",
+      "viewportWidth": 1425,
+      "pageOverflow": 0
+    },
+    "curves": {
+      "selected": "true",
+      "title": "Respuesta del sistema",
+      "metrics": 4,
+      "curves": 4,
+      "graphExportActions": 4,
+      "memoSections": 0,
+      "academicColumns": 0,
+      "pageOverflow": 0
+    },
+    "memory": {
+      "selected": "true",
+      "title": "Memoria de cálculo",
+      "metrics": 4,
+      "curves": 4,
+      "graphExportActions": 4,
+      "memoSections": 7,
+      "academicColumns": 0,
+      "pageOverflow": 0
+    },
+    "academy": {
+      "selected": "true",
+      "title": "Laboratorio de casos",
+      "metrics": 4,
+      "curves": 4,
+      "graphExportActions": 4,
+      "memoSections": 7,
+      "academicColumns": 2,
+      "pageOverflow": 0
+    },
+    "drawer": {
+      "open": "block",
+      "close": "none",
+      "remainingClass": false,
+      "restoredFocus": "wb-command-parameters"
+    },
+    "mobile": {
+      "selected": "academy",
+      "viewportWidth": 390,
+      "pageOverflow": 0,
+      "railPosition": "relative",
+      "gridColumns": "390px",
+      "academicColumns": "362px",
+      "activeNavigationVisible": true
+    },
+    "mobileCurves": {
+      "selected": "curves",
+      "charts": 4
+    },
+    "memorySaved": {
+      "before": "1.2",
+      "savedId": "scenario-1793901804602-2",
+      "provenance": "QA - Scenario origin",
+      "note": "Los parámetros de esta memoria coinciden con el escenario guardado seleccionado."
+    },
+    "memoryDirty": {
+      "inputMissing": false,
+      "currentValue": "1.5",
+      "provenance": "Escenario actual · borrador no guardado",
+      "warning": "Los valores calculados NO coinciden con el escenario guardado seleccionado. El informe contiene únicamente el estado activo, no el contenido de la biblioteca.",
+      "savedFlag": "false"
+    },
+    "circuitPreservation": {
+      "active": "circuit",
+      "redesignClass": true,
+      "railDisplay": "flex",
+      "sceneCanvasPresent": true,
+      "academicCasesRestored": true,
+      "originalCaseSelectDirect": true,
+      "originalCompareDirect": true,
+      "originalLabDirect": true
+    },
+    "academicRoundTrip": {
+      "restoredToAcademy": true,
+      "caseSelectInFirstColumn": true,
+      "compareInSecondColumn": true,
+      "labInSecondColumn": true
+    }
+  },
+  "runtimeExceptions": []
+}

@@ -4,9 +4,13 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const endpoint = 'http://127.0.0.1:9336/json';
+const qaPort = process.env.PULPA_QA_PORT ?? '8844';
+const cdpPort = process.env.PULPA_QA_CDP_PORT ?? '9336';
+const dest = resolve(process.env.PULPA_QA_REPORT_DIR ?? 'qa-artifacts/ui-transform');
+mkdirSync(dest, { recursive: true });
+const endpoint = `http://127.0.0.1:${cdpPort}/json`;
 const target = (await (await fetch(endpoint)).json())
-  .find((candidate) => candidate.type === 'page' && candidate.url.includes('127.0.0.1:8844/'));
+  .find((candidate) => candidate.type === 'page' && candidate.url.includes(`127.0.0.1:${qaPort}/`));
 if (!target) throw new Error('Chrome QA page unavailable');
 const ws = new WebSocket(target.webSocketDebuggerUrl);
 await new Promise((done, fail) => {
@@ -43,7 +47,7 @@ async function image(name) {
   await evalJs('window.scrollTo({top:0,behavior:"instant"})');
   await new Promise((r) => setTimeout(r, 160));
   const screenshot = await call('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
-  writeFileSync(resolve('qa-artifacts/ui-transform', name), Buffer.from(screenshot.data, 'base64'));
+  writeFileSync(resolve(dest, name), Buffer.from(screenshot.data, 'base64'));
 }
 async function captureSection(selector, name) {
   await evalJs(`(() => {
@@ -54,14 +58,13 @@ async function captureSection(selector, name) {
   })()`);
   await new Promise((r) => setTimeout(r, 230));
   const frame = await call('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
-  writeFileSync(resolve('qa-artifacts/ui-transform', name), Buffer.from(frame.data, 'base64'));
+  writeFileSync(resolve(dest, name), Buffer.from(frame.data, 'base64'));
 }
 await call('Page.enable');
 await call('Runtime.enable');
+await call('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
 await call('Page.reload', { ignoreCache: true });
 await new Promise((done) => setTimeout(done, 900));
-const dest = resolve('qa-artifacts/ui-transform');
-mkdirSync(dest, { recursive: true });
 const state = {};
 for (let n = 0; n < 65; n++) {
   await new Promise((done) => setTimeout(done, 200));
@@ -80,6 +83,9 @@ state.start = await evalJs(`(() => ({
   topbarDisplay:getComputedStyle(document.querySelector('.topbar')).display,
   modelText:document.querySelector('#balance-summary .wb-metric-reading')?.textContent?.trim(),
   contentBackground:getComputedStyle(document.querySelector('.content')).backgroundColor,
+  railBackground:getComputedStyle(document.querySelector('.wb-rail')).backgroundColor,
+  selectedBackground:getComputedStyle(document.querySelector('.workspace-tabs .active')).backgroundColor,
+  primaryAccent:getComputedStyle(document.body).getPropertyValue('--ui-accent').trim(),
   viewportWidth:document.documentElement.clientWidth,
   pageOverflow:document.documentElement.scrollWidth - document.documentElement.clientWidth,
 }))()`);
@@ -209,6 +215,9 @@ writeFileSync(resolve(dest, 'visual-qa.json'), JSON.stringify(report, null, 2));
 ws.close();
 console.log(JSON.stringify(report, null, 2));
 if (!state.start.workbench || state.start.activeSections < 4 ||
+    state.start.railBackground !== 'rgb(12, 28, 54)' ||
+    state.start.contentBackground !== 'rgb(238, 243, 250)' ||
+    state.start.primaryAccent !== '#1672c9' ||
     !state.start.calculatedPressureMap || state.start.pressureLegendItems !== 3 ||
     state.start.metrics !== 4 || state.start.railDisplay !== 'flex' ||
     state.start.topbarDisplay !== 'none' || state.curves.curves !== 4 ||
