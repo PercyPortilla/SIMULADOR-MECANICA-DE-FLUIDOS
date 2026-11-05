@@ -5,6 +5,8 @@
       "tab": "balance",
       "workbench": true,
       "activeSections": 5,
+      "calculatedPressureMap": true,
+      "pressureLegendItems": 3,
       "metrics": 4,
       "railDisplay": "flex",
       "topbarDisplay": "none",
@@ -18,8 +20,9 @@
       "title": "Respuesta del sistema",
       "metrics": 4,
       "curves": 4,
+      "graphExportActions": 4,
       "memoSections": 0,
-      "academicColumns": 2,
+      "academicColumns": 0,
       "pageOverflow": 0
     },
     "memory": {
@@ -27,8 +30,9 @@
       "title": "Memoria de cálculo",
       "metrics": 4,
       "curves": 4,
+      "graphExportActions": 4,
       "memoSections": 7,
-      "academicColumns": 2,
+      "academicColumns": 0,
       "pageOverflow": 0
     },
     "academy": {
@@ -36,6 +40,7 @@
       "title": "Laboratorio de casos",
       "metrics": 4,
       "curves": 4,
+      "graphExportActions": 4,
       "memoSections": 7,
       "academicColumns": 2,
       "pageOverflow": 0
@@ -43,7 +48,8 @@
     "drawer": {
       "open": "block",
       "close": "none",
-      "remainingClass": false
+      "remainingClass": false,
+      "restoredFocus": "wb-command-parameters"
     },
     "mobile": {
       "selected": "academy",
@@ -58,11 +64,34 @@
       "selected": "curves",
       "charts": 4
     },
+    "memorySaved": {
+      "before": "1.2",
+      "savedId": "scenario-1793867645731-2",
+      "provenance": "QA - Scenario origin",
+      "note": "Los parámetros de esta memoria coinciden con el escenario guardado seleccionado."
+    },
+    "memoryDirty": {
+      "inputMissing": false,
+      "currentValue": "1.5",
+      "provenance": "Escenario actual · borrador no guardado",
+      "warning": "Los valores calculados NO coinciden con el escenario guardado seleccionado. El informe contiene únicamente el estado activo, no el contenido de la biblioteca.",
+      "savedFlag": "false"
+    },
     "circuitPreservation": {
       "active": "circuit",
       "redesignClass": false,
       "railDisplay": "contents",
-      "sceneCanvasPresent": true
+      "sceneCanvasPresent": true,
+      "academicCasesRestored": true,
+      "originalCaseSelectDirect": true,
+      "originalCompareDirect": true,
+      "originalLabDirect": true
+    },
+    "academicRoundTrip": {
+      "restoredToAcademy": true,
+      "caseSelectInFirstColumn": true,
+      "compareInSecondColumn": true,
+      "labInSecondColumn": true
     }
   },
   "runtimeExceptions": []

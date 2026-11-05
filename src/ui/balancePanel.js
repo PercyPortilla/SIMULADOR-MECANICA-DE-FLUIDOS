@@ -1,3 +1,6 @@
+import { renderPressureBreakdown } from './pressureBreakdown.js';
+import { escapeHtml } from './safeHtml.js';
+
 function fmt(value, digits = 2) {
   return typeof value === 'number' && Number.isFinite(value) ? value.toFixed(digits) : '—';
 }
@@ -12,12 +15,12 @@ function qualityLabel(value) {
 }
 
 function row(label, value, unit = '', emphasized = false) {
-  return `<div class="balance-row wb-data-row${emphasized ? ' wb-data-row--key' : ''}"><span>${label}</span><strong>${value}${unit ? ` ${unit}` : ''}</strong></div>`;
+  return `<div class="balance-row wb-data-row${emphasized ? ' wb-data-row--key' : ''}"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}${unit ? ` ${escapeHtml(unit)}` : ''}</strong></div>`;
 }
 
 function pressureRows(results) {
   const segments = results.transport?.segments;
-  if (Array.isArray(segments) && segments.length) return segments.map((segment) => `<tr><td>${segment.id}</td><td>${fmt(segment.distributedPressureDropPa / 1000)}</td><td>${fmt(segment.minorLossPressurePa / 1000)}</td><td>${fmt(segment.staticPressurePa / 1000)}</td><td>${fmt(segment.pressureDropPa / 1000)}</td></tr>`).join('');
+  if (Array.isArray(segments) && segments.length) return segments.map((segment) => `<tr><td>${escapeHtml(segment.id)}</td><td>${fmt(segment.distributedPressureDropPa / 1000)}</td><td>${fmt(segment.minorLossPressurePa / 1000)}</td><td>${fmt(segment.staticPressurePa / 1000)}</td><td>${fmt(segment.pressureDropPa / 1000)}</td></tr>`).join('');
   const t = results.transport ?? {};
   return `<tr><td>Tramo inicial</td><td>${fmt(t.distributedPressureDropPa / 1000)}</td><td>${fmt(t.minorLossPressurePa / 1000)}</td><td>${fmt(t.staticPressurePa / 1000)}</td><td>${fmt(t.pressureDropPa / 1000)}</td></tr>`;
 }
@@ -26,9 +29,9 @@ function accessoryRows(results) {
   const segments = results.transport?.segments;
   const rows = [];
   if (Array.isArray(segments) && segments.length) {
-    segments.forEach((segment) => (segment.accessoryBreakdown ?? []).filter((item) => item.subtotal > 0).forEach((item) => rows.push(`<tr><td>${segment.id}</td><td>${item.type}</td><td>${item.count}</td><td>${fmt(item.k, 3)}</td><td>${fmt(item.subtotal, 3)}</td></tr>`)));
+    segments.forEach((segment) => (segment.accessoryBreakdown ?? []).filter((item) => item.subtotal > 0).forEach((item) => rows.push(`<tr><td>${escapeHtml(segment.id)}</td><td>${escapeHtml(item.type)}</td><td>${escapeHtml(item.count)}</td><td>${fmt(item.k, 3)}</td><td>${fmt(item.subtotal, 3)}</td></tr>`)));
   } else {
-    (results.transport?.accessoryBreakdown ?? []).filter((item) => item.subtotal > 0).forEach((item) => rows.push(`<tr><td>Tramo inicial</td><td>${item.type}</td><td>${item.count}</td><td>${fmt(item.k, 3)}</td><td>${fmt(item.subtotal, 3)}</td></tr>`));
+    (results.transport?.accessoryBreakdown ?? []).filter((item) => item.subtotal > 0).forEach((item) => rows.push(`<tr><td>Tramo inicial</td><td>${escapeHtml(item.type)}</td><td>${escapeHtml(item.count)}</td><td>${fmt(item.k, 3)}</td><td>${fmt(item.subtotal, 3)}</td></tr>`));
   }
   return rows.length ? rows.join('') : '<tr><td colspan="5">Sin accesorios explícitos activos.</td></tr>';
 }
@@ -51,7 +54,7 @@ export function renderBalanceAndEnergy(root, { state, results }) {
           <span>MECÁNICA DE FLUIDOS</span>
           <strong id="wb-hydraulic-title">Análisis hidráulico y bombeo</strong>
         </div>
-        <small>${qualityLabel(transport.resultQuality)}</small>
+        <small>${escapeHtml(qualityLabel(transport.resultQuality))}</small>
       </header>
 
       <section class="wb-section wb-section-hydraulic" aria-labelledby="wb-pressure-section-title">
@@ -65,14 +68,14 @@ export function renderBalanceAndEnergy(root, { state, results }) {
         </header>
         <div class="balance-dashboard wb-analysis-grid wb-analysis-grid-primary">
           <article class="balance-card wb-data-card wb-data-card-featured">
-            <div class="science-card-head"><strong>Presión requerida</strong><small>${qualityLabel(transport.resultQuality)}</small></div>
+            <div class="science-card-head"><strong>Presión requerida</strong><small>${escapeHtml(qualityLabel(transport.resultQuality))}</small></div>
             ${row('Distribuida', transport.distributedPressureDropPa === undefined ? '—' : fmt(transport.distributedPressureDropPa / 1000), 'kPa')}
             ${row('Pérdidas locales', transport.minorLossPressurePa === undefined ? '—' : fmt(transport.minorLossPressurePa / 1000), 'kPa')}
             ${row('Componente estática', transport.staticPressurePa === undefined ? '—' : fmt(transport.staticPressurePa / 1000), 'kPa')}
             ${row('Total requerida', transport.pressureDropPa === undefined ? '—' : fmt(transport.pressureDropPa / 1000), 'kPa', true)}
           </article>
           <article class="balance-card wb-data-card">
-            <div class="science-card-head"><strong>Bomba y NPSH</strong><small>${pump?.modelStatus ?? 'sin curva tabulada'}</small></div>
+            <div class="science-card-head"><strong>Bomba y NPSH</strong><small>${escapeHtml(pump?.modelStatus ?? 'sin curva tabulada')}</small></div>
             ${row('Q impuesto', imposedFlowM3h === null ? '—' : fmt(imposedFlowM3h), 'm³/h')}
             ${row('Qop', operatingFlowM3h === null ? '—' : fmt(operatingFlowM3h), 'm³/h', true)}
             ${pump?.operatingPoint ? row('H bomba / H sistema', `${fmt(pump.operatingPoint.pumpHeadM)} / ${fmt(pump.operatingPoint.systemHeadM)}`, 'm') : row('H bomba / H sistema', '—')}
@@ -81,6 +84,7 @@ export function renderBalanceAndEnergy(root, { state, results }) {
             ${row('Margen NPSH', npsh?.marginM === undefined ? '—' : fmt(npsh.marginM), 'm', true)}
           </article>
         </div>
+        ${renderPressureBreakdown(transport)}
       </section>
 
       <section class="wb-section wb-section-energy" aria-labelledby="wb-energy-section-title">
@@ -94,7 +98,7 @@ export function renderBalanceAndEnergy(root, { state, results }) {
         </header>
         <div class="balance-dashboard wb-analysis-grid wb-analysis-grid-secondary">
           <article class="balance-card wb-data-card wb-data-card-featured">
-            <div class="science-card-head"><strong>Potencia y energía</strong><small>${energy?.basis === 'pump-operating-point' ? 'evaluada en Qop' : qualityLabel(energy?.resultQuality)}</small></div>
+            <div class="science-card-head"><strong>Potencia y energía</strong><small>${escapeHtml(energy?.basis === 'pump-operating-point' ? 'evaluada en Qop' : qualityLabel(energy?.resultQuality))}</small></div>
             ${row('Caudal base', energy?.flowRateM3s === undefined ? '—' : fmt(energy.flowRateM3s * 3600), 'm³/h')}
             ${row('Potencia hidráulica', energy?.hydraulicPowerW === undefined ? '—' : fmt(energy.hydraulicPowerW / 1000), 'kW')}
             ${row('Potencia eléctrica', energy?.electricalPowerW === undefined ? '—' : fmt(energy.electricalPowerW / 1000), 'kW', true)}
@@ -102,12 +106,12 @@ export function renderBalanceAndEnergy(root, { state, results }) {
             ${row('OPEX energético', energy?.annualEnergyCost === undefined ? '—' : fmt(energy.annualEnergyCost, 2), 'moneda/año')}
           </article>
           <article class="balance-card wb-data-card">
-            <div class="science-card-head"><strong>Estado operacional</strong><small>${settling?.status ?? 'sin evaluación'}</small></div>
+            <div class="science-card-head"><strong>Estado operacional</strong><small>${escapeHtml(settling?.status ?? 'sin evaluación')}</small></div>
             ${row('Velocidad crítica', settling ? fmt(settling.criticalVelocityMps) : '—', 'm/s', true)}
             ${row('V / Vcrit', settling ? fmt(settling.velocityRatio, 3) : '—')}
             ${row('Segmento limitante', settling?.limitingSegmentId ?? '—')}
             ${row('Régimen', transport.flowRegime ?? '—')}
-            <p class="balance-note">${settling?.note ?? 'Ingrese densidades y Fl para evaluar asentamiento.'}</p>
+            <p class="balance-note">${escapeHtml(settling?.note ?? 'Ingrese densidades y Fl para evaluar asentamiento.')}</p>
           </article>
         </div>
       </section>

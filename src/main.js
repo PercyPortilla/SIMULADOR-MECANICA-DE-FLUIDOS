@@ -4,6 +4,7 @@ import './ui/slurryPipeInspector.css';
 import './ui/eulerLayoutCompact.css';
 import './ui/uiReview.css';
 import './ui/workbenchTransform.css';
+import { resolveMemoryScenarioProvenance } from './ui/scenarioProvenance.js';
 import { mountIndustrialV57Presentation } from './ui/industrialV57Presentation.js';
 import { attachNativeClassFeedL349 } from './babylon/assets/nativeClassFeedL349.js';
 import { attachNativeClassHeaderL352 } from './babylon/assets/nativeClassHeaderL352.js';
@@ -603,6 +604,7 @@ function wireScenarioControls() {
       refreshScenarioSelect();
       if (select) select.value = saved.id;
       setScenarioStatus(`Guardado: ${saved.name}.`, 'success');
+      if (activeWorkspaceTab === 'memory') renderScientificWorkspace('memory');
     } catch (error) {
       setScenarioStatus(error.message, 'warning');
     }
@@ -621,6 +623,7 @@ function wireScenarioControls() {
       renderParameterSections();
       if (nameInput) nameInput.value = scenario.name;
       setScenarioStatus(`Cargado: ${scenario.name}.`, 'success');
+      if (activeWorkspaceTab === 'memory') renderScientificWorkspace('memory');
     } catch (error) {
       setScenarioStatus(`Escenario incompatible: ${error.message}`, 'warning');
     }
@@ -639,6 +642,7 @@ function wireScenarioControls() {
     deleteNamedScenario(select.value);
     refreshScenarioSelect();
     setScenarioStatus('Escenario eliminado.', 'muted');
+    if (activeWorkspaceTab === 'memory') renderScientificWorkspace('memory');
   });
   document.querySelector('#scenario-compare')?.addEventListener('click', () => {
     const scenario = loadNamedScenario(select?.value);
@@ -652,6 +656,9 @@ function wireScenarioControls() {
   });
   document.querySelector('#scenario-export-csv')?.addEventListener('click', () => {
     downloadText('pulpa-lab-scenario.csv', exportScenarioCsv(nameInput?.value, getState()), 'text/csv');
+  });
+  select?.addEventListener('change', () => {
+    if (activeWorkspaceTab === 'memory') renderScientificWorkspace('memory');
   });
   refreshScenarioSelect();
 }
@@ -1031,24 +1038,50 @@ function refreshWorkbenchMetrics(tabId = activeWorkspaceTab) {
 }
 
 function structureAcademicWorkbench() {
-  const panel = document.querySelector('#academy-tab-root .academic-case-panel');
-  if (!panel || panel.querySelector('.wb-academic-select')) return;
-  const select = document.createElement('div');
-  select.className = 'wb-academic-select';
-  const lab = document.createElement('div');
-  lab.className = 'wb-academic-experiments';
+  const panel = document.querySelector('.academic-case-panel');
+  const root = document.querySelector('#academy-tab-root');
+  if (!panel || !root) return;
+  if (!root.contains(panel)) root.append(panel);
+  let select = panel.querySelector(':scope > .wb-academic-select');
+  let lab = panel.querySelector(':scope > .wb-academic-experiments');
+  if (!select) {
+    select = document.createElement('div');
+    select.className = 'wb-academic-select';
+    select.innerHTML = '<div class="wb-academic-step">01 / PREPARAR Y CARGAR</div>';
+    panel.prepend(select);
+  }
+  if (!lab) {
+    lab = document.createElement('div');
+    lab.className = 'wb-academic-experiments';
+    lab.innerHTML = '<div class="wb-academic-step">02 / COMPARAR Y EXPERIMENTAR</div>';
+    panel.append(lab);
+  }
+  // Widgets are dynamically installed after the initial tab construction;
+  // move any late #academic-lab into its proper column too.
   [...panel.children].forEach((child) => {
+    if (child === select || child === lab) return;
     (child.id === 'academic-comparator' || child.id === 'academic-lab' ? lab : select).append(child);
   });
-  const kicker = document.createElement('div');
-  kicker.className = 'wb-academic-step';
-  kicker.textContent = '01 / PREPARAR Y CARGAR';
-  select.prepend(kicker);
-  const next = document.createElement('div');
-  next.className = 'wb-academic-step';
-  next.textContent = '02 / COMPARAR Y EXPERIMENTAR';
-  lab.prepend(next);
-  panel.replaceChildren(select, lab);
+}
+
+function restoreAcademicSidebar() {
+  const panel = document.querySelector('.academic-case-panel');
+  const sidebar = document.querySelector('.sidebar');
+  const sections = document.querySelector('#sections');
+  if (!panel || !sidebar) return;
+  // Restore the original direct-child structure for the protected 3D entry
+  // workspace, including selector, cases and laboratory controls.
+  const select = panel.querySelector(':scope > .wb-academic-select');
+  const lab = panel.querySelector(':scope > .wb-academic-experiments');
+  for (const wrapper of [select, lab]) {
+    if (!wrapper) continue;
+    [...wrapper.children].forEach((child) => {
+      if (child.classList.contains('wb-academic-step')) child.remove();
+      else panel.append(child);
+    });
+    wrapper.remove();
+  }
+  sidebar.insertBefore(panel, sections ?? null);
 }
 
 function installWorkspaceTabs(shell) {
@@ -1122,18 +1155,25 @@ function installWorkspaceTabs(shell) {
     content.append(panel);
   });
 
-  // The academic experience needs full width, not a 332 px sidebar.
-  // Moving the existing node preserves the controls and their established IDs.
-  const academicPanel = shell.querySelector('.academic-case-panel');
-  const academyRoot = content.querySelector('#academy-tab-root');
-  if (academicPanel && academyRoot) academyRoot.append(academicPanel);
+  // The academic controls stay in their ORIGINAL sidebar for the protected
+  // circuit/3D view. Only reparent them when the scientific Academy tab opens.
 
+  let lastParameterTrigger = null;
   const closeParameters = () => {
+    const wasOpen = document.body.classList.contains('wb-parameters-open');
     document.body.classList.remove('wb-parameters-open');
     shell.querySelectorAll('[data-wb-parameters-trigger]').forEach((button) => button.setAttribute('aria-expanded', 'false'));
+    if (wasOpen && lastParameterTrigger?.isConnected) {
+      lastParameterTrigger.focus({ preventScroll: true });
+    }
   };
-  const toggleParameters = () => {
-    const open = document.body.classList.toggle('wb-parameters-open');
+  const toggleParameters = (event) => {
+    if (document.body.classList.contains('wb-parameters-open')) {
+      closeParameters();
+      return;
+    }
+    lastParameterTrigger = event?.currentTarget ?? null;
+    const open = document.body.classList.toggle('wb-parameters-open', true);
     shell.querySelectorAll('[data-wb-parameters-trigger]').forEach((button) => button.setAttribute('aria-expanded', String(open)));
     if (open) document.querySelector('#scenario-name')?.focus({ preventScroll: true });
   };
@@ -1181,6 +1221,8 @@ function installWorkspaceTabs(shell) {
     document.body.classList.toggle('ui-workbench', id !== 'circuit');
     document.body.dataset.workbenchTab = id;
     if (id === 'circuit') closeParameters();
+    if (id === 'academy') structureAcademicWorkbench();
+    if (id === 'circuit') restoreAcademicSidebar();
     content.querySelectorAll('[data-workspace-tab]').forEach((button) => {
       const active = button.dataset.workspaceTab === id;
       button.classList.toggle('active', active);
@@ -1225,7 +1267,11 @@ function renderScientificWorkspace(tabId = activeWorkspaceTab) {
   }
   if (tabId === 'memory') {
     const selectedScenario = loadNamedScenario(document.querySelector('#scenario-select')?.value);
-    renderMemoryPanel(document.querySelector('#memory-tab-root'), { state, results, scenarioName: selectedScenario?.name ?? 'Escenario actual' });
+    const provenance = resolveMemoryScenarioProvenance(selectedScenario, state);
+    renderMemoryPanel(document.querySelector('#memory-tab-root'), {
+      state, results, scenarioName: provenance.scenarioName,
+      scenarioNotice: provenance.notice, matchesSaved: provenance.matchesSaved,
+    });
   }
 }
 
@@ -1323,7 +1369,7 @@ function render() {
   wireScenarioControls();
   wireAcademicCaseControls();
   wireAcademicLabControls();
-  structureAcademicWorkbench();
+  if (activeWorkspaceTab === 'academy') structureAcademicWorkbench();
   wireSceneFullscreen();
   wireMobileWorkspaceJump();
   setScenarioStatus('Caso de ejemplo precargado. Modifica los valores o guarda tu propio escenario.', 'success');

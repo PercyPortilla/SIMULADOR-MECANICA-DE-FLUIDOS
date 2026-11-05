@@ -106,7 +106,10 @@ function renderTableOfContents(sections) {
   </nav>`;
 }
 
-export function renderMemoryPanel(root, { state, results, scenarioName = 'Escenario actual' }) {
+export function renderMemoryPanel(root, {
+  state, results, scenarioName = 'Escenario actual',
+  scenarioNotice = '', matchesSaved = false,
+}) {
   if (!root) return;
   const memo = buildSimulationMemo({ state, results, scenarioName });
   const warnings = memo.sections.find((section) => section.id === 'warnings')?.rows.length ?? 0;
@@ -118,6 +121,7 @@ export function renderMemoryPanel(root, { state, results, scenarioName = 'Escena
       <div class="wb-memory-hero-top"><span class="wb-memory-eyebrow">CUADERNO CIENTÍFICO / 04</span><span class="wb-memory-hero-kind">EXPEDIENTE DE CÁLCULO</span></div>
       <h2>Memoria técnica del escenario</h2>
       <p>Revisa la secuencia de entradas, ecuaciones, sustituciones, resultados y límites de aplicabilidad del cálculo activo.</p>
+      ${scenarioNotice ? `<p class="wb-memory-provenance" role="status" data-saved="${matchesSaved ? 'true' : 'false'}">${escapeHtml(scenarioNotice)}</p>` : ''}
       <dl class="wb-memory-overview">
         <div><dt>Escenario activo</dt><dd>${escapeHtml(scenarioName)}</dd></div>
         <div><dt>Reología</dt><dd>${escapeHtml(model)}</dd></div>
