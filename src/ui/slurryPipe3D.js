@@ -8,7 +8,7 @@
 import {
   ArcRotateCamera, Color3, Color4, DirectionalLight, Engine,
   HemisphericLight, Matrix, Mesh, MeshBuilder, PBRMaterial, Quaternion,
-  Scene, StandardMaterial, Vector3, VertexData, Camera,
+  Scene, StandardMaterial, Vector3, VertexData, Camera, ImageProcessingConfiguration,
 } from '@babylonjs/core';
 
 const R = 1.20;
@@ -108,12 +108,21 @@ export function createSlurryPipe3DScene({canvas,engineFactory}){
     preserveDrawingBuffer:true,stencil:false,doNotHandleContextLost:false,
   });
   const scene=new Scene(engine);
-  scene.clearColor=new Color4(.045,.095,.15,1);
+  // E11: D5-inspired neutral photographic lookdev for the existing 3D tube.
+  // No change to tube dimensions, material flow logic, solver or inspector UI.
+  scene.clearColor=new Color4(.13,.15,.16,1);
   scene.fogEnabled=false;
+  scene.imageProcessingConfiguration.toneMappingEnabled=true;
+  scene.imageProcessingConfiguration.toneMappingType=ImageProcessingConfiguration.TONEMAPPING_ACES;
+  scene.imageProcessingConfiguration.exposure=1.03;
+  scene.imageProcessingConfiguration.contrast=1.14;
   const hemi=new HemisphericLight('EDU_PIPE_3D_FILL',new Vector3(-.2,1,-.3),scene);
-  hemi.intensity=1.12;hemi.groundColor=new Color3(.07,.12,.19);
+  hemi.intensity=.94;hemi.groundColor=new Color3(.19,.20,.19);
   const key=new DirectionalLight('EDU_PIPE_3D_KEY',new Vector3(-.42,-1,.6),scene);
-  key.intensity=1.65;
+  key.intensity=1.39;
+  key.diffuse=new Color3(1,.94,.87);
+  const rim=new DirectionalLight('EDU_PIPE_3D_RIM',new Vector3(.5,-.3,-.7),scene);
+  rim.intensity=.34;rim.diffuse=new Color3(.72,.82,.86);
   const camera=new ArcRotateCamera('EDU_PIPE_3D_CAMERA',-Math.PI/2+.26,1.10,16,
     new Vector3(0,-.08,0),scene);
   camera.mode=Camera.ORTHOGRAPHIC_CAMERA;
@@ -126,13 +135,13 @@ export function createSlurryPipe3DScene({canvas,engineFactory}){
   scene.activeCamera=camera;
   // Orientation exposes the front/top of the physically hollow C-shaped pipe.
   const a0=-.34,a1=Math.PI*1.36;
-  const steel=material(scene,'EDU_PIPE_3D_STEEL','#9db1b9',{alpha:.31,metallic:.58,roughness:.4});
-  const liner=material(scene,'EDU_PIPE_3D_LINER','#7a9da6',{alpha:.13,metallic:.19,roughness:.54});
-  const flange=material(scene,'EDU_PIPE_3D_FLANGE','#8096a1',{metallic:.85,roughness:.22});
-  const edge=material(scene,'EDU_PIPE_3D_CUT_EDGE','#d6e8ec',{metallic:.75,roughness:.27});
-  const fluid=material(scene,'EDU_PIPE_3D_FLUID','#578895',{alpha:.11,metallic:.13,roughness:.37});
-  const earth=material(scene,'EDU_PIPE_3D_SEDIMENT','#c59857',{metallic:0,roughness:.95});
-  earth.emissiveColor=new Color3(.15,.07,.018);
+  const steel=material(scene,'EDU_PIPE_3D_STEEL','#87989d',{alpha:.31,metallic:.47,roughness:.56});
+  const liner=material(scene,'EDU_PIPE_3D_LINER','#748186',{alpha:.13,metallic:.10,roughness:.79});
+  const flange=material(scene,'EDU_PIPE_3D_FLANGE','#919fa4',{metallic:.68,roughness:.47});
+  const edge=material(scene,'EDU_PIPE_3D_CUT_EDGE','#b7c3c4',{metallic:.58,roughness:.46});
+  const fluid=material(scene,'EDU_PIPE_3D_FLUID','#777e7b',{alpha:.11,metallic:.02,roughness:.69});
+  const earth=material(scene,'EDU_PIPE_3D_SEDIMENT','#a08b6d',{metallic:0,roughness:.97});
+  earth.emissiveColor=new Color3(.06,.03,.012);
   const abrasion=material(scene,'EDU_PIPE_3D_ABRASION','#fa7c30',{alpha:.12,metallic:.05,roughness:.75});
   abrasion.emissiveColor=Color3.FromHexString('#f45b19').scale(.4);
   surface(scene,'EDU_PIPE_3D_OUTER_SHELL',N,1,(t,u)=>{
@@ -177,8 +186,8 @@ export function createSlurryPipe3DScene({canvas,engineFactory}){
   },abrasion);
   wearStrip.setEnabled(false);
   const grainMats=[
-    material(scene,'EDU_PIPE_3D_FINE','#c4c5a2',{metallic:.02,roughness:.94}),
-    material(scene,'EDU_PIPE_3D_COARSE','#e3a85c',{metallic:.06,roughness:.91}),
+    material(scene,'EDU_PIPE_3D_FINE','#aeb1a1',{metallic:.02,roughness:.96}),
+    material(scene,'EDU_PIPE_3D_COARSE','#c19a6d',{metallic:.04,roughness:.94}),
   ];
   const prototypes=[0,1].map(i=>{
     const m=MeshBuilder.CreateIcoSphere('EDU_PIPE_3D_GRAIN_'+(i?'COARSE':'FINE'),{
@@ -273,7 +282,7 @@ export function createSlurryPipe3DScene({canvas,engineFactory}){
     engine,scene,camera,resize,render,
     get status(){return {
       mode,playing,bed:lastBed,particles:groups.reduce((n,g)=>n+g.length,0),
-      cutaway:true,geo3D:true,sourceCadModified:false,cfd:false,disposed,
+      cutaway:true,geo3D:true,e11D5Visual:true,sourceCadModified:false,cfd:false,disposed,
     };},
     dispose(){if(disposed)return;disposed=true;scene.dispose();engine.dispose();},
   };

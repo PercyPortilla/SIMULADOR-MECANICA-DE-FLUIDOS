@@ -1,0 +1,30 @@
+{
+  "result": "PASS",
+  "phase": "E11",
+  "originalGLBSHA256": "3ea34050240b310a6fe8663d6b66c8f1f07b69b23c4e2473f93819ead33fcf3e",
+  "originalGLBBytes": 21018796,
+  "trueBabylonImport": true,
+  "borrowedD5LookdevNotD5Engine": true,
+  "visual": {
+    "active": true,
+    "tunedMeshes": 174,
+    "clonedMaterials": 41,
+    "adjustedLights": 2,
+    "originalMaterialsUnchanged": true,
+    "uiModified": false,
+    "signedCadModified": false,
+    "solverModified": false
+  },
+  "animations": 34,
+  "cameras": 13,
+  "nativeCad": 4,
+  "cadTransparencyPreserved": true,
+  "realFlowAnimationsPreserved": true,
+  "sameMineCameraAndHostRestored": true,
+  "originalSceneIlluminationRestored": true,
+  "same21MBAssetReenteredWithoutRedownload": true,
+  "noLossOfV57Meshes": true,
+  "uiChanged": false,
+  "solverChanged": false,
+  "originalGLBChanged": false
+}
