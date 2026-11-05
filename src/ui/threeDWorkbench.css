@@ -1,0 +1,397 @@
+/* T19 / T20 · Unified scientific workspace for both authentic 3D environments.
+ * Only the PAGE shell is restyled; original scene, camera, pipe, Euler and
+ * inspection DOM nodes stay mounted with all their existing event handlers.
+ */
+
+body.ui-workbench:not(.v57-industrial) .wb-3d-selector { display: none; }
+body.ui-workbench.wb-3d-workspace:not(.v57-industrial) .wb-3d-selector,
+body.v57-industrial.wb-3d-workspace .wb-3d-selector {
+  display: grid;
+  gap: 7px;
+  padding: 18px 5px 21px;
+  margin-top: 12px;
+  border-top: 1px solid #385152;
+}
+.wb-3d-selector-title { color: #9db9ae; letter-spacing: .13em; font-size: 9px; font-weight: 760; }
+.wb-3d-selector button {
+  padding: 11px 12px;
+  min-height: 42px;
+  border: 1px solid #425b58;
+  border-radius: 9px;
+  background: #213638;
+  color: #c6d6cd;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 680;
+  cursor: pointer;
+}
+.wb-3d-selector button:hover:not(:disabled) { background: #345451; color: #fff; }
+.wb-3d-selector button.active { background: #395d54; border-color: #89ab99; color: #fff; }
+.wb-3d-selector button:disabled { cursor: progress; opacity: .54; }
+.wb-3d-intro-actions button:disabled { opacity: .55; cursor: progress; }
+
+/* 06 / Planta General: same left rail, scientific editorial canvas, live controls. */
+body.ui-workbench.wb-3d-workspace:not(.v57-industrial) .workspace-tab-panel[data-tab-panel="circuit"] {
+  grid-column: 2;
+  grid-row: 2;
+  width: 100%;
+  max-width: 1550px;
+  margin: 0 auto;
+  padding: 40px clamp(20px, 3.3vw, 56px) 84px;
+  min-width: 0;
+}
+body.ui-workbench.wb-3d-workspace:not(.v57-industrial) .content-heading { display: none; }
+body.ui-workbench.wb-3d-workspace:not(.v57-industrial) .wb-3d-intro {
+  order: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+.wb-3d-intro-copy { max-width: 680px; }
+body.ui-workbench.wb-3d-workspace:not(.v57-industrial) .wb-3d-intro h2 {
+  margin: 13px 0 12px;
+  font-size: clamp(32px, 3.5vw, 52px);
+  font-weight: 775;
+  letter-spacing: -.055em;
+  line-height: 1.1;
+  color: #1b3434;
+}
+body.ui-workbench.wb-3d-workspace:not(.v57-industrial) .wb-3d-intro p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #60756e;
+}
+.wb-3d-intro-actions {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  flex: 0 0 auto;
+}
+.wb-3d-intro-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 9px 12px;
+  border: 1px solid #d1ded7;
+  border-radius: 9px;
+  background: #fff;
+  color: #31544c;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.wb-3d-intro-actions button.active { border-color: #365f53; background: #25443e; color: #fff; }
+.wb-3d-intro-actions button span { opacity: .72; font-size: 10px; }
+body.ui-workbench.wb-3d-workspace:not(.v57-industrial) .scene-card {
+  order: 1;
+  width: 100%;
+  margin: 0 0 26px;
+  border: 1px solid #d8e2dc;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 15px 40px rgba(16, 47, 39, .08);
+}
+body.ui-workbench.wb-3d-workspace:not(.v57-industrial) .scene-card-head {
+  flex-wrap: wrap;
+  padding: 17px 22px;
+  gap: 14px;
+  background: #fbfcf8;
+  border-bottom: 1px solid #dce7de;
+}
+body.ui-workbench.wb-3d-workspace:not(.v57-industrial) .scene-card-head h3 { color: #1c3b36; font-size: 19px; font-weight: 740; }
+body.ui-workbench.wb-3d-workspace:not(.v57-industrial) .scene-viewport { height: min(57vw, 635px); min-height: 450px; }
+body.ui-workbench.wb-3d-workspace:not(.v57-industrial) .hydraulic-summary { order: 2; margin: 0 0 18px; }
+body.ui-workbench.wb-3d-workspace:not(.v57-industrial) .result-panel { order: 3; margin: 0; }
+body.ui-workbench.wb-3d-workspace:not(.v57-industrial) :is(.hydraulic-summary,.result-panel) {
+  min-width: 0;
+  border: 1px solid #dce5df;
+  border-radius: 12px;
+  padding: 23px;
+  background: #fff;
+  color: #25433d;
+}
+body.ui-workbench.wb-3d-workspace:not(.v57-industrial) .kpi-grid { border-color: #e1e8e3; background: #f5f8f4; }
+body.ui-workbench.wb-3d-workspace:not(.v57-industrial) .kpi-grid strong { color: #27554c; }
+body.ui-workbench.wb-3d-workspace:not(.v57-industrial) :is(.technical-section-head h3,.result-panel h3) { color: #1a3a34; }
+
+/* 06 / Bernoulli–Euler: preserve the native laboratory inspector, right stage,
+ * controls and animations inside the same dark navigation / light topbar shell.
+ * The native .v57-industrial class still owns the actual lab content and mode. */
+body.v57-industrial.wb-3d-workspace {
+  --wb-3d-rail-width: 248px;
+  overflow: hidden;
+  background: #f4f5f1;
+}
+body.v57-industrial.wb-3d-workspace .shell { height: 100dvh; overflow: hidden; background: #f4f5f1; }
+body.v57-industrial.wb-3d-workspace .workspace { display: block; height: 100dvh; min-height: 0; }
+body.v57-industrial.wb-3d-workspace .content {
+  display: grid;
+  grid-template-columns: var(--wb-3d-rail-width) minmax(0, 1fr);
+  grid-template-rows: 64px minmax(0, 1fr);
+  max-width: none;
+  width: 100%;
+  height: 100dvh;
+  min-height: 0;
+  padding: 0 !important;
+  overflow: hidden;
+}
+body.v57-industrial.wb-3d-workspace .wb-rail {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 29;
+  height: 100dvh;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 28px 16px 22px;
+  background: #162628;
+  color: #f0f5ee;
+  scrollbar-color: #455c56 transparent;
+}
+body.v57-industrial.wb-3d-workspace .wb-rail-brand {
+  display: flex;
+  gap: 13px;
+  align-items: center;
+  padding: 3px 10px 42px;
+}
+body.v57-industrial.wb-3d-workspace .wb-brand-mark {
+  display: grid;
+  place-items: center;
+  flex: 0 0 50px;
+  height: 50px;
+  border-radius: 14px;
+  background: #edf1e8;
+  color: #203034;
+  font-size: 19px;
+  font-weight: 800;
+}
+body.v57-industrial.wb-3d-workspace .wb-brand-mark span { color: #c6794f; }
+body.v57-industrial.wb-3d-workspace .wb-brand-copy { display: grid; gap: 5px; }
+body.v57-industrial.wb-3d-workspace .wb-brand-copy strong { color: #f0f4ee; font-size: 15px; font-weight: 765; letter-spacing: .055em; }
+body.v57-industrial.wb-3d-workspace .wb-brand-copy small { color: #a6b9b5; font-size: 9px; letter-spacing: .135em; }
+body.v57-industrial.wb-3d-workspace .wb-rail-section-label {
+  display: block;
+  margin: 0 10px 14px;
+  color: #91aaa2;
+  font-size: 10px;
+  font-weight: 730;
+  letter-spacing: .14em;
+}
+body.v57-industrial.wb-3d-workspace .workspace-tabs {
+  display: flex !important;
+  flex-direction: column;
+  gap: 7px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+}
+body.v57-industrial.wb-3d-workspace .workspace-tabs button {
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: 13px;
+  width: 100%;
+  min-width: 0;
+  min-height: 56px;
+  margin: 0;
+  padding: 12px 11px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: #b6c8c3;
+  text-align: left;
+  font-size: 12.5px;
+  font-weight: 590;
+  line-height: 1.3;
+  cursor: pointer;
+}
+body.v57-industrial.wb-3d-workspace .workspace-tabs button span {
+  display: grid;
+  place-items: center;
+  flex: 0 0 28px;
+  height: 29px;
+  border-radius: 7px;
+  background: #27383b;
+  color: #9bb5ae;
+  font-size: 11px;
+  font-weight: 750;
+}
+body.v57-industrial.wb-3d-workspace .workspace-tabs button:hover { background: #25383a; color: #fff; }
+body.v57-industrial.wb-3d-workspace .workspace-tabs button.active { background: #345451; border-color: #526b65; color: #fff; box-shadow: inset 3px 0 0 #d2b296; }
+body.v57-industrial.wb-3d-workspace .workspace-tabs button.active span { background: #e9eee5; color: #1b3636; }
+body.v57-industrial.wb-3d-workspace .wb-rail-footer {
+  display: grid;
+  gap: 9px;
+  margin-top: auto;
+  padding-top: 18px;
+  border-top: 1px solid #3c5051;
+}
+body.v57-industrial.wb-3d-workspace .wb-rail-footer-kicker { color: #8fa7a1; font-size: 10px; letter-spacing: .13em; }
+body.v57-industrial.wb-3d-workspace .wb-rail-action {
+  min-height: 43px;
+  padding: 9px 13px;
+  border: 1px solid #466060;
+  border-radius: 9px;
+  background: #223639;
+  color: #e8eee9;
+  text-align: left;
+  font-size: 12px;
+  cursor: pointer;
+}
+body.v57-industrial.wb-3d-workspace .wb-rail-footer > small { color: #8b9f9e; font-size: 9px; }
+body.v57-industrial.wb-3d-workspace .wb-commandbar { display: none; }
+body.v57-industrial.wb-3d-workspace .topbar {
+  display: flex;
+  position: fixed;
+  z-index: 31;
+  top: 0;
+  left: var(--wb-3d-rail-width);
+  right: 0;
+  width: auto;
+  height: 64px;
+  min-width: 0;
+  padding: 0 15px;
+  border-bottom: 1px solid #dce5dc;
+  background: #f8faf6;
+  color: #183934;
+  gap: 11px;
+}
+body.v57-industrial.wb-3d-workspace .topbar .eyebrow { color: #9b6143; }
+body.v57-industrial.wb-3d-workspace .topbar h1 { color: #1f3a35; font-size: 17px; }
+body.v57-industrial.wb-3d-workspace .topbar h1 span { color: #b77150; }
+body.v57-industrial.wb-3d-workspace .release-tag { color: #698078; }
+body.v57-industrial.wb-3d-workspace .v57-top-actions button,
+body.v57-industrial.wb-3d-workspace .v57-top-actions label {
+  border-color: #ceddd3;
+  border-radius: 8px;
+  background: #eef3ee;
+  color: #28473e;
+  font-weight: 660;
+}
+body.v57-industrial.wb-3d-workspace .v57-top-actions select { background: transparent; color: #28473e; }
+body.v57-industrial.wb-3d-workspace .v57-top-actions #v57InspectP3P4 { color: #8b4e26; border-color: #d9b491; }
+body.v57-industrial.wb-3d-workspace .workspace-tab-panel[data-tab-panel="circuit"] {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  max-height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+body.v57-industrial.wb-3d-workspace .wb-3d-intro { display: none; }
+body.v57-industrial.wb-3d-workspace .scene-card {
+  position: relative !important;
+  flex: 1 1 auto;
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  border: 0;
+  border-radius: 0;
+}
+body.v57-industrial.wb-3d-workspace .scene-viewport {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+}
+body.v57-industrial.wb-3d-workspace .v57-top-actions { min-width: 0; }
+
+@media (max-width: 940px) {
+  body.ui-workbench.wb-3d-workspace:not(.v57-industrial) .workspace-tab-panel[data-tab-panel="circuit"] {
+    grid-column: 1; grid-row: 3; padding: 26px 22px 64px;
+  }
+  body.ui-workbench.wb-3d-workspace:not(.v57-industrial) .wb-3d-selector {
+    display: flex; flex-wrap: wrap; align-items: center; padding: 8px 0 0; margin-top: 9px;
+  }
+  body.ui-workbench.wb-3d-workspace:not(.v57-industrial) .wb-3d-selector-title { display: none; }
+  .wb-3d-selector button { min-height: 36px; padding: 8px 10px; }
+  body.ui-workbench.wb-3d-workspace:not(.v57-industrial) .wb-3d-intro { align-items: flex-start; flex-direction: column; }
+
+  body.v57-industrial.wb-3d-workspace { --wb-3d-mobile-rail: 135px; }
+  body.v57-industrial.wb-3d-workspace .content {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: var(--wb-3d-mobile-rail) 68px minmax(0, 1fr);
+  }
+  body.v57-industrial.wb-3d-workspace .wb-rail {
+    grid-column: 1; grid-row: 1;
+    height: var(--wb-3d-mobile-rail);
+    width: 100%;
+    padding: 9px 15px 8px;
+    overflow: hidden;
+    gap: 4px;
+  }
+  body.v57-industrial.wb-3d-workspace .wb-rail-brand { padding: 0; gap: 8px; }
+  body.v57-industrial.wb-3d-workspace .wb-brand-mark { flex-basis: 35px; height: 34px; font-size: 14px; border-radius: 8px; }
+  body.v57-industrial.wb-3d-workspace .wb-brand-copy strong { font-size: 12px; }
+  body.v57-industrial.wb-3d-workspace .wb-brand-copy small { font-size: 8px; }
+  body.v57-industrial.wb-3d-workspace .wb-rail-section-label,
+  body.v57-industrial.wb-3d-workspace .wb-rail-footer { display: none; }
+  body.v57-industrial.wb-3d-workspace .workspace-tabs {
+    flex-direction: row; gap: 4px; width: 100%; overflow-x: auto;
+    overscroll-behavior-x: contain; scrollbar-width: thin;
+  }
+  body.v57-industrial.wb-3d-workspace .workspace-tabs button {
+    width: auto; min-height: 38px; gap: 7px; padding: 7px 9px; white-space: nowrap; font-size: 11px;
+  }
+  body.v57-industrial.wb-3d-workspace .workspace-tabs button span { flex-basis: 22px; height: 23px; }
+  body.v57-industrial.wb-3d-workspace .wb-3d-selector {
+    display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center;
+    gap: 6px; margin: 0; padding: 2px 0 0; border-top: 0;
+  }
+  body.v57-industrial.wb-3d-workspace .wb-3d-selector-title { display: none; }
+  body.v57-industrial.wb-3d-workspace .wb-3d-selector button { flex: 1; min-width: 0; min-height: 30px; padding: 5px 8px; font-size: 10px; }
+  body.v57-industrial.wb-3d-workspace .topbar {
+    left: 0;
+    top: var(--wb-3d-mobile-rail);
+    right: 0;
+    height: 68px;
+    padding: 0 9px;
+    gap: 7px;
+    overflow: hidden;
+  }
+  body.v57-industrial.wb-3d-workspace .topbar > div:not(.v57-top-actions) { min-width: 115px; max-width: 135px; }
+  body.v57-industrial.wb-3d-workspace .topbar h1 { font-size: 12px; line-height: 1.25; }
+  body.v57-industrial.wb-3d-workspace .v57-top-actions {
+    flex: 1; overflow-x: auto; scrollbar-width: thin; min-width: 0; gap: 4px;
+  }
+  body.v57-industrial.wb-3d-workspace .v57-top-actions label { display: flex; flex: none; padding: 5px 7px; }
+  body.v57-industrial.wb-3d-workspace .v57-top-actions select { max-width: 135px; font-size: 10px; }
+  body.v57-industrial.wb-3d-workspace .v57-top-actions button { flex: none; padding: 6px 7px; font-size: 10px; }
+  body.v57-industrial.wb-3d-workspace .workspace-tab-panel[data-tab-panel="circuit"] {
+    grid-column: 1; grid-row: 3; min-height: 0; height: 100%;
+  }
+  body.v57-industrial.wb-3d-workspace .scene-card {
+    position: relative !important; inset: auto !important; left: auto !important; right: auto !important;
+    top: auto !important; bottom: auto !important; width: 100% !important;
+    height: 100% !important; min-height: 0 !important; max-height: 100% !important;
+  }
+  body.v57-industrial.wb-3d-workspace .scene-viewport {
+    position: relative !important; inset: auto !important;
+    width: 100% !important; height: 100% !important; min-height: 0 !important;
+  }
+}
+@media (max-width: 680px) {
+  body.ui-workbench.wb-3d-workspace:not(.v57-industrial) .workspace-tab-panel[data-tab-panel="circuit"] { padding: 22px 14px 50px; }
+  body.ui-workbench.wb-3d-workspace:not(.v57-industrial) .wb-3d-intro h2 { font-size: 34px; }
+  body.ui-workbench.wb-3d-workspace:not(.v57-industrial) .wb-3d-intro-actions { width: 100%; }
+  body.ui-workbench.wb-3d-workspace:not(.v57-industrial) .wb-3d-intro-actions button { flex: 1; font-size: 10px; }
+  body.ui-workbench.wb-3d-workspace:not(.v57-industrial) .scene-card-head { padding: 13px; }
+  body.ui-workbench.wb-3d-workspace:not(.v57-industrial) .scene-viewport { height: 64dvh; min-height: 430px; }
+  body.ui-workbench.wb-3d-workspace:not(.v57-industrial) :is(.hydraulic-summary,.result-panel) { padding: 14px; }
+}

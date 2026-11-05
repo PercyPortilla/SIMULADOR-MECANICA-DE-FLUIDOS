@@ -4,6 +4,7 @@ import './ui/slurryPipeInspector.css';
 import './ui/eulerLayoutCompact.css';
 import './ui/uiReview.css';
 import './ui/workbenchTransform.css';
+import './ui/threeDWorkbench.css';
 import { resolveMemoryScenarioProvenance } from './ui/scenarioProvenance.js';
 import { prepareScenarioState } from './ui/scenarioLoad.js';
 import { mountIndustrialV57Presentation } from './ui/industrialV57Presentation.js';
@@ -1031,10 +1032,11 @@ const WORKSPACE_TABS = Object.freeze([
   ['balance', '03', 'Análisis hidráulico'],
   ['memory', '04', 'Memoria y supuestos'],
   ['academy', '05', 'Prácticas académicas'],
-  ['circuit', '06', 'Planta general · 3D'],
+  ['circuit', '06', 'Entornos 3D'],
 ]);
 
 const WORKBENCH_NAMES = Object.freeze({
+  circuit: 'Entornos 3D',
   inputs: 'Entradas y modelo',
   curves: 'Exploración de resultados',
   balance: 'Diagnóstico hidráulico',
@@ -1193,7 +1195,14 @@ function installWorkspaceTabs(shell) {
     + '<button type="button" class="wb-rail-action" id="wb-rail-parameters">⚙ &nbsp; Editar parámetros</button>'
     + '<button type="button" class="wb-rail-action" id="wb-rail-report">↗ &nbsp; Memoria técnica</button>'
     + '<small>SIMULACIÓN ACADÉMICA · SISTEMA SI</small>';
-  rail.append(railBrand, railLabel, nav, railFooter);
+  const sceneSelector = document.createElement('div');
+  sceneSelector.className = 'wb-3d-selector';
+  sceneSelector.setAttribute('role', 'group');
+  sceneSelector.setAttribute('aria-label', 'Entorno tridimensional');
+  sceneSelector.innerHTML = '<span class="wb-3d-selector-title">VISTAS DEL MÓDULO 06</span>'
+    + '<button type="button" data-wb-3d-mode="mine" aria-pressed="true">◉ Planta general</button>'
+    + '<button type="button" data-wb-3d-mode="euler" aria-pressed="false" disabled>◎ Laboratorio Euler</button>';
+  rail.append(railBrand, railLabel, nav, sceneSelector, railFooter);
 
   const toolbar = document.createElement('div');
   toolbar.className = 'wb-commandbar';
@@ -1209,6 +1218,17 @@ function installWorkspaceTabs(shell) {
   circuit.setAttribute('aria-labelledby', 'workspace-tab-circuit');
   circuit.tabIndex = 0;
   existing.forEach((node) => circuit.append(node));
+  const sceneIntro = document.createElement('header');
+  sceneIntro.className = 'wb-3d-intro';
+  sceneIntro.innerHTML = `<div class="wb-3d-intro-copy">
+    <span class="wb-section-index">06 / ENTORNOS TRIDIMENSIONALES</span>
+    <h2>Exploración del circuito</h2>
+    <p>Recorre el modelo industrial y el tramo de hidráulica estudiado con sus cámaras, animaciones e inspecciones originales. Las magnitudes mostradas son resultados del modelo, no sensores.</p>
+  </div><div class="wb-3d-intro-actions" role="group" aria-label="Seleccionar entorno 3D">
+    <button type="button" data-wb-3d-mode="mine" aria-pressed="true"><span>01</span> Planta general</button>
+    <button type="button" data-wb-3d-mode="euler" aria-pressed="false" disabled><span>02</span> Laboratorio Bernoulli–Euler</button>
+  </div>`;
+  circuit.prepend(sceneIntro);
   content.append(circuit);
 
   const placeholders = [
@@ -1279,6 +1299,11 @@ function installWorkspaceTabs(shell) {
       inputsRoot.querySelector('#sections summary')?.focus?.({ preventScroll: true });
       return;
     }
+    if (document.body.classList.contains('v57-industrial')) {
+      // Open the native Euler parameter stage. Its controls are not replaced.
+      shell.querySelector('[data-euler-panel="parameters"]')?.click();
+      return;
+    }
     if (document.body.classList.contains('wb-parameters-open')) {
       closeParameters();
       return;
@@ -1327,9 +1352,14 @@ function installWorkspaceTabs(shell) {
 
   const activate = (id) => {
     if (!WORKSPACE_TABS.some(([tabId]) => tabId === id)) return;
+    // A science module must never leave an active, hidden Euler scene behind it.
+    if (id !== 'circuit' && document.body.classList.contains('v57-industrial')) {
+      document.querySelector('#v57ExitEulerLab')?.click();
+    }
     if (activeWorkspaceTab === 'inputs' && id !== 'inputs') restoreInputsToSidebar();
     activeWorkspaceTab = id;
-    document.body.classList.toggle('ui-workbench', id !== 'circuit');
+    document.body.classList.add('ui-workbench');
+    document.body.classList.toggle('wb-3d-workspace', id === 'circuit');
     document.body.dataset.workbenchTab = id;
     if (id === 'circuit') closeParameters();
     if (id === 'academy') structureAcademicWorkbench();
@@ -1365,6 +1395,48 @@ function installWorkspaceTabs(shell) {
     tabs[next].focus();
   });
   activate(activeWorkspaceTab);
+}
+
+function wireUnified3DViews(shell) {
+  const nativeEntry = shell.querySelector('#v57EnterEulerLab');
+  const nativeExit = shell.querySelector('#v57ExitEulerLab');
+  const modeButtons = [...shell.querySelectorAll('[data-wb-3d-mode]')];
+  if (!nativeEntry || !nativeExit || !modeButtons.length) return;
+  const updateMode = () => {
+    const activeMode = document.body.classList.contains('v57-industrial') ? 'euler' : 'mine';
+    const ready = !nativeEntry.disabled;
+    modeButtons.forEach((button) => {
+      // A dash preceding a digit is retained in DOMStringMap keys;
+      // use the literal attribute to avoid a silent selector mismatch.
+      const mode = button.getAttribute('data-wb-3d-mode');
+      const selected = mode === activeMode;
+      button.classList.toggle('active', selected);
+      button.setAttribute('aria-pressed', String(selected));
+      button.disabled = mode === 'euler' && !ready;
+      if (mode === 'euler') {
+        button.title = ready ? 'Abrir el laboratorio existente con todas sus funciones' : 'Preparando modelo 3D del laboratorio';
+      }
+    });
+    shell.querySelectorAll('[data-wb-current-tab]').forEach((node) => {
+      if (activeWorkspaceTab === 'circuit') node.textContent = activeMode === 'euler' ? 'Laboratorio Bernoulli–Euler' : 'Planta general 3D';
+    });
+  };
+  shell.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-wb-3d-mode]');
+    if (!button || button.disabled) return;
+    if (button.getAttribute('data-wb-3d-mode') === 'euler') {
+      nativeEntry.click();
+      // On a narrow screen, let the 3D studied environment be visible first.
+      // The original right-side scientific stage remains one native tap away.
+      if (document.body.classList.contains('v57-industrial') && window.matchMedia('(max-width: 940px)').matches) {
+        shell.querySelector('#v57CloseRightWorkspace')?.click();
+      }
+    } else nativeExit.click();
+    updateMode();
+  });
+  new MutationObserver(updateMode).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  new MutationObserver(updateMode).observe(nativeEntry, { attributes: true, attributeFilter: ['disabled'] });
+  updateMode();
 }
 
 function renderScientificWorkspace(tabId = activeWorkspaceTab) {
@@ -1496,6 +1568,7 @@ eulerPresentationUi = mountIndustrialV57Presentation({
   cameras:CAMERA_PRESET_ORDER,
   labels:CAMERA_PRESET_LABELS,
 });
+wireUnified3DViews(document.querySelector('.shell'));
 const unsubscribeResultsRender = subscribeResults((results) => {
   renderResultsPanel(results, getState());
   eulerPresentationUi?.refresh();

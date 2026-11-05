@@ -55,7 +55,7 @@ try {
 } catch {
   await call('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: downloadRoot });
 }
-await call('Page.reload', { ignoreCache: true });
+await call('Page.navigate', { url: `http://127.0.0.1:${previewPort}/?tab=balance` });
 await sleep(1000);
 for (let i = 0; i < 80; i += 1) {
   const ready = await evaluate(`Boolean(document.querySelector('#scenario-save-new') && document.querySelector('#balance-tab-root .wb-npsh-diagnostic'))`).catch(() => false);
@@ -101,7 +101,8 @@ verify('inputsPageAndProtectedCircuit', await evaluate(`(async () => {
   document.querySelector('#workspace-tab-circuit').click();
   const circuit = {
     tab: document.body.dataset.workbenchTab,
-    originalLayout: !document.body.classList.contains('ui-workbench'),
+    unifiedLayout: document.body.classList.contains('ui-workbench') && document.body.classList.contains('wb-3d-workspace'),
+    labSelector: Boolean(document.querySelector('.wb-3d-selector [data-wb-3d-mode="euler"]')),
     fieldsRestored: Boolean(document.querySelector('#parameters-sidebar #sections [data-path]')),
     scenariosRestored: Boolean(document.querySelector('#parameters-sidebar .scenario-panel')),
     academicControlsRestored: Boolean(document.querySelector('#parameters-sidebar .academic-case-panel')),
@@ -113,7 +114,7 @@ verify('inputsPageAndProtectedCircuit', await evaluate(`(async () => {
   return { inputs, circuit, preserved, finalTab: document.body.dataset.workbenchTab };
 })()`), (v) => v.inputs.tab === 'inputs' && v.inputs.workbench && v.inputs.visible
   && v.inputs.fields >= 15 && v.inputs.scenarios && v.inputs.editable && v.inputs.recalculated
-  && v.circuit.tab === 'circuit' && v.circuit.originalLayout && v.circuit.fieldsRestored
+  && v.circuit.tab === 'circuit' && v.circuit.unifiedLayout && v.circuit.labSelector && v.circuit.fieldsRestored
   && v.circuit.scenariosRestored && v.circuit.academicControlsRestored
   && v.circuit.canvasPresent && v.preserved && v.finalTab === 'balance');
 

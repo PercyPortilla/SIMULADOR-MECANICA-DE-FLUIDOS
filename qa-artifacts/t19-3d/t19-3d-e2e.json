@@ -1,0 +1,120 @@
+{
+  "checks": {
+    "generalDesktop": {
+      "tab": "circuit",
+      "unified": true,
+      "railDisplay": "flex",
+      "heading": "Exploración del circuito",
+      "views": 2,
+      "cameras": 9,
+      "sceneCanvasWidth": 1079.96875,
+      "sceneCanvasHeight": 635,
+      "sceneCardVisible": true,
+      "responsiveOverflow": 0
+    },
+    "generalCameraSwitch": {
+      "switched": true,
+      "restored": true,
+      "buttons": 9
+    },
+    "beforeEnterEuler": {
+      "nativeDisabled": false,
+      "selectorDisabled": false,
+      "labReady": true,
+      "labActive": false
+    },
+    "afterEnterEuler": {
+      "nativeDisabled": false,
+      "selectorDisabled": false,
+      "bodyClasses": "ui-workbench wb-3d-workspace v57-industrial v57-right-open v57-layout-compact",
+      "labActive": true,
+      "tab": "circuit"
+    },
+    "eulerDesktop": {
+      "labActive": true,
+      "railDisplay": "flex",
+      "modeButtonActive": "true",
+      "nativeViewOptions": 7,
+      "nativeControls": true,
+      "panelWidth": 1192,
+      "panelHeight": 836,
+      "canvasWidth": 1192,
+      "canvasHeight": 836,
+      "railWidth": 248,
+      "topbarWidth": 1192,
+      "originalSidebarRelocated": true,
+      "labReady": true,
+      "labState": true,
+      "renderer": "V57",
+      "noDocumentOverflow": true
+    },
+    "eulerNativeControls": {
+      "transparentSelected": true,
+      "realisticRestored": true,
+      "auditVisible": true,
+      "auditClosed": true,
+      "noWetCertification": true
+    },
+    "nativeInterior": {
+      "labActive": true,
+      "pipeCanvasExists": true,
+      "inspectorOpen": true,
+      "pipeReady": true,
+      "pipeError": null,
+      "pipeVisualization": "babylon 3D educational cutaway",
+      "selectedRoute": "pump",
+      "originalEulerCanvasPresent": true
+    },
+    "mineRestored": {
+      "tab": "circuit",
+      "unified": true,
+      "mineSelected": "true",
+      "originalSidebarParent": true,
+      "nativeLabInactive": true,
+      "cameraButtons": 9,
+      "sceneCanvasPresent": true
+    },
+    "moduleSwitchExitsEuler": {
+      "tab": "balance",
+      "labInactive": true,
+      "balanceVisible": true,
+      "viewportHidden": true
+    },
+    "generalMobile": {
+      "tab": "circuit",
+      "width": 390,
+      "horizontalOverflow": 0,
+      "navVisible": "flex",
+      "canvasWidth": 360
+    },
+    "eulerMobile": {
+      "labActive": true,
+      "width": 390,
+      "horizontalOverflow": 0,
+      "railVisible": true,
+      "topbarVisible": true,
+      "canvasHeight": 641,
+      "canvasWidth": 390,
+      "canvasStartsAfterTopbar": true,
+      "nativeViewStillExists": true,
+      "nativePipeStillExists": true,
+      "rightPanelInitiallyClosed": true,
+      "rightReopenAvailable": true
+    },
+    "eulerMobileNativePanelReopens": {
+      "rightPanelVisible": true,
+      "nativeIndicatorsPresent": true
+    }
+  },
+  "screenshots": [
+    "01-general-workbench-desktop.png",
+    "02-euler-workbench-desktop.png",
+    "03-euler-pipe-interior.png",
+    "04-general-workbench-mobile.png",
+    "05-euler-workbench-mobile.png"
+  ],
+  "runtimeExceptions": [],
+  "started": "2026-11-05T17:35:33.135Z",
+  "result": "PASS",
+  "finished": "2026-11-05T17:35:59.244Z"
+}

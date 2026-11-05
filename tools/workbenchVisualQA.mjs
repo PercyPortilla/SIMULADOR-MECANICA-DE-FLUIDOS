@@ -217,7 +217,7 @@ if (!state.start.workbench || state.start.activeSections < 4 ||
     state.drawer.open === 'none' || state.drawer.close !== 'none' ||
     state.drawer.restoredFocus !== 'wb-command-parameters' ||
     state.mobileCurves.charts !== 4 || !state.mobile.activeNavigationVisible ||
-    state.circuitPreservation.redesignClass ||
+    !state.circuitPreservation.redesignClass ||
     !state.circuitPreservation.academicCasesRestored ||
     !state.circuitPreservation.originalCaseSelectDirect ||
     !state.circuitPreservation.originalCompareDirect ||
@@ -228,6 +228,6 @@ if (!state.start.workbench || state.start.activeSections < 4 ||
     !state.memorySaved.savedId || state.memorySaved.provenance !== 'QA - Scenario origin' ||
     state.memoryDirty.inputMissing || state.memoryDirty.savedFlag !== 'false' ||
     !state.memoryDirty.provenance?.includes('borrador') ||
-    state.circuitPreservation.railDisplay !== 'contents') {
+    state.circuitPreservation.railDisplay !== 'flex') {
   process.exitCode = 1;
 }
