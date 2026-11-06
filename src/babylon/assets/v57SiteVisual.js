@@ -5,6 +5,9 @@ import { TransformNode } from '@babylonjs/core/Meshes/transformNode.js';
 import { V57_SITE_VISUAL_URL } from '../../scene/integration/v57Layout.js';
 import { loadBabylonAssetContainer } from './gltfLoader.js';
 import { applyB71HydraulicStudyVisual } from './b71HydraulicStudyVisual.js';
+import { applyB73FoundationVisual } from './b73FoundationVisual.js';
+import { applyB74SlurryFlowVisual } from './b74SlurryFlowVisual.js';
+import { applyB75EquipmentSlurryVisual } from './b75EquipmentSlurryVisual.js';
 
 function visitHierarchy(root, callback) {
   callback(root);
@@ -148,6 +151,11 @@ export function attachBabylonV57SiteVisual({
   let disposed = false;
   let b64TerrainMaterial = null;
   let b71HydraulicStudyVisual = null;
+  let b73FoundationVisual = null;
+  let b74SlurryFlowVisual = null;
+  let b75EquipmentSlurryVisual = null;
+  let processMetrics = Object.freeze({});
+  let inspectionState = Object.freeze({ targetId: null, mode: 'normal' });
 
   function syncAnimationState() {
     animationGroups.forEach((group) => {
@@ -175,6 +183,15 @@ export function attachBabylonV57SiteVisual({
       });
       b64TerrainMaterial = applyB64TerrainMaterial({ rootNodes, scene, host });
       b71HydraulicStudyVisual = applyB71HydraulicStudyVisual({ scene, rootNodes, host });
+      b73FoundationVisual = applyB73FoundationVisual({ scene, rootNodes, host });
+      b74SlurryFlowVisual = applyB74SlurryFlowVisual({ scene, rootNodes, host });
+      b74SlurryFlowVisual.setMetrics(processMetrics);
+      b74SlurryFlowVisual.setAnimationsEnabled(animationsEnabled);
+      b74SlurryFlowVisual.setInspectionState(inspectionState);
+      b75EquipmentSlurryVisual = applyB75EquipmentSlurryVisual({ scene, rootNodes, host });
+      b75EquipmentSlurryVisual.setMetrics(processMetrics);
+      b75EquipmentSlurryVisual.setAnimationsEnabled(animationsEnabled);
+      b75EquipmentSlurryVisual.setInspectionState(inspectionState);
       host.metadata.blenderVisualStatus = 'loaded';
       host.metadata.blenderVisualLoaded = true;
       host.metadata.importedRootCount = rootNodes.length;
@@ -200,11 +217,34 @@ export function attachBabylonV57SiteVisual({
     setAnimationsEnabled(enabled) {
       animationsEnabled = Boolean(enabled);
       syncAnimationState();
+      b74SlurryFlowVisual?.setAnimationsEnabled?.(animationsEnabled);
+      b75EquipmentSlurryVisual?.setAnimationsEnabled?.(animationsEnabled);
       return animationsEnabled;
+    },
+    setProcessMetrics(nextMetrics = {}) {
+      processMetrics = Object.freeze({ ...nextMetrics });
+      b74SlurryFlowVisual?.setMetrics?.(processMetrics);
+      b75EquipmentSlurryVisual?.setMetrics?.(processMetrics);
+      return processMetrics;
+    },
+    setInspectionState(nextState = {}) {
+      inspectionState = Object.freeze({
+        targetId: nextState.targetId ? String(nextState.targetId) : null,
+        mode: ['transparent', 'cutaway', 'interior'].includes(nextState.mode) ? nextState.mode : 'normal',
+      });
+      b74SlurryFlowVisual?.setInspectionState?.(inspectionState);
+      b75EquipmentSlurryVisual?.setInspectionState?.(inspectionState);
+      return inspectionState;
+    },
+    update(deltaSeconds) {
+      const pipeMoved = b74SlurryFlowVisual?.update?.(deltaSeconds) ?? false;
+      const equipmentMoved = b75EquipmentSlurryVisual?.update?.(deltaSeconds) ?? false;
+      return pipeMoved || equipmentMoved;
     },
     get loaded() { return host.metadata?.blenderVisualStatus === 'loaded'; },
     get rootNodes() { return [...rootNodes]; },
     get animationGroups() { return [...animationGroups]; },
+    get inspectionState() { return inspectionState; },
     dispose() {
       if (disposed) return;
       disposed = true;
@@ -212,6 +252,12 @@ export function attachBabylonV57SiteVisual({
       animationGroups = [];
       b64TerrainMaterial?.dispose?.(false, true);
       b64TerrainMaterial = null;
+      b75EquipmentSlurryVisual?.dispose?.();
+      b75EquipmentSlurryVisual = null;
+      b74SlurryFlowVisual?.dispose?.();
+      b74SlurryFlowVisual = null;
+      b73FoundationVisual?.dispose?.();
+      b73FoundationVisual = null;
       b71HydraulicStudyVisual?.dispose?.();
       b71HydraulicStudyVisual = null;
       container?.dispose?.();
