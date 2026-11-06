@@ -75,6 +75,28 @@ describe('Babylon Inspection parity', () => {
     system.dispose(); scene.dispose(); engine.dispose();
   });
 
+  it('reuses one inspection material variant for meshes that share the same original material and role', () => {
+    const { engine, scene } = makeScene();
+    const root = new TransformNode('MILL-01', scene);
+    const sharedShellMaterial = new StandardMaterial('mill-shared-shell', scene);
+    const shells = Array.from({ length: 6 }, (_, index) => {
+      const mesh = CreateBox(`MILL-01_SHELL_${index}`, { size: 1 }, scene);
+      mesh.parent = root;
+      mesh.position.x = index * 1.1;
+      mesh.material = sharedShellMaterial;
+      return mesh;
+    });
+    const system = createBabylonEquipmentInspectionSystem({ scene });
+    system.setTarget('MILL-01');
+    system.setMode('transparent');
+    const sharedVariant = shells[0].material;
+    expect(sharedVariant).not.toBe(sharedShellMaterial);
+    expect(shells.every((mesh) => mesh.material === sharedVariant)).toBe(true);
+    system.setMode('normal');
+    expect(shells.every((mesh) => mesh.material === sharedShellMaterial)).toBe(true);
+    system.dispose(); scene.dispose(); engine.dispose();
+  });
+
   it('draws compact selected/upstream/downstream markers without wireframe boxes', () => {
     const { engine, scene } = makeScene();
     target(scene, 'EXCAVATOR-01', [-10, 0, 0]);

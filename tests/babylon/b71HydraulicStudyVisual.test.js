@@ -49,15 +49,12 @@ describe('B71 hydraulic study visual', () => {
     expect(visual.bridges.every((mesh) => mesh.metadata?.visualOnly === true)).toBe(true);
 
     expect(slurry.material?.name).toBe('b71-study-mineral-slurry');
-    expect(visual.minerals).toHaveLength(64);
-    expect(visual.minerals.filter((mesh) => mesh.metadata?.mineral === 'gold')).toHaveLength(8);
-    expect(visual.minerals.filter((mesh) => mesh.metadata?.mineral === 'pyrite')).toHaveLength(22);
-    expect(visual.minerals.filter((mesh) => mesh.metadata?.mineral === 'quartz')).toHaveLength(34);
-    expect(visual.minerals.every((mesh) => mesh.metadata?.visualOnly === true)).toBe(true);
+    expect(visual.minerals).toHaveLength(0);
+    expect(slurry.metadata?.b77LegacyMineralParticlesRetired).toBe(true);
     expect(host.metadata.b71HydraulicStudy).toMatchObject({
       seamBridgeCount: 3,
-      mineralParticleCount: 64,
-      disseminatedGoldCount: 8,
+      mineralParticleCount: 0,
+      disseminatedGoldCount: 0,
     });
 
     visual.dispose();
